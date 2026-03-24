@@ -1,6 +1,7 @@
 {
 	"name": "design-docs",
 	"version": "0.0.0",
+	"private": true,
 	"type": "module",
 	"scripts": {
 		"build": "claude-binary-plugin build",

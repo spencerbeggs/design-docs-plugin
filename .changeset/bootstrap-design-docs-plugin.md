@@ -1,5 +1,5 @@
 ---
-"design-docs": minor
+"design-docs-plugin": minor
 ---
 
 ## Features
