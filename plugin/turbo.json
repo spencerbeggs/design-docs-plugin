@@ -4,7 +4,7 @@
 	"tasks": {
 		"build": {
 			"cache": false,
-			"dependsOn": ["types:check", "//#kill:otel", "validate"],
+			"dependsOn": ["types:check", "//#kill:otel"],
 			"outputs": ["*.plugin"]
 		},
 		"test": {

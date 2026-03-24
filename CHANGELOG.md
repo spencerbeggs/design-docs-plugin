@@ -1,10 +1,10 @@
----
-"design-docs-plugin": minor
----
+# design-docs-plugin
 
-## Features
+## 0.1.0
 
-### Design Documentation Management System
+### Features
+
+* [`132b999`](https://github.com/spencerbeggs/design-docs-plugin/commit/132b999cc9de39803c308583c77c4e4cc14d43a8) ### Design Documentation Management System
 
 A Claude Code plugin that brings structured design documentation, CLAUDE.md context management, implementation planning, and user-facing documentation generation into any project. Injects session context automatically and provides 34 skills across 4 categories plus 3 specialized agents.
 
