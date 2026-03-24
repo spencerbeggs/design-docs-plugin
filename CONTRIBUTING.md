@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for your interest in contributing to claude-plugin-template.
+Thank you for your interest in contributing to design-docs-plugin.
 
 ## Prerequisites
 
@@ -13,8 +13,8 @@ Thank you for your interest in contributing to claude-plugin-template.
 1. Fork and clone the repository:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/claude-plugin-template.git
-   cd claude-plugin-template
+   git clone https://github.com/YOUR_USERNAME/design-docs-plugin.git
+   cd design-docs-plugin
    ```
 
 2. Install dependencies:
@@ -60,7 +60,7 @@ Thank you for your interest in contributing to claude-plugin-template.
 
 | Directory | Purpose | Ships to Users? |
 | --- | --- | --- |
-| `plugin/` | Plugin source, hooks, commands, skills | Yes |
+| `plugin/` | Plugin source, hooks, skills, agents | Yes |
 | `plugin/src/` | Shared source code | Yes |
 | `__test__/` | All tests | No |
 | `lib/` | Dev tooling configs | No |
@@ -70,7 +70,6 @@ Thank you for your interest in contributing to claude-plugin-template.
 
 * **Shared source code** -- `plugin/src/{descriptive-name}.ts` (no barrel/index files)
 * **Hook handlers** -- `plugin/hooks/{name}.hook.ts`
-* **Commands** -- `plugin/commands/{name}.cmd.ts` + `plugin/commands/{name}.md`
 * **Skills** -- `plugin/skills/{name}/SKILL.md`
 * **Agents** -- `plugin/agents/{name}.md`
 * **Tests** -- `__test__/` (mirrors plugin/ structure, e.g., `__test__/hooks/context.hook.test.ts`)
@@ -82,7 +81,7 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 ```text
 feat: add new hook for PreToolUse validation
 fix: correct schema validation for empty strings
-docs: update README with command examples
+docs: update README with skill examples
 chore: update dependencies
 ```
 

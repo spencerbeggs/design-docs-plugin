@@ -1,0 +1,169 @@
+{
+	"$schema": "../../plugin/skills/design-config/json-schemas/current.json",
+	"version": "1.0.0",
+	"project": {
+		"name": "spencerbeggs/design-docs-plugin",
+		"type": "monorepo",
+		"repository": "https://github.com/spencerbeggs/design-docs-plugin",
+		"maintainer": "C. Spencer Beggs"
+	},
+	"paths": {
+		"designDocs": ".claude/design",
+		"plans": ".claude/plans",
+		"skills": "plugin/skills",
+		"context": "CLAUDE.md",
+		"localContext": "CLAUDE.local.md"
+	},
+	"modules": {
+		"design-docs-plugin": {
+			"path": "plugin",
+			"designDocsPath": ".claude/design/design-docs-plugin",
+			"categories": ["architecture", "meta", "documentation"],
+			"maintainer": "C. Spencer Beggs",
+			"userDocs": {
+				"readme": "README.md",
+				"repoDocs": "docs",
+				"siteDocs": null
+			}
+		}
+	},
+	"skills": {
+		"baseNamespace": "/",
+		"enabled": [
+			"design-init",
+			"design-validate",
+			"design-update",
+			"design-sync",
+			"design-review",
+			"design-audit",
+			"design-search",
+			"design-compare",
+			"design-link",
+			"design-index",
+			"design-report",
+			"design-export",
+			"design-archive",
+			"design-prune",
+			"design-config",
+			"plan-create",
+			"plan-validate",
+			"plan-list",
+			"plan-explore",
+			"plan-complete",
+			"context-validate",
+			"context-audit",
+			"context-review",
+			"context-update",
+			"context-split",
+			"docs-generate-readme",
+			"docs-generate-repo",
+			"docs-generate-site",
+			"docs-generate-contributing",
+			"docs-generate-security",
+			"docs-review",
+			"docs-review-package",
+			"docs-sync",
+			"docs-update"
+		]
+	},
+	"quality": {
+		"designDocs": {
+			"maxLineLength": 120,
+			"requireFrontmatter": true,
+			"requireTOC": true,
+			"minSections": ["Overview", "Current State", "Rationale"]
+		},
+		"userDocs": {
+			"level1": {
+				"targetWordCount": [200, 500],
+				"maxLineLength": 80,
+				"requireSections": ["Features", "Installation", "Usage"]
+			}
+		},
+		"context": {
+			"rootMaxLines": 500,
+			"childMaxLines": 300,
+			"requireDesignDocPointers": true
+		},
+		"plans": {
+			"maxLineLength": 120,
+			"requireFrontmatter": true,
+			"requiredFields": ["name", "title", "created", "status", "progress"],
+			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"],
+			"progressRange": [0, 100],
+			"stalenessThresholdDays": 30,
+			"archiveAfterDays": 30
+		}
+	},
+	"integration": {
+		"ci": {
+			"enabled": false,
+			"validateOnPR": false,
+			"syncOnMerge": false
+		},
+		"git": {
+			"trackDesignDocs": true,
+			"requireReviewForChanges": false
+		},
+		"plans": {
+			"enabled": true,
+			"bidirectionalLinking": true,
+			"autoSyncProgress": false,
+			"validateOnCommit": true,
+			"cacheMetadata": true,
+			"cacheTTL": 300
+		}
+	},
+	"subagents": {
+		"design-doc-agent": {
+			"enabled": true,
+			"description": "Maintain internal design documentation and implementation plans",
+			"skills": [
+				"design-init",
+				"design-validate",
+				"design-update",
+				"design-sync",
+				"design-prune",
+				"design-review",
+				"design-audit",
+				"design-search",
+				"design-index",
+				"design-export",
+				"design-compare",
+				"design-link",
+				"design-report",
+				"design-archive",
+				"design-config",
+				"plan-validate",
+				"plan-create",
+				"plan-list"
+			],
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"],
+			"file": "plugin/agents/design-doc-agent.md"
+		},
+		"context-doc-agent": {
+			"enabled": true,
+			"description": "Maintain CLAUDE.md context files",
+			"skills": ["context-validate", "context-audit", "context-review", "context-update", "context-split"],
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"],
+			"file": "plugin/agents/context-doc-agent.md"
+		},
+		"docs-gen-agent": {
+			"enabled": true,
+			"description": "Generate user-facing documentation from design docs",
+			"skills": [
+				"docs-generate-readme",
+				"docs-generate-contributing",
+				"docs-generate-security",
+				"docs-generate-repo",
+				"docs-generate-site",
+				"docs-sync",
+				"docs-review",
+				"docs-review-package",
+				"docs-update"
+			],
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write"],
+			"file": "plugin/agents/docs-gen-agent.md"
+		}
+	}
+}

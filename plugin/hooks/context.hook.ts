@@ -1,67 +1,42 @@
 import type { Pipeline } from "../plugin.config.js";
 
-// =============================================================================
-// SessionStart Hook: Context Provider
-// =============================================================================
-//
-// This hook runs once when a Claude Code session starts. Its job is to inject
-// context into the session via the `claudeContext` return field.
-//
-// The handler receives { input, options, state }:
-//   - state:   The primary API. Contains Layer 1 (base) + Layer 3 (computed)
-//              values. Hooks should operate on state, not options.
-//   - options: Escape hatch for raw Layer 2 values. Prefer state — setup()
-//              has already transformed options into typed, computed values.
-//   - input:   The raw hook event from Claude Code (session source, cwd, etc.)
-//
-// Return statuses — what Claude Code does with each:
-//
-//   status: "executed"  → Hook ran. Claude reads the action field:
-//       action: "context"  → Injects `claudeContext` markdown into the session
-//       action: "none"     → Hook ran but has nothing to inject
-//
-//   status: "disabled"  → Hook is turned off. Claude ignores it entirely.
-//
-//   status: "error"     → Hook hit a runtime error. Requires `reason` field.
-//
-//   status: "timeout"   → Hook exceeded its time budget. Requires `reason` field.
-//
-// =============================================================================
-
 const handler: Pipeline["SessionStart"] = ({ state }) => {
-	// ── Disabled: setup() determined context should be off ───────────────
-	// The CONTEXT_ENABLED option was transformed into state.contextEnabled
-	// by setup(). We read state here, not options.
 	if (!state.contextEnabled) {
 		return {
 			status: "disabled",
-			summary: "Context injection disabled via MY_PLUGIN_CONTEXT_ENABLED=false",
+			summary: "Context injection disabled via DESIGN_DOCS_CONTEXT_ENABLED=false",
 		};
 	}
 
-	// ── Executed, action: none — setup() didn't produce usable data ──────
-	// This can happen if the GREETING option was empty or setup() failed
-	// to compute a usable value.
-	if (!state.greetingPrefix) {
-		return {
-			status: "executed",
-			action: "none",
-			summary: "No greeting configured — check MY_PLUGIN_GREETING",
-		};
-	}
-
-	// ── Executed, action: context — inject markdown into the session ─────
 	const context = [
-		"## Plugin Context",
+		"## Design Documentation System",
 		"",
-		`Greeting prefix: ${state.greetingPrefix}`,
-		`Environment: ${state.environment}`,
+		"This project uses a design documentation system managed by the design-docs plugin.",
+		"Design docs live in `docs/design/` and implementation plans in `.claude/plans/`.",
+		"",
+		"### Available Skills",
+		"",
+		"Use these slash commands to manage design documentation:",
+		"",
+		"**Design docs:** `/design-docs:design-init`, `/design-docs:design-validate`, `/design-docs:design-update`, `/design-docs:design-sync`, `/design-docs:design-review`, `/design-docs:design-audit`, `/design-docs:design-search`, `/design-docs:design-compare`, `/design-docs:design-link`, `/design-docs:design-index`, `/design-docs:design-report`, `/design-docs:design-export`, `/design-docs:design-archive`, `/design-docs:design-prune`, `/design-docs:design-config`",
+		"",
+		"**Plans:** `/design-docs:plan-create`, `/design-docs:plan-validate`, `/design-docs:plan-list`, `/design-docs:plan-explore`, `/design-docs:plan-complete`",
+		"",
+		"**Context (CLAUDE.md):** `/design-docs:context-validate`, `/design-docs:context-audit`, `/design-docs:context-review`, `/design-docs:context-update`, `/design-docs:context-split`",
+		"",
+		"**User docs:** `/design-docs:docs-generate-readme`, `/design-docs:docs-generate-repo`, `/design-docs:docs-generate-site`, `/design-docs:docs-generate-contributing`, `/design-docs:docs-generate-security`, `/design-docs:docs-review`, `/design-docs:docs-review-package`, `/design-docs:docs-sync`, `/design-docs:docs-update`",
+		"",
+		"### Available Agents",
+		"",
+		"**design-doc-agent** — Maintain internal design documentation and implementation plans",
+		"**context-doc-agent** — Maintain CLAUDE.md context files",
+		"**docs-gen-agent** — Generate user-facing documentation from design docs",
 	].join("\n");
 
 	return {
 		status: "executed",
 		action: "context",
-		summary: `Injected context for ${state.environment} environment`,
+		summary: "Injected design documentation system context",
 		claudeContext: context,
 	};
 };

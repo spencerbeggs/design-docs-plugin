@@ -3,7 +3,7 @@
 	"changelog": [
 		"@savvy-web/changesets/changelog",
 		{
-			"repo": "spencerbeggs/claude-plugin-template",
+			"repo": "spencerbeggs/design-docs-plugin",
 			"versionFiles": [{ "glob": "plugin/.claude-plugin/plugin.json", "paths": ["$.version"] }]
 		}
 	],

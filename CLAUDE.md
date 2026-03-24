@@ -1,6 +1,6 @@
-# claude-plugin-template
+# design-docs
 
-A template for creating Claude Code plugins with `claude-binary-plugin`.
+A Claude Code plugin for managing design documentation and implementation plans.
 
 ## Quick Reference
 
@@ -12,7 +12,7 @@ bun run lint         # Biome lint check
 ```
 
 * **Author**: C. Spencer Beggs ([spencer@beggs.codes](mailto:spencer@beggs.codes), [spencerbeg.gs](https://spencerbeg.gs))
-* **Repository**: [spencerbeggs/claude-plugin-template](https://github.com/spencerbeggs/claude-plugin-template)
+* **Repository**: [spencerbeggs/design-docs-plugin](https://github.com/spencerbeggs/design-docs-plugin)
 * **License**: MIT
 
 ## Architecture
@@ -20,7 +20,7 @@ bun run lint         # Biome lint check
 This is a monorepo with a **sidecar distribution pattern**. The plugin is developed alongside dev tooling but distributed independently. Only the `plugin/` directory reaches end users via git-subdir sparse cloning. This ensures dev tooling never ships to users and the `plugin/` directory can be sparse-cloned independently.
 
 * **Root workspace** -- Development infrastructure only (linting, commitlint, changesets, testing). Nothing ships.
-* **`plugin/`** -- Everything that gets distributed. Contains source, hooks, commands, skills, agents, and the compiled binary. See `plugin/CLAUDE.md` for implementation details (hook/command handler patterns, type imports, return shapes).
+* **`plugin/`** -- Everything that gets distributed. Contains source, hooks, skills, agents, and the compiled binary. See `plugin/CLAUDE.md` for implementation details (hook handler patterns, type imports, return shapes).
 * **`__test__/`** -- All tests live at root level, NOT inside `plugin/`. Because `plugin/` ships to users and tests should not be distributed.
 * **`docs/`** -- User-facing public documentation about the plugin.
 * **`lib/`** -- Dev tooling configs (commitlint, lint-staged, markdownlint) and scripts. Not shipped.
@@ -28,12 +28,10 @@ This is a monorepo with a **sidecar distribution pattern**. The plugin is develo
 ## Project Structure
 
 ```text
-claude-plugin-template/
+design-docs-plugin/
 ├── __test__/                    # ALL tests (mirrors plugin/ structure)
 │   ├── hooks/
 │   │   └── context.hook.test.ts
-│   ├── commands/
-│   │   └── greet.cmd.test.ts
 │   ├── src/
 │   │   └── schema.test.ts
 │   ├── utils/
@@ -49,11 +47,16 @@ claude-plugin-template/
 │   ├── hooks/
 │   │   ├── hooks.json           # GENERATED — do not edit
 │   │   └── context.hook.ts      # Hook handler
-│   ├── commands/
-│   │   ├── greet.md             # → /claude-plugin-template:greet
-│   │   └── greet.cmd.ts         # Handler (paired with .md)
-│   ├── skills/                  # (empty — add yours here)
-│   ├── agents/                  # (empty — add yours here)
+│   ├── commands/                # (no commands yet)
+│   ├── skills/
+│   │   ├── design-init/          # 15 design-* skills
+│   │   ├── context-validate/     # 5 context-* skills
+│   │   ├── docs-generate-readme/ # 9 docs-* skills
+│   │   └── plan-create/          # 5 plan-* skills
+│   ├── agents/
+│   │   ├── design-doc-agent.md
+│   │   ├── context-doc-agent.md
+│   │   └── docs-gen-agent.md
 │   ├── scripts/
 │   │   └── setup-proxy.sh       # GENERATED — do not edit
 │   ├── plugin.config.ts         # Central plugin definition
@@ -68,10 +71,6 @@ claude-plugin-template/
 │   │   └── kill-otel.ts
 │   └── turbo/
 │       └── packages-with-tasks.gql
-├── .claude/
-│   └── skills/
-│       └── bootstrap/
-│           └── SKILL.md         # Template customization wizard
 ├── CLAUDE.md                    # This file
 ├── README.md
 ├── CONTRIBUTING.md
@@ -84,7 +83,7 @@ The build system uses `claude-binary-plugin` which compiles TypeScript into a si
 
 ### Three-Layer State Architecture
 
-The plugin configuration (`plugin/plugin.config.ts`) uses three layers that merge into the `state` object available in every hook and command handler:
+The plugin configuration (`plugin/plugin.config.ts`) uses three layers that merge into the `state` object available in every hook handler:
 
 1. **Layer 1 (Base)** -- Built-in, provided automatically:
    * `projectDir`: The user's project root
@@ -94,12 +93,12 @@ The plugin configuration (`plugin/plugin.config.ts`) uses three layers that merg
 2. **Layer 2 (Options)** -- User-configurable via environment variables:
    * Defined in `plugin/src/schema.ts` using Zod
    * Each field becomes `<PREFIX>_<FIELD_NAME>` environment variable
-   * Current prefix: `MY_PLUGIN` (options: `GREETING`, `CONTEXT_ENABLED`)
+   * Current prefix: `DESIGN_DOCS` (options: `CONTEXT_ENABLED`)
 
 3. **Layer 3 (Computed)** -- Dynamic values from `setup()`:
    * Runs once at build/startup
-   * Returns: `greetingPrefix`, `environment`, `contextEnabled`
-   * Used for environment detection, tool discovery, async init
+   * Returns: `contextEnabled`
+   * Used for feature flags and async init
 
 ### Build Pipeline
 
@@ -110,7 +109,7 @@ The plugin configuration (`plugin/plugin.config.ts`) uses three layers that merg
 * `validate` -- Runs `claude plugin validate .` on the plugin manifest
 * `build` -- Compiles to bytecode binary via `claude-binary-plugin build`
 
-Output: `plugin/claude-plugin-template.plugin` (gitignored)
+Output: `plugin/design-docs.plugin` (gitignored)
 
 ### Turbo Task Graph
 
@@ -144,19 +143,11 @@ The `setup-proxy.sh` provides just-in-time compilation:
 
 See `package.json` for the full script list (includes `lint:fix:unsafe`, `ci:build`, `ci:test`, `ci:version`).
 
-### Command Conventions
-
-Plugin commands (slash commands) use exit codes:
-
-* **0** -- Success
-* **1** -- User/input error (bad arguments, missing data)
-* **2** -- Internal/system error (build failure, unexpected exception)
+This plugin has no slash commands currently. The `plugin/commands/` directory exists for future additions.
 
 ## Naming Conventions
 
 * **Hooks**: `{name}.hook.ts` in `plugin/hooks/` -- e.g., `context.hook.ts`
-* **Commands**: `{name}.cmd.ts` + `{name}.md` paired in `plugin/commands/`
-* **Command namespacing**: Directory nesting creates `:` separators -- `commands/test/coverage.md` becomes `/plugin-name:test:coverage`
 * **Skills**: `plugin/skills/{name}/SKILL.md`
 * **Agents**: `plugin/agents/{name}.md`
 * **Shared source**: `plugin/src/{descriptive-name}.ts` -- NO barrel/index.ts files. Avoids circular imports and keeps the bytecode bundler's tree-shaking effective.
@@ -213,23 +204,9 @@ Plugins are distributed via sparse git cloning from a marketplace repository. On
 
 Root has dev-only deps (turbo, husky, linting). Plugin ships only `zod`; `claude-binary-plugin` is a devDep.
 
-## Template Customization
+## Plugin Identity
 
-When using this template to build a new plugin, update these touch-points:
-
-1. **Plugin name**: `plugin/.claude-plugin/plugin.json` -- `name`, and `plugin/package.json` -- `name`
-2. **Prefix**: `plugin/plugin.config.ts` -- `prefix` field (env var namespace)
-3. **Options schema**: `plugin/src/schema.ts` -- define your plugin's options
-4. **Setup function**: `plugin/plugin.config.ts` -- `setup()` for environment detection
-5. **Author info**: See hardcoded values table below
-6. **Repository URLs**: Update in `plugin.json`, `package.json`, changeset config
-7. **Root package name**: `package.json` -- `name` field
-
-Use the `/bootstrap` skill for guided customization.
-
-### Hardcoded Personal Values
-
-These values are specific to the template author. Users should update them when forking:
+Key locations with plugin-specific values:
 
 | Value | Location(s) |
 | ----- | ----------- |
@@ -237,4 +214,4 @@ These values are specific to the template author. Users should update them when 
 | `spencer@beggs.codes` | `.claude/settings.local.json` (attribution), `SECURITY.md` |
 | `https://spencerbeg.gs` | `plugin/.claude-plugin/plugin.json` (author.url) |
 | `spencerbeggs` | `plugin/.claude-plugin/plugin.json` (repository), `.github/CODEOWNERS` |
-| `spencerbeggs/claude-plugin-template` | `.changeset/config.json` (repo), `plugin/.claude-plugin/plugin.json` (homepage, repository) |
+| `spencerbeggs/design-docs-plugin` | `.changeset/config.json` (repo), `plugin/.claude-plugin/plugin.json` (homepage, repository) |
