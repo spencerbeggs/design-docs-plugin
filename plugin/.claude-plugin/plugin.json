@@ -1,0 +1,13 @@
+{
+	"name": "claude-plugin-template",
+	"description": "A template for creating Claude Code plugins with claude-binary-plugin",
+	"version": "0.0.0",
+	"author": {
+		"name": "C. Spencer Beggs",
+		"url": "https://spencerbeg.gs"
+	},
+	"homepage": "https://github.com/spencerbeggs/claude-plugin-template",
+	"repository": "https://github.com/spencerbeggs/claude-plugin-template.git",
+	"license": "MIT",
+	"commands": ["./commands/greet.md"]
+}

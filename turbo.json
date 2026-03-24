@@ -1,0 +1,17 @@
+{
+	"$schema": "https://turborepo.com/schema.v2.json",
+	"globalPassThroughEnv": ["CLAUDE_CONFIG_HOME"],
+	"tasks": {
+		"//#kill:otel": {
+			"cache": false,
+			"dependsOn": [],
+			"outputs": []
+		},
+		"types:check": {
+			"cache": false,
+			"dependsOn": [],
+			"outputLogs": "errors-only",
+			"outputs": []
+		}
+	}
+}
