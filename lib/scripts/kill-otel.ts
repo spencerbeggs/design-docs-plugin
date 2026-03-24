@@ -41,43 +41,45 @@ async function killProcess(pid: number): Promise<boolean> {
 }
 
 async function main() {
-	const allProcesses: ProcessInfo[] = [];
+	if (!process.env.GITHUB_ACTIONS) {
+		const allProcesses: ProcessInfo[] = [];
 
-	for (const pattern of PROCESS_PATTERNS) {
-		const processes = await findProcesses(pattern);
-		for (const proc of processes) {
-			// Avoid duplicates
-			if (!allProcesses.some((p) => p.pid === proc.pid)) {
-				allProcesses.push(proc);
+		for (const pattern of PROCESS_PATTERNS) {
+			const processes = await findProcesses(pattern);
+			for (const proc of processes) {
+				// Avoid duplicates
+				if (!allProcesses.some((p) => p.pid === proc.pid)) {
+					allProcesses.push(proc);
+				}
 			}
 		}
-	}
 
-	if (allProcesses.length === 0) {
-		console.log("No OTEL/sidecar processes found.");
-		return;
-	}
-
-	console.log(`Found ${allProcesses.length} process(es):\n`);
-
-	for (const proc of allProcesses) {
-		console.log(`  PID ${proc.pid}: ${proc.command}`);
-	}
-
-	console.log("");
-
-	let killed = 0;
-	for (const proc of allProcesses) {
-		const success = await killProcess(proc.pid);
-		if (success) {
-			console.log(`✓ Killed PID ${proc.pid}`);
-			killed++;
-		} else {
-			console.log(`✗ Failed to kill PID ${proc.pid}`);
+		if (allProcesses.length === 0) {
+			console.log("No OTEL/sidecar processes found.");
+			return;
 		}
-	}
 
-	console.log(`\nKilled ${killed}/${allProcesses.length} process(es).`);
+		console.log(`Found ${allProcesses.length} process(es):\n`);
+
+		for (const proc of allProcesses) {
+			console.log(`  PID ${proc.pid}: ${proc.command}`);
+		}
+
+		console.log("");
+
+		let killed = 0;
+		for (const proc of allProcesses) {
+			const success = await killProcess(proc.pid);
+			if (success) {
+				console.log(`✓ Killed PID ${proc.pid}`);
+				killed++;
+			} else {
+				console.log(`✗ Failed to kill PID ${proc.pid}`);
+			}
+		}
+
+		console.log(`\nKilled ${killed}/${allProcesses.length} process(es).`);
+	}
 }
 
 main().catch((err) => {
