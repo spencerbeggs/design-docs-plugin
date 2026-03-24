@@ -31,6 +31,9 @@ pnpm-release.json
 !.env.example
 !.env.*.example
 
+# Temporary reference files
+old/
+
 # Claude AI files
 .claude/settings.local.json
 .claude/plans/

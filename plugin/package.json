@@ -1,6 +1,7 @@
 {
-	"name": "claude-plugin-template",
+	"name": "design-docs",
 	"version": "0.0.0",
+	"type": "module",
 	"scripts": {
 		"build": "claude-binary-plugin build",
 		"types:check": "tsgo --noEmit",

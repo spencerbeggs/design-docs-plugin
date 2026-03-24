@@ -6,40 +6,36 @@ This is the distributable plugin workspace. Everything in this directory ships t
 
 The central file is `plugin.config.ts`. It defines:
 
-* **prefix**: Environment variable namespace (currently `MY_PLUGIN`)
+* **prefix**: Environment variable namespace (currently `DESIGN_DOCS`)
 * **options**: Zod schema imported from `./src/schema.ts` — user-configurable via env vars
-* **setup()**: Async function for environment detection — returns computed values
+* **setup()**: Async function that returns computed values
 * **bytecode/persistLocal**: Build options for the binary compiler
 * **hooks**: Event handlers mapped to `.hook.ts` files
-* **commands**: Slash commands mapped to `.cmd.ts` files
 
 ## State Flow
 
-The `state` object in hooks and commands contains all three layers merged:
+The `state` object in hooks contains all three layers merged:
 
 ```text
 Layer 1 (Base)     → projectDir, pluginDir, pluginEnvFile
-Layer 2 (Options)  → GREETING, CONTEXT_ENABLED (raw user config)
-Layer 3 (Computed) → greetingPrefix, environment, contextEnabled
+Layer 2 (Options)  → CONTEXT_ENABLED (raw user config)
+Layer 3 (Computed) → contextEnabled
 ```
 
-Access in handlers: `({ state }) => { state.projectDir; state.greetingPrefix; state.environment; }`
+Access in handlers: `({ state }) => { state.projectDir; state.contextEnabled; }`
 
-Options are the raw user-facing config surface. The `setup()` function in `plugin.config.ts` transforms them into typed state. Hooks and commands should operate on computed state fields, not raw options.
+Options are the raw user-facing config surface. The `setup()` function in `plugin.config.ts` transforms them into typed state. Hooks should operate on computed state fields, not raw options.
 
 ## Type System
 
-Two key type exports from `plugin.config.ts`:
+The key type export from `plugin.config.ts`:
 
 * **`Pipeline`**: Hook handler types. Use as `Pipeline["SessionStart"]`, `Pipeline["PreToolUse"]`, etc.
-* **`Commands`**: Command handler types. Use as `Commands["greet"]`.
 
 Import in handlers:
 
 ```typescript
 import type { Pipeline } from "../plugin.config.js";
-// or
-import type { Commands } from "../plugin.config.js";
 ```
 
 Note: Use `.js` extension in imports (`verbatimModuleSyntax` is enabled).
@@ -72,6 +68,8 @@ Hook return shape:
 ```
 
 ## Adding Commands
+
+This plugin currently has no slash commands. To add one:
 
 1. Create `commands/{name}.md` with frontmatter (description, allowed-tools, argument-hint)
 1. Create `commands/{name}.cmd.ts` with the handler — the file MUST `export default handler`

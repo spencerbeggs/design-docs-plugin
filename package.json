@@ -1,7 +1,8 @@
 {
-	"name": "claude-plugin-template-root",
+	"name": "design-docs-plugin",
 	"version": "0.0.0",
-	"description": "Root package for the Claude plugin template monorepo",
+	"description": "Root package for the design-docs-plugin monorepo",
+	"type": "module",
 	"workspaces": [".", "plugin"],
 	"scripts": {
 		"build": "turbo run build --log-order=grouped --log-prefix=none",
