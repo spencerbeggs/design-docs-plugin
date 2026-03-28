@@ -2,7 +2,7 @@
 name: docs-generate-contributing
 description: Generate CONTRIBUTING.md for developer onboarding. Use when creating
   or updating contribution guides with setup instructions and development workflows.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---

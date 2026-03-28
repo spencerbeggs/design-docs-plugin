@@ -63,7 +63,8 @@
 			"docs-review",
 			"docs-review-package",
 			"docs-sync",
-			"docs-update"
+			"docs-update",
+			"finalize"
 		]
 	},
 	"quality": {

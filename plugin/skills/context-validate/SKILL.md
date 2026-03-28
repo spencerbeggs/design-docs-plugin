@@ -1,7 +1,8 @@
 ---
 name: context-validate
 description: Validate CLAUDE.md structure, formatting, and quality. Use when checking context files for compliance, ensuring proper structure, or verifying before commits.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
+context: fork
 agent: context-doc-agent
 ---
 

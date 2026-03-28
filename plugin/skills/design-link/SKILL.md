@@ -1,7 +1,7 @@
 ---
 name: design-link
 description: Generate cross-reference graph showing relationships between design documents. Use when visualizing doc dependencies, finding related docs, or understanding documentation structure.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

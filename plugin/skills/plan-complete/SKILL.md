@@ -1,7 +1,7 @@
 ---
 name: plan-complete
 description: Complete a plan by updating design docs and removing the transitory plan file. Use when implementation is finished and knowledge should be persisted to design documentation.
-tools: Read, Edit, Write, Bash
+allowed-tools: Read, Edit, Write, Bash
 context: fork
 agent: design-doc-agent
 ---

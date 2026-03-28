@@ -1,7 +1,7 @@
 ---
 name: docs-generate-readme
 description: Generate Level 1 (README.md) user documentation from design docs. Use when creating or updating package README files for npm/GitHub.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---

@@ -1,132 +1,68 @@
-# Plugin Workspace
+# Plugin Directory
 
-This is the distributable plugin workspace. Everything in this directory ships to end users via git-subdir sparse cloning. Keep it minimal — no tests, no dev tooling, no unnecessary files.
+This is the distributable plugin directory. Everything here ships to end users via git-subdir sparse cloning. Keep it minimal -- no tests, no dev tooling.
 
-## Plugin Configuration
+## Structure
 
-The central file is `plugin.config.ts`. It defines:
+* `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
+* `hooks/hooks.json` -- Hook configuration consumed by Claude Code
+* `hooks/session-start.sh` -- SessionStart hook (pure bash)
+* `skills/` -- 35 SKILL.md files across design-*, context-*, docs-*, plan-*, finalize groups
+* `agents/` -- design-doc-agent, context-doc-agent, docs-gen-agent
+* `commands/` -- (no commands yet)
 
-* **prefix**: Environment variable namespace (currently `DESIGN_DOCS`)
-* **options**: Zod schema imported from `./src/schema.ts` — user-configurable via env vars
-* **setup()**: Async function that returns computed values
-* **bytecode/persistLocal**: Build options for the binary compiler
-* **hooks**: Event handlers mapped to `.hook.ts` files
+## Hooks
 
-## State Flow
+Hooks are pure bash scripts invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh`. This avoids executable bit issues when distributed from repos that strip them.
 
-The `state` object in hooks contains all three layers merged:
+All hooks check `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior.
 
-```text
-Layer 1 (Base)     → projectDir, pluginDir, pluginEnvFile
-Layer 2 (Options)  → CONTEXT_ENABLED (raw user config)
-Layer 3 (Computed) → contextEnabled
-```
+### session-start.sh (SessionStart)
 
-Access in handlers: `({ state }) => { state.projectDir; state.contextEnabled; }`
+Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. If `.claude/design/` does not exist, shows initialization guidance instead.
 
-Options are the raw user-facing config surface. The `setup()` function in `plugin.config.ts` transforms them into typed state. Hooks should operate on computed state fields, not raw options.
+### subagent-start.sh (SubagentStart)
 
-## Type System
+Injects condensed (<50 word) design docs awareness into every spawned subagent via JSON `additionalContext`. Tells subagents to flag architecture-relevant changes to the parent agent. Skips if `.claude/design/` does not exist.
 
-The key type export from `plugin.config.ts`:
+### stop-reminder.sh (Stop)
 
-* **`Pipeline`**: Hook handler types. Use as `Pipeline["SessionStart"]`, `Pipeline["PreToolUse"]`, etc.
+Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON as a loop guard, then scans `last_assistant_message` for multi-word implementation keyword patterns. Outputs plain text reminder if detected. Does not block — context-only v1 with a documented escalation path. Skips if `.claude/design/` does not exist. Requires `jq`.
 
-Import in handlers:
+## Key Skills
 
-```typescript
-import type { Pipeline } from "../plugin.config.js";
-```
+### finalize
 
-Note: Use `.js` extension in imports (`verbatimModuleSyntax` is enabled).
+End-of-branch orchestration workflow invoked via `/design-docs:finalize`.
+Updates design docs, CLAUDE.md files, and user docs by delegating to
+existing plugin skills (design-sync, context-update, docs-update), then
+creates a changeset, commits, pushes, and opens a PR.
+
+Flags: `--no-pr`, `--docs-only`, `--dry-run`
+
+User-invocable only (`disable-model-invocation: true`).
 
 ## Adding Hooks
 
-1. Create `hooks/{name}.hook.ts` implementing the handler
-1. The handler file MUST `export default handler`
-1. Add the hook to `plugin.config.ts` under the appropriate event
-1. Run `bun run build` — this regenerates `hooks/hooks.json` and `scripts/setup-proxy.sh`
-
-Available hook events:
-
-* **SessionStart**: Session init, context injection. Return `claudeContext` for markdown injection.
-* **PreToolUse**: Before tool executes. Return `action: "allow"|"deny"|"block"` to control execution.
-* **PostToolUse**: After tool executes. For validation and side effects.
-* **Stop/SubagentStop**: Before Claude/subagent stops. For preflight checks.
-* **Notification**: On notification events.
-
-Hook return shape:
-
-```typescript
-{
-  status: "executed" | "skipped" | "disabled",
-  action: "allow" | "deny" | "block" | "context" | "none",
-  summary: string,
-  reason?: string,         // Required for deny/block
-  claudeContext?: string,  // SessionStart only — markdown injected into session
-}
-```
-
-## Adding Commands
-
-This plugin currently has no slash commands. To add one:
-
-1. Create `commands/{name}.md` with frontmatter (description, allowed-tools, argument-hint)
-1. Create `commands/{name}.cmd.ts` with the handler — the file MUST `export default handler`
-1. Register in `plugin.config.ts` under `commands`. Each command entry needs:
-   * `description` (string): Brief summary of what the command does
-   * `args` (Zod schema): Defines the command's accepted arguments
-   * `pipeline` (path to `.cmd.ts`): Points to the handler file
-1. Add the `.md` path to `.claude-plugin/plugin.json` commands array
-
-Command namespacing via directories:
-
-* `commands/lint.md` → `/plugin-name:lint`
-* `commands/test/coverage.md` → `/plugin-name:test:coverage`
-
-Command `.md` frontmatter:
-
-```yaml
----
-allowed-tools: Bash, Read, Edit
-description: Brief description of what this command does
-argument-hint: [optional-arg]
----
-```
-
-### Exit Code Conventions
-
-Commands communicate status to the agent through exit codes:
-
-| Exit Code | Meaning | Behavior |
-| --- | --- | --- |
-| 0 | Success | Output markdown is shown to the user or agent |
-| 1 | Issues found | Output contains warnings for the agent to act on |
-| 2 | Fatal error | Command could not execute; agent should report the failure |
+1. Create `hooks/{name}.sh` as a bash script
+1. Add an entry to `hooks/hooks.json` using `bash ${CLAUDE_PLUGIN_ROOT}/hooks/{name}.sh`
+1. Script outputs become `claudeContext` for SessionStart hooks, or stdout for other hook types
 
 ## Adding Skills
 
-1. Create `skills/{name}/SKILL.md` with the skill definition
+1. Create `skills/{name}/SKILL.md` with YAML frontmatter and instructions
 1. Add the skill directory path to `.claude-plugin/plugin.json` skills array
+1. Supported frontmatter: `name`, `description`, `allowed-tools`, `context`, `agent`, `model`, `effort`, `disable-model-invocation`, `user-invocable`, `argument-hint`, `hooks`, `paths`, `shell`
 
 ## Adding Agents
 
-1. Create `agents/{name}.md` with agent definition and frontmatter
-1. Agent files define autonomous subagents with model, tools, and system prompt
+1. Create `agents/{name}.md` with YAML frontmatter and system prompt
+1. Add the agent file path to `.claude-plugin/plugin.json` agents array
+1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `maxTurns`, `memory`, `effort`, `isolation`
+1. Note: plugin agents ignore `hooks`, `mcpServers`, and `permissionMode` fields
 
-## Shared Source Code
+## Adding Commands
 
-Place shared utilities in `src/` as specifically-named files (NOT barrel/index.ts files):
-
-* `src/schema.ts` — Options schema (required)
-
-Add additional specifically-named files to `src/` as needed for environment detection, output formatting, or other shared logic.
-
-Import with `.js` extension: `import { foo } from "./src/bar.js";`
-
-## Generated Files
-
-Do NOT edit these — they are overwritten by `claude-binary-plugin build`:
-
-* `hooks/hooks.json` — Hook manifest consumed by Claude Code
-* `scripts/setup-proxy.sh` — JIT build wrapper
+1. Create `commands/{name}.md` with frontmatter (`description`, `allowed-tools`, `argument-hint`)
+1. Add to `.claude-plugin/plugin.json` commands array
+1. Namespacing: `commands/foo.md` becomes `/design-docs:foo`

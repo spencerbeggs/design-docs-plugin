@@ -3,7 +3,7 @@ name: plan-create
 description: Create new plan documents from templates. Use when starting new
   implementation work, documenting planned features, or organizing development
   tasks.
-tools: Read, Write, Bash
+allowed-tools: Read, Write, Bash
 context: fork
 agent: design-doc-agent
 ---

@@ -1,7 +1,7 @@
 ---
 name: design-archive
 description: Archive outdated design documentation. Use when design docs are no longer relevant, have been superseded, or document deprecated features.
-tools: Read, Edit, Bash
+allowed-tools: Read, Edit, Bash
 context: fork
 agent: design-doc-agent
 ---

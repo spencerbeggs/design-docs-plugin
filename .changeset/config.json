@@ -4,7 +4,7 @@
 		"@savvy-web/changesets/changelog",
 		{
 			"repo": "spencerbeggs/design-docs-plugin",
-			"versionFiles": [{ "glob": "plugin/.claude-plugin/plugin.json", "paths": ["$.version"] }]
+			"versionFiles": [{ "glob": ".claude-plugin/plugin.json", "paths": ["$.version"], "package": "design-docs" }]
 		}
 	],
 	"commit": false,

@@ -2,7 +2,7 @@
 name: docs-generate-security
 description: Generate SECURITY.md for vulnerability reporting. Use when creating
   or updating security policies with supported versions and reporting instructions.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---

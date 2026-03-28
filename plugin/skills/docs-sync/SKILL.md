@@ -2,7 +2,7 @@
 name: docs-sync
 description: Sync user documentation with design doc changes. Use when design docs
   have been updated and user docs need to reflect the changes.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---

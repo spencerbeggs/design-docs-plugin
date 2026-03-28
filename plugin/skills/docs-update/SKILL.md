@@ -2,7 +2,7 @@
 name: docs-update
 description: Comprehensive documentation review and update. Use before merging
   branches to ensure all docs are current, complete, and consistent.
-tools: Read, Glob, Grep, Edit, Write, WebSearch
+allowed-tools: Read, Glob, Grep, Edit, Write, WebSearch
 context: fork
 agent: docs-gen-agent
 ---

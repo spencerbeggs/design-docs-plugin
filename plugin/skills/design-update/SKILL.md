@@ -1,7 +1,7 @@
 ---
 name: design-update
 description: Update specific design document with new content or metadata. Use when modifying design docs, updating status/completeness, or syncing after code changes.
-tools: Read, Edit, Bash
+allowed-tools: Read, Edit, Bash
 context: fork
 agent: design-doc-agent
 ---

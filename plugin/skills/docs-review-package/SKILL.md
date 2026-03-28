@@ -2,7 +2,7 @@
 name: docs-review-package
 description: Review package.json for completeness and best practices. Use when
   auditing metadata, checking dependency versions, or validating peerDependencies.
-tools: Read, Glob, Grep, WebSearch
+allowed-tools: Read, Glob, Grep, WebSearch
 context: fork
 agent: docs-gen-agent
 ---

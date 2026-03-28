@@ -1,7 +1,8 @@
 ---
 name: plan-validate
 description: Validate plan document structure and frontmatter. Use when checking plans for compliance, ensuring proper formatting, or verifying metadata before commits.
-tools: Read, Bash
+allowed-tools: Read, Bash
+context: fork
 agent: design-doc-agent
 ---
 

@@ -1,11 +1,11 @@
 # design-docs
 
-A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans, and user-facing documentation. Injects structured context into every Claude session and provides 34 skills and 3 specialized agents for working with design docs end-to-end.
+A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans, and user-facing documentation. Injects structured context into every Claude session and provides 35 skills and 3 specialized agents for working with design docs end-to-end.
 
 ## What's Included
 
-* **SessionStart context hook** -- injects design documentation context into each Claude session, configurable via `DESIGN_DOCS_CONTEXT_ENABLED`
-* **34 skills across 4 categories** -- covering design doc creation, context file management, documentation generation, and implementation planning
+* **3 lifecycle hooks** -- SessionStart injects philosophy-first design doc context into each session; SubagentStart reinforces design doc awareness in spawned subagents; Stop nudges you to update docs after implementation work. All configurable via `DESIGN_DOCS_CONTEXT_ENABLED`.
+* **35 skills across 5 categories** -- covering design doc creation, context file management, documentation generation, implementation planning, and branch finalization
 * **3 specialized agents** -- for orchestrating complex multi-step documentation workflows
 
 ## Skill Categories
@@ -25,6 +25,10 @@ Skills for generating user-facing documentation: README generation, API docs, ch
 ### plan-* (5 skills)
 
 Skills for creating and tracking implementation plans: breaking design docs into tasks, estimating effort, tracking progress, and generating status reports.
+
+### finalize (1 skill)
+
+End-of-branch workflow orchestration via `/design-docs:finalize`. Updates design docs, CLAUDE.md files, and user docs, then creates a changeset, commits, pushes, and opens a PR. Supports `--no-pr`, `--docs-only`, and `--dry-run` flags.
 
 ## Agents
 
@@ -57,10 +61,8 @@ claude plugin add ./plugin
 
 | Command | Description |
 | --- | --- |
-| `bun run build` | Build plugin binary (turbo orchestrated) |
 | `bun run test` | Run all tests (Bun test runner) |
-| `bun run typecheck` | Type-check all workspaces (turbo + tsgo) |
-| `bun run validate` | Validate plugin manifest |
+| `bun run validate` | Validate plugin manifest (`claude plugin validate plugin`) |
 | `bun run lint` | Biome lint check |
 | `bun run lint:fix` | Auto-fix lint issues |
 | `bun run lint:md` | Markdown lint check |

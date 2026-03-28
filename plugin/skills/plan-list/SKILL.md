@@ -2,7 +2,8 @@
 name: plan-list
 description: List and filter plan documents. Use when exploring plans, checking
   status, finding plans by module, or reviewing plan health.
-tools: Read, Bash
+allowed-tools: Read, Bash
+context: fork
 agent: design-doc-agent
 ---
 

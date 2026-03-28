@@ -1,8 +1,7 @@
 ---
 name: design-init
 description: Initialize new design documentation from templates. Use when creating new design docs, documenting new systems, starting architecture documentation, or setting up design docs for a new module.
-tools: Read, Write, Glob, AskUserQuestion
-context: fork
+allowed-tools: Read, Write, Glob, AskUserQuestion
 agent: design-doc-agent
 ---
 

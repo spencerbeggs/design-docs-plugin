@@ -1,7 +1,8 @@
 ---
 name: design-validate
 description: Validate design doc structure and frontmatter. Use when checking design docs for compliance, ensuring proper formatting, or verifying metadata before commits.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
+context: fork
 agent: design-doc-agent
 ---
 

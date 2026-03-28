@@ -2,7 +2,7 @@
 name: docs-generate-repo
 description: Generate Level 2 (repository docs) from design docs. Use when
   creating comprehensive topic-based documentation for developers.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---
