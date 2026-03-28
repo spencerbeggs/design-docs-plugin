@@ -15,7 +15,7 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ ! -d "$CLAUDE_PROJECT_DIR/.claude/desig
   exit 0
 fi
 
-# Consume stdin (required by hook protocol even if unused)
+# Consume stdin to prevent broken pipe errors
 cat > /dev/null
 
 # Output JSON with additionalContext for the subagent.

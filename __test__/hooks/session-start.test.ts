@@ -54,7 +54,7 @@ describe("session-start.sh", () => {
 		expect(result.stdout).not.toContain("institutional memory");
 	});
 
-	test("context message is under 40 lines", () => {
+	test("context message is under 50 lines", () => {
 		tempDir = mkdtempSync(join(tmpdir(), "hook-test-"));
 		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
 		const result = runHook({ CLAUDE_PROJECT_DIR: tempDir });

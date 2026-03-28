@@ -4,6 +4,11 @@ set -euo pipefail
 # PreToolUse hook: auto-approve Write/Edit to design docs and plans directories.
 # Prevents repeated permission prompts when agents update documentation.
 
+# Kill switch
+if [ "${DESIGN_DOCS_CONTEXT_ENABLED:-true}" = "false" ]; then
+  exit 0
+fi
+
 # Read stdin JSON
 INPUT=$(cat)
 

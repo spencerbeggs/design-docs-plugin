@@ -217,10 +217,11 @@ since this is a documentation update commit:
 ```bash
 git commit -m "docs: update documentation and add changeset
 
-[Brief description of what was updated based on branch changes]
-
-Signed-off-by: C. Spencer Beggs <spencer@beggs.codes>"
+[Brief description of what was updated based on branch changes]"
 ```
+
+If the project requires DCO sign-off, append a `Signed-off-by` line using
+the user's git identity (`git config user.name` / `git config user.email`).
 
 **On failure:** Report the git error and stop.
 
