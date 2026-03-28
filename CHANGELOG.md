@@ -1,5 +1,33 @@
 # design-docs-plugin
 
+## 0.2.0
+
+### Features
+
+* [`7f4ec0d`](https://github.com/spencerbeggs/design-docs-plugin/commit/7f4ec0d6e8e41affa16cf6d9a2cfa604dff1631a) ### Hook Reinforcement System
+
+Three new lifecycle hooks that reinforce design docs awareness across context-loss boundaries:
+
+* **SessionStart** rewritten with philosophy-first context, fires on all session sources (startup, resume, compact, clear), includes first-install detection
+* **SubagentStart** injects condensed design docs awareness into every spawned subagent
+* **Stop** provides a soft post-implementation nudge using keyword detection with a loop guard
+
+### Refactoring
+
+* [`7f4ec0d`](https://github.com/spencerbeggs/design-docs-plugin/commit/7f4ec0d6e8e41affa16cf6d9a2cfa604dff1631a) ### Pure Bash Hooks
+
+Replaced the compiled TypeScript binary plugin build system with pure bash hooks. Removes all build dependencies and simplifies distribution.
+
+### Finalize Skill
+
+New `/design-docs:finalize` skill orchestrates the end-of-branch workflow: update design docs, CLAUDE.md files, and user docs, create a changeset, commit, push, and open a PR. Supports `--no-pr`, `--docs-only`, and `--dry-run` flags.
+
+### Skill Frontmatter Fixes
+
+* Renamed `tools` to `allowed-tools` across all 35 skills
+* Added missing `context: fork` to 5 skills
+* Fixed agent tool lists (added WebSearch to docs-gen-agent)
+
 ## 0.1.0
 
 ### Features
