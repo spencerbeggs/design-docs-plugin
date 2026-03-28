@@ -1,7 +1,7 @@
 ---
 name: context-update
 description: Update CLAUDE.md files to improve efficiency and structure. Use when optimizing LLM context files, implementing review recommendations, splitting large files, or adding design doc pointers.
-tools: Read, Grep, Glob, Edit, Write
+allowed-tools: Read, Grep, Glob, Edit, Write
 context: fork
 agent: context-doc-agent
 ---

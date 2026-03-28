@@ -2,7 +2,7 @@
 name: docs-gen-agent
 description: Generate user-facing documentation. Use for creating READMEs, repository docs, documentation sites, and transforming internal docs to user docs.
 skills: docs-generate-readme, docs-generate-contributing, docs-generate-security, docs-generate-repo, docs-generate-site, docs-sync, docs-review, docs-review-package, docs-update
-tools: Read, Grep, Glob, Edit, Write
+tools: Read, Grep, Glob, Edit, Write, WebSearch
 ---
 
 # User Documentation Generation Agent

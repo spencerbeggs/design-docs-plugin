@@ -1,7 +1,7 @@
 ---
 name: design-search
 description: Full-text search across design documentation. Use when looking for specific topics, decisions, or patterns documented across design docs.
-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

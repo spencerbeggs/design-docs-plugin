@@ -2,7 +2,7 @@
 name: docs-generate-site
 description: Generate Level 3 (documentation sites) from design docs. Use when
   creating feature-rich, interactive documentation for RSPress/Docusaurus sites.
-tools: Read, Glob, Edit, Write
+allowed-tools: Read, Glob, Edit, Write
 context: fork
 agent: docs-gen-agent
 ---

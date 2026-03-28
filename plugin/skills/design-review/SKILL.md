@@ -1,7 +1,7 @@
 ---
 name: design-review
 description: Review and analyze design docs for health, quality, and improvement opportunities. Use when auditing design documentation, checking doc health, or identifying areas for improvement.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

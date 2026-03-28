@@ -1,7 +1,8 @@
 ---
 name: design-config
 description: Manage design documentation system configuration. Use when initializing the system, adding modules, or updating quality standards.
-tools: Read, Write, Bash
+allowed-tools: Read, Write, Bash
+context: fork
 agent: design-doc-agent
 ---
 

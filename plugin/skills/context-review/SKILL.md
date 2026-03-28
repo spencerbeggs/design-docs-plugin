@@ -1,7 +1,7 @@
 ---
 name: context-review
 description: Review CLAUDE.md files for quality, efficiency, and structure. Use when auditing LLM context files, checking documentation organization, preparing for context optimization, or ensuring lean imperative instructions.
-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob
 context: fork
 agent: context-doc-agent
 ---

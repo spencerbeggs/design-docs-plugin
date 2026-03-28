@@ -1,7 +1,7 @@
 ---
 name: design-audit
 description: Comprehensive health audit for design documentation. Use when performing thorough quality checks, preparing for releases, or ensuring documentation compliance.
-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash
 context: fork
 agent: design-doc-agent
 ---

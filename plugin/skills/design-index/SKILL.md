@@ -1,7 +1,7 @@
 ---
 name: design-index
 description: Generate table of contents for design documentation. Use when creating navigation, documentation overview, or module index pages.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

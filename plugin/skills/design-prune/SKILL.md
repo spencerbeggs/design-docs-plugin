@@ -1,7 +1,7 @@
 ---
 name: design-prune
 description: Remove historical cruft from design docs. Use when docs accumulate outdated content, after major refactorings, or when preparing for releases.
-tools: Read, Edit, Glob, Bash
+allowed-tools: Read, Edit, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

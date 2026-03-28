@@ -1,7 +1,7 @@
 ---
 name: context-audit
 description: Comprehensive quality audit for CLAUDE.md context files. Use when performing thorough quality checks, preparing for releases, ensuring context efficiency, or verifying token optimization.
-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash
 context: fork
 agent: context-doc-agent
 ---

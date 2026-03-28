@@ -1,7 +1,7 @@
 ---
 name: plan-explore
 description: Explore implementation plans, status, and relationships. Provides comprehensive plan ecosystem navigation with filtering, health analysis, and actionable recommendations.
-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---

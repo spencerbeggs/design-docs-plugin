@@ -1,7 +1,7 @@
 ---
 name: context-split
 description: Split large CLAUDE.md into child files. Use when context files exceed line limits, are too verbose, or cover multiple distinct topics that should be separate.
-tools: Read, Write, Edit, Bash
+allowed-tools: Read, Write, Edit, Bash
 context: fork
 agent: context-doc-agent
 ---

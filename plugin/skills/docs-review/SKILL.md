@@ -2,7 +2,7 @@
 name: docs-review
 description: Review user doc quality. Use when checking documentation completeness,
   accuracy, readability, and ensuring examples work correctly.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
 context: fork
 agent: docs-gen-agent
 ---

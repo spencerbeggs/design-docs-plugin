@@ -1,7 +1,7 @@
 ---
 name: design-export
 description: Export to PDF/HTML/markdown. Use when distributing documentation, creating presentations, or archiving design docs.
-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash
 context: fork
 agent: design-doc-agent
 ---
