@@ -6,7 +6,10 @@ This is the distributable plugin directory. Everything here ships to end users v
 
 * `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
 * `hooks/hooks.json` -- Hook configuration consumed by Claude Code
-* `hooks/session-start.sh` -- SessionStart hook (pure bash)
+* `hooks/session-start.sh` -- SessionStart context injection
+* `hooks/subagent-start.sh` -- SubagentStart context injection
+* `hooks/stop-reminder.sh` -- Stop post-implementation nudge
+* `hooks/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
 * `skills/` -- 35 SKILL.md files across design-*, context-*, docs-*, plan-*, finalize groups
 * `agents/` -- design-doc-agent, context-doc-agent, docs-gen-agent
 * `commands/` -- (no commands yet)
@@ -28,6 +31,10 @@ Injects condensed (<50 word) design docs awareness into every spawned subagent v
 ### stop-reminder.sh (Stop)
 
 Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON as a loop guard, then scans `last_assistant_message` for multi-word implementation keyword patterns. Outputs plain text reminder if detected. Does not block — context-only v1 with a documented escalation path. Skips if `.claude/design/` does not exist. Requires `jq`.
+
+### allow-design-writes.sh (PreToolUse)
+
+Auto-approves Write and Edit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
 
 ## Key Skills
 

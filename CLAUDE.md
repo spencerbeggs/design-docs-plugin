@@ -34,20 +34,23 @@ design-docs-plugin/
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Plugin manifest (name, version, author)
 │   ├── hooks/
-│   │   ├── hooks.json           # Hook configuration
-│   │   └── session-start.sh     # SessionStart context injection (bash)
-│   ├── commands/                # (no commands yet)
-│   ├── skills/                  # 34 skills
-│   │   ├── design-init/         # 15 design-* skills
-│   │   ├── context-validate/    # 5 context-* skills
-│   │   ├── docs-generate-readme/# 9 docs-* skills
-│   │   └── plan-create/         # 5 plan-* skills
+│   │   ├── hooks.json               # Hook configuration
+│   │   ├── session-start.sh         # SessionStart context injection
+│   │   ├── subagent-start.sh        # SubagentStart context injection
+│   │   ├── stop-reminder.sh         # Stop post-implementation nudge
+│   │   └── allow-design-writes.sh   # PreToolUse auto-approve design dirs
+│   ├── commands/                    # (no commands yet)
+│   ├── skills/                      # 35 skills
+│   │   ├── design-init/             # 15 design-* skills
+│   │   ├── context-validate/        # 5 context-* skills
+│   │   ├── docs-generate-readme/    # 9 docs-* skills
+│   │   ├── plan-create/             # 5 plan-* skills
+│   │   └── finalize/                # 1 finalize skill
 │   ├── agents/
 │   │   ├── design-doc-agent.md
 │   │   ├── context-doc-agent.md
 │   │   └── docs-gen-agent.md
-│   ├── CLAUDE.md
-│   └── package.json
+│   └── CLAUDE.md
 ├── docs/
 ├── lib/
 │   └── configs/                 # commitlint, lint-staged, markdownlint
@@ -78,7 +81,7 @@ design-docs-plugin/
 
 ## Configuration
 
-The `session-start.sh` hook respects `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable context injection.
+All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `allow-design-writes.sh` PreToolUse hook auto-approves Write/Edit operations to `.claude/design/` and `.claude/plans/`.
 
 ## Testing
 
@@ -97,7 +100,7 @@ The `session-start.sh` hook respects `DESIGN_DOCS_CONTEXT_ENABLED` environment v
 ## Versioning and Releases
 
 * Changesets (`@savvy-web/changesets`) manage versioning
-* Version bumps update both `plugin/package.json` AND `plugin/.claude-plugin/plugin.json` (via `versionFiles` config)
+* Version bumps update `plugin/.claude-plugin/plugin.json` (via `versionFiles` config)
 * Release workflow: `.github/workflows/release.yml`
 * Commit sign-off required (DCO)
 
@@ -114,6 +117,14 @@ Plugins are distributed via sparse git cloning from a marketplace repository. On
 * **Marketplace repo**: `spencerbeggs/bot`
 * **Distribution**: The `plugin/` subdirectory is published to the marketplace via git-subdir
 * **Installation by users**: Via Claude Code plugin marketplace commands
+
+## Design Documentation
+
+For detailed architecture:
+
+* Plugin architecture → `@./.claude/design/design-docs-plugin/plugin-architecture.md`
+
+Load when modifying hooks, skills, agents, or the distribution mechanism.
 
 ## Dependencies
 

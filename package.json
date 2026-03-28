@@ -1,10 +1,12 @@
 {
-	"name": "design-docs-plugin",
+	"name": "design-docs",
 	"version": "0.1.0",
 	"private": true,
 	"description": "Root package for the design-docs-plugin monorepo",
 	"type": "module",
+	"workspaces": ["."],
 	"scripts": {
+		"ci:build": "echo \"No build needed in this repo\"",
 		"ci:test": "CI=\"true\" bun test",
 		"ci:version": "savvy-changesets version && biome format --write .",
 		"commit:check": "savvy-commit check",
