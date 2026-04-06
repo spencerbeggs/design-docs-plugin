@@ -23,9 +23,9 @@
 	},
 	"devDependencies": {
 		"@savvy-web/changesets": "^0.7.1",
-		"@savvy-web/commitlint": "^0.4.4",
-		"@savvy-web/lint-staged": "^0.6.5",
-		"@types/bun": "1.3.9",
+		"@savvy-web/commitlint": "^0.5.2",
+		"@savvy-web/lint-staged": "^0.7.3",
+		"@types/bun": "1.3.11",
 		"@types/node": "^25.5.0",
 		"@typescript/native-preview": "7.0.0-dev.20260327.2",
 		"typescript": "^5.9.3"
