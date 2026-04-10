@@ -3,6 +3,12 @@ name: docs-gen-agent
 description: Generate user-facing documentation. Use for creating READMEs, repository docs, documentation sites, and transforming internal docs to user docs.
 skills: docs-generate-readme, docs-generate-contributing, docs-generate-security, docs-generate-repo, docs-generate-site, docs-sync, docs-review, docs-review-package, docs-update
 tools: Read, Grep, Glob, Edit, Write, WebSearch
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/allow-design-writes.sh"
 ---
 
 # User Documentation Generation Agent

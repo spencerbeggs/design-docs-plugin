@@ -1,23 +1,25 @@
 ---
 name: finalize
 description: End-of-branch workflow. Updates design docs, CLAUDE.md files, and
-  user docs, creates a changeset, commits, pushes, and opens a PR. Use when
-  finishing work on a branch before merge.
+  user docs, creates a changeset, squashes commits, pushes, and opens a PR.
+  Use when finishing work on a branch before merge.
 allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit
 disable-model-invocation: true
-argument-hint: "[--no-pr] [--docs-only] [--dry-run]"
+argument-hint: "[--no-pr] [--no-squash] [--docs-only] [--dry-run]"
 ---
 
 # Branch Finalization
 
 Orchestrates the end-of-branch workflow: analyze what changed, update all
-documentation layers, create a changeset, commit, push, and open a PR.
+documentation layers, create a changeset, squash commits into a single clean
+commit, push, and open a PR.
 
 ## Argument Parsing
 
 Parse `$ARGUMENTS` for flags:
 
 - `--no-pr` — run steps 0-6, skip push and PR (step 7)
+- `--no-squash` — skip the squash step (step 6), commit docs/changeset normally
 - `--docs-only` — run steps 0-4 only, warn that changes are left uncommitted
 - `--dry-run` — preview what each step would do without modifying any files
 
@@ -27,7 +29,17 @@ If no arguments are provided, run the full workflow.
 
 Run these checks before any work. If any check fails, stop and report.
 
-### 0.1 Dirty Working Tree
+### 0.1 Branch Check
+
+Verify you are NOT on the default branch:
+
+!`git rev-parse --abbrev-ref HEAD`
+
+If on the default branch, stop:
+
+> "You are on the default branch. Finalize is for feature branches only."
+
+### 0.2 Dirty Working Tree
 
 Run `git status --porcelain`. If there are uncommitted changes, list them
 and ask the user:
@@ -39,7 +51,7 @@ and ask the user:
 
 Wait for the user's response. If they say abort, stop the workflow.
 
-### 0.2 Base Branch Detection
+### 0.3 Base Branch Detection
 
 Detect the default branch:
 
@@ -47,7 +59,7 @@ Detect the default branch:
 
 Store the result as `BASE_BRANCH` for use in subsequent steps.
 
-### 0.3 Empty Diff Check
+### 0.4 Empty Diff Check
 
 Run `git log $BASE_BRANCH..HEAD --oneline`. If there are no commits ahead
 of the base branch, report:
@@ -57,7 +69,23 @@ of the base branch, report:
 
 And stop the workflow.
 
-### 0.4 GitHub Auth Check
+### 0.5 Session Tag Check
+
+Check if the `session/start` tag exists:
+
+```bash
+git rev-parse session/start 2>/dev/null
+```
+
+If it does not exist, create it at the merge-base:
+
+```bash
+git tag session/start $(git merge-base HEAD $BASE_BRANCH)
+```
+
+Report: "Created session/start tag at merge-base."
+
+### 0.6 GitHub Auth Check
 
 Run `gh auth status`. If not authenticated, warn the user:
 
@@ -177,53 +205,75 @@ Generate a random changeset filename (lowercase adjective-noun pattern).
 
 **On failure:** Report and stop.
 
-## Step 6: Commit
+## Step 6: Squash Commits
 
-### 6.1 Show Staging Summary
+**Skip if `--no-squash` flag is set.** Proceed directly to step 7 with a
+normal commit of just the docs/changeset changes.
 
-Run `git status --porcelain` and organize the output by category:
+### 6.1 Stage All Changes
+
+Stage everything including doc updates and changeset from previous steps:
+
+```bash
+git add -A
+```
+
+### 6.2 Show Squash Preview
+
+Show the user what will be squashed:
+
+```bash
+git log $(git merge-base HEAD $BASE_BRANCH)..HEAD --oneline
+```
+
+> "The following N commits will be squashed into a single commit:
+> [list commits]
+> Continue? (yes/no)"
+
+Wait for confirmation. If the user says no, stop.
+
+### 6.3 Squash via Soft Reset
+
+```bash
+git reset --soft $(git merge-base HEAD $BASE_BRANCH)
+```
+
+### 6.4 Generate Commit Message
+
+Generate a conventional commit message from:
+
+- The changeset content (for the description)
+- The branch name (for inferring type and scope)
+- The diff stat (for context)
+
+Present the generated message to the user for review/editing.
+
+Format:
 
 ```text
-Design docs:     .claude/design/module/file.md (modified)
-Context files:   CLAUDE.md (modified)
-User docs:       README.md (modified)
-Changesets:      .changeset/fuzzy-cats.md (new)
+type(scope): subject
+
+[Description from changeset and branch changes]
+
+Signed-off-by: [from git config]
 ```
 
-### 6.2 Confirm with User
-
-Ask the user:
-
-> "Ready to commit these files? (yes/no)"
-
-Wait for confirmation. If the user says no, stop and let them review.
-
-### 6.3 Stage and Commit
-
-Stage only files in expected directories. Do NOT use `git add -A`:
+### 6.5 Create Squashed Commit
 
 ```bash
-git add .claude/design/ .claude/plans/ .changeset/
-git add CLAUDE.md */CLAUDE.md
-git add README.md CONTRIBUTING.md SECURITY.md
-git add docs/
+git commit -m "<generated message>"
 ```
 
-Ignore errors from `git add` for files/dirs that do not exist.
+### 6.6 Move Session Tag
 
-Generate a conventional commit message from the changes. Use `docs:` prefix
-since this is a documentation update commit:
+Move the session tag to the new squashed commit:
 
 ```bash
-git commit -m "docs: update documentation and add changeset
-
-[Brief description of what was updated based on branch changes]"
+git tag -f session/start HEAD
 ```
 
-If the project requires DCO sign-off, append a `Signed-off-by` line using
-the user's git identity (`git config user.name` / `git config user.email`).
-
-**On failure:** Report the git error and stop.
+**On failure:** Report the git error. The user can recover with
+`git reflog` to find the pre-squash state.
 
 ## Step 7: Push and Open PR
 
@@ -262,13 +312,13 @@ Report the PR URL to the user.
 
 Between each step, report a brief status update:
 
-- "Step 0: Preflight checks passed"
+- "Step 0: Preflight checks passed (session tag at abc1234)"
 - "Step 1: Branch has 8 commits touching 12 files"
 - "Step 2: Design docs updated (3 files modified)"
 - "Step 3: CLAUDE.md files are current (no changes needed)"
 - "Step 4: README.md updated with new API documentation"
 - "Step 5: Changeset created (.changeset/fuzzy-cats.md)"
-- "Step 6: Changes committed (docs: update documentation)"
+- "Step 6: Squashed 8 commits into 1 (feat: add merge commit support)"
 - "Step 7: PR opened: <https://github.com/>..."
 
 ## Error Recovery
@@ -280,6 +330,8 @@ If any step fails:
 3. List any files that were modified by previous steps
 4. Suggest recovery: "You can review the changes with `git diff`, revert
    with `git checkout -- .`, or fix the issue and re-run `/design-docs:finalize`"
+5. If the squash step (6) fails mid-operation, remind the user they can use
+   `git reflog` to find the pre-squash state
 
 Steps 2-4 are idempotent — re-running against already-updated docs produces no
 changes. Steps 5-7 are not idempotent — the skill should detect existing
