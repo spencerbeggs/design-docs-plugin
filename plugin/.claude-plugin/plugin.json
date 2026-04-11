@@ -1,7 +1,7 @@
 {
 	"name": "design-docs",
 	"description": "Design documentation and implementation plan management system for Claude Code",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"author": {
 		"name": "C. Spencer Beggs",
 		"url": "https://spencerbeg.gs"
