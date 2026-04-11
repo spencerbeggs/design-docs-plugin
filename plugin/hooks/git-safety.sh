@@ -125,6 +125,9 @@ if [ "$CURRENT_BRANCH" = "$DEFAULT_BRANCH" ]; then
   if [ "$IS_RESET_HARD" = "true" ]; then
     deny "Hard reset on default branch ($DEFAULT_BRANCH) is blocked by git safety hook"
   fi
+  if [ "$IS_RESET_SOFT" = "true" ]; then
+    deny "Soft reset on default branch ($DEFAULT_BRANCH) is blocked by git safety hook"
+  fi
   if [ "$IS_REBASE" = "true" ]; then
     deny "Rebase on default branch ($DEFAULT_BRANCH) is blocked by git safety hook"
   fi

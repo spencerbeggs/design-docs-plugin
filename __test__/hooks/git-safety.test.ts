@@ -95,6 +95,15 @@ describe("git-safety.sh", () => {
 			expect(json.hookSpecificOutput.permissionDecision).toBe("deny");
 		});
 
+		test("blocks git reset --soft HEAD~1", () => {
+			tempDir = createGitRepo();
+			const result = runHook("git reset --soft HEAD~1", tempDir);
+
+			expect(result.exitCode).toBe(0);
+			const json = JSON.parse(result.stdout);
+			expect(json.hookSpecificOutput.permissionDecision).toBe("deny");
+		});
+
 		test("blocks git rebase origin/main", () => {
 			tempDir = createGitRepo();
 			const result = runHook("git rebase origin/main", tempDir);
