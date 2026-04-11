@@ -3,9 +3,9 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-03-28
-last-synced: 2026-03-28
-completeness: 90
+updated: 2026-04-10
+last-synced: 2026-04-10
+completeness: 95
 related: []
 dependencies: []
 ---
@@ -36,11 +36,12 @@ The design-docs plugin provides design documentation management, implementation
 plan tracking, CLAUDE.md context file maintenance, and user-facing documentation
 generation to Claude Code users. It ships as pure bash hooks and markdown
 skills/agents with no compiled binary, no TypeScript runtime, and no runtime
-dependencies. The plugin has 35 skills organized across 3 specialized agents,
-activated through three hooks: a SessionStart hook that injects context into
-every session, a SubagentStart hook that gives spawned subagents design-doc
-awareness, and a Stop hook that nudges agents to update design docs after
-implementation work.
+dependencies. The plugin has 37 skills organized across 3 specialized agents,
+activated through six hooks: a SessionStart hook that injects context and manages
+session tags, a SubagentStart hook for subagent awareness, a Stop hook for
+post-implementation nudges, a PreToolUse hook for auto-approving design directory
+writes, and two PreToolUse git safety hooks that protect the default branch from
+destructive operations while auto-allowing them on feature branches.
 
 The plugin follows a **sidecar distribution pattern**: it is developed inside a
 monorepo with full dev tooling (linting, testing, CI), but only the `plugin/`
@@ -57,8 +58,9 @@ repository. This separation ensures dev infrastructure never ships.
   (`skills/{name}/SKILL.md`) with optional supporting files
 - Agents as orchestrators: agents coordinate multiple skills within a shared
   context, reducing redundant file reads and enabling multi-step workflows
-- Hook reinforcement system: three hooks (SessionStart, SubagentStart, Stop)
-  work together to ensure design docs stay current without blocking workflow
+- Hook reinforcement system: six hooks (SessionStart, SubagentStart, Stop,
+  three PreToolUse) work together to ensure design docs stay current, auto-
+  approve safe operations, and protect the default branch
 
 **When to reference this document:**
 
@@ -100,8 +102,8 @@ and bash.
 The plugin identity is declared in `plugin/.claude-plugin/plugin.json`:
 
 - **name**: `design-docs`
-- **version**: `0.1.0` (managed by changesets)
-- **skills**: 35 skill directory paths
+- **version**: `0.2.0` (managed by changesets)
+- **skills**: 37 skill directory paths
 - **agents**: 3 agent markdown files
 - **commands**: none currently
 
@@ -122,7 +124,10 @@ session. Fires on all SessionStart sources (startup, resume, compact, clear).
 Includes first-install detection: if `.claude/design/` does not exist, shows
 initialization guidance instead of the full context. The context message explains
 what design docs are, why they matter, when to update them, and lists all
-available skills organized by category.
+available skills organized by category. On feature branches, manages the
+`session/start` local git tag for session boundary tracking -- creates at
+merge-base if missing, reports existing tag without moving it. Outputs branch
+session context as XML within the design documentation system block.
 
 **subagent-start.sh (SubagentStart, timeout 3s):**
 
@@ -141,9 +146,35 @@ signals are detected, outputs a plain text reminder suggesting design doc update
 and the `/design-docs:finalize` workflow. Does not block -- context-only.
 Requires `jq` for JSON parsing.
 
+**allow-design-writes.sh (PreToolUse, matcher: Write|Edit, timeout 3s):**
+
+Auto-approves Write and Edit operations targeting `.claude/design/` and
+`.claude/plans/` directories. Prevents repeated permission prompts when agents
+update documentation. Reads stdin JSON, extracts `tool_input.file_path`, and
+outputs a JSON `permissionDecision: "allow"` if the path matches. Requires `jq`.
+
+**git-safety.sh (PreToolUse, matcher: Bash, timeout 5s):**
+
+Git safety checks for Bash commands. Parses the command string from stdin JSON
+and detects destructive git operations: force push, hard reset, soft reset,
+rebase, and branch deletion. On the default branch, denies these operations. On
+feature branches, auto-allows them to support squash-merge workflows. Always
+blocks `gh repo delete`, branch protection modification via `gh api`, and
+`gh pr merge --admin` regardless of branch. Uses `git rev-parse --abbrev-ref HEAD`
+for current branch detection and `git symbolic-ref refs/remotes/origin/HEAD` with
+`main` fallback for default branch detection. Requires `jq`.
+
+**git-safety-mcp.sh (PreToolUse, matcher: mcp__gitkraken__git_push|git_branch|git_checkout, timeout 5s):**
+
+Git safety checks for GitKraken MCP tools. Same branch-aware rules as
+git-safety.sh but reads tool name and structured parameters from MCP tool input
+format instead of parsing a command string. Handles `mcp__gitkraken__git_push`
+(force flag), `mcp__gitkraken__git_branch` (delete action targeting default),
+and `mcp__gitkraken__git_checkout` (force flag targeting default). Requires `jq`.
+
 ### Skills
 
-35 skill directories organized in 5 categories:
+37 skill directories organized in 5 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
@@ -151,11 +182,16 @@ Requires `jq` for JSON parsing.
 | context-* | 5 | validate, audit, review, update, split |
 | docs-* | 9 | generate-readme, generate-contributing, generate-security, generate-repo, generate-site, review, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
-| finalize | 1 | end-of-branch orchestration workflow |
+| workflow | 3 | finalize (end-of-branch orchestration with squash), review (PR feedback cycles), merge-prep (final squash before merge) |
 
 Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool
 permissions. Skills that need isolation use `context: fork` in frontmatter.
 Skills are invoked as `/design-docs:{skill-name}`.
+
+The three workflow skills form a branch lifecycle: `/finalize` squashes commits
+and opens a PR, `/review` addresses PR feedback in small fix commits, and
+`/merge-prep` does a final squash for merge. All three are user-invocable only
+(`disable-model-invocation: true`).
 
 ### Agents
 
@@ -165,8 +201,11 @@ Three agents orchestrate multi-skill workflows:
 - `agents/context-doc-agent.md` -- CLAUDE.md context files
 - `agents/docs-gen-agent.md` -- User-facing documentation generation
 
-Agent frontmatter declares skills and tools. The agent markdown body describes
-purpose, available skills, common workflows, and best practices.
+Agent frontmatter declares skills and tools. All three agents include `hooks`
+frontmatter with a PreToolUse entry for `allow-design-writes.sh` to auto-approve
+Write/Edit operations to design directories in subagent contexts. The agent
+markdown body describes purpose, available skills, common workflows, and best
+practices.
 
 ---
 
@@ -291,7 +330,29 @@ implementation work. A single SessionStart injection is insufficient.
   (kill switch), then checks for `.claude/design/` directory existence
   (first-install detection). Both conditions exit silently.
 
-#### Pattern 4: Loop Guard for Stop Hook
+#### Pattern 4: Branch-Aware Git Safety
+
+- **Where used:** `git-safety.sh` and `git-safety-mcp.sh` PreToolUse hooks
+- **Why used:** Squash-merge workflows require destructive operations (force
+  push, soft reset, rebase) on feature branches but never on the default branch
+- **Implementation:** Hooks detect the current branch via
+  `git rev-parse --abbrev-ref HEAD` and the default branch via
+  `git symbolic-ref refs/remotes/origin/HEAD` with `main` fallback. On the
+  default branch, destructive operations are denied. On feature branches, they
+  are auto-allowed with a permissionDecision response. Certain operations
+  (repo deletion, protection removal, admin merge) are always blocked.
+
+#### Pattern 5: Session Tag Convention
+
+- **Where used:** `session-start.sh`, finalize skill, merge-prep skill
+- **Why used:** Tracks session boundaries on feature branches for squash-merge
+  workflows. The tag provides a stable anchor point for squash operations.
+- **Implementation:** `session/start` is a local-only git tag created at the
+  merge-base of the feature branch with the default branch. Created by
+  session-start.sh if missing, moved by finalize after squash, deleted by
+  merge-prep after final squash.
+
+#### Pattern 6: Loop Guard for Stop Hook
 
 - **Where used:** `stop-reminder.sh`
 - **Why used:** The Stop hook's nudge can cause Claude to continue working,
@@ -358,23 +419,34 @@ agents.
 
 **Responsibilities:**
 
-- Session context injection (SessionStart)
+- Session context injection and session tag management (SessionStart)
 - Subagent awareness propagation (SubagentStart)
 - Post-implementation nudging (Stop)
+- Auto-approving design directory writes (PreToolUse)
+- Git safety: branch-aware permission decisions (PreToolUse)
 - Feature flag evaluation (DESIGN_DOCS_CONTEXT_ENABLED)
 - First-install detection (.claude/design/ existence)
 
 **Components:**
 
-- `hooks/session-start.sh` -- SessionStart handler (outputs markdown context)
+- `hooks/session-start.sh` -- SessionStart handler (outputs markdown context,
+  manages session/start git tag on feature branches)
 - `hooks/subagent-start.sh` -- SubagentStart handler (outputs JSON
   additionalContext)
 - `hooks/stop-reminder.sh` -- Stop handler (keyword detection + plain text
   nudge)
+- `hooks/allow-design-writes.sh` -- PreToolUse handler (auto-approves design
+  dir writes)
+- `hooks/git-safety.sh` -- PreToolUse handler (branch-aware git safety for
+  Bash commands)
+- `hooks/git-safety-mcp.sh` -- PreToolUse handler (branch-aware git safety for
+  GitKraken MCP tools)
 
-**Communication:** Hooks receive JSON on stdin (SubagentStart and Stop) or
-nothing (SessionStart). Hooks output either plain text (becomes `claudeContext`)
-or structured JSON (for `hookSpecificOutput`). Exit code 0 indicates success.
+**Communication:** Hooks receive JSON on stdin (SubagentStart, Stop, PreToolUse)
+or nothing (SessionStart). Hooks output either plain text (becomes
+`claudeContext`) or structured JSON (for `hookSpecificOutput` with
+`permissionDecision`). Exit code 0 indicates success. PreToolUse hooks output
+`permissionDecision: "allow"` or `"deny"` with a reason string.
 
 #### Layer 3: Skills
 
@@ -389,7 +461,7 @@ or structured JSON (for `hookSpecificOutput`). Exit code 0 indicates success.
 
 **Components:**
 
-35 skill directories organized in 5 categories:
+37 skill directories organized in 5 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
@@ -397,7 +469,7 @@ or structured JSON (for `hookSpecificOutput`). Exit code 0 indicates success.
 | context-* | 5 | validate, audit, review, update, split |
 | docs-* | 9 | generate-readme, generate-contributing, generate-security, generate-repo, generate-site, review, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
-| finalize | 1 | end-of-branch orchestration |
+| workflow | 3 | finalize, review, merge-prep |
 
 **Communication:** Skills are invoked as `/design-docs:{skill-name}`. Each skill
 reads its SKILL.md frontmatter for tool permissions (`allowed-tools`) and agent
@@ -532,6 +604,11 @@ Claude Code          session-start.sh
 {
   "hooks": {
     "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 5 }] }],
+    "PreToolUse": [
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash .../allow-design-writes.sh", "timeout": 3 }] },
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash .../git-safety.sh", "timeout": 5 }] },
+      { "matcher": "mcp__gitkraken__git_push|...", "hooks": [{ "type": "command", "command": "bash .../git-safety-mcp.sh", "timeout": 5 }] }
+    ],
     "SubagentStart": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 3 }] }],
     "Stop": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 10 }] }]
   }
@@ -778,9 +855,12 @@ structure:
 ```text
 __test__/
 +-- hooks/
-|   +-- session-start.test.ts     # Tests for SessionStart hook
+|   +-- session-start.test.ts     # Tests for SessionStart hook + session tags
 |   +-- subagent-start.test.ts    # Tests for SubagentStart hook
 |   +-- stop-reminder.test.ts     # Tests for Stop hook
+|   +-- allow-design-writes.test.ts # Tests for PreToolUse auto-approve
+|   +-- git-safety.test.ts        # Tests for git safety Bash hook (18 tests)
+|   +-- git-safety-mcp.test.ts    # Tests for git safety MCP hook (5 tests)
 ```
 
 Tests live outside `plugin/` because `plugin/` ships to users. Tests must not be
@@ -802,7 +882,29 @@ distributed.
 - Disabled state: outputs nothing when `DESIGN_DOCS_CONTEXT_ENABLED=false`
 - First-install: outputs initialization guidance when `.claude/design/` is
   missing
+- Session tag management (4 tests): skips on default branch, creates tag at
+  merge-base on feature branch, reports existing tag, creates at HEAD when
+  branch is even with main
 - All paths exit with code 0
+
+**git-safety.sh tests (18 tests):**
+
+- Default branch (6 tests): blocks force push (--force, -f, --force-with-lease),
+  hard reset, rebase, branch deletion
+- Feature branch (5 tests): auto-allows force push, soft reset, hard reset,
+  rebase, force-with-lease
+- Always blocked (3 tests): gh repo delete, gh api branch protection, gh pr
+  merge --admin
+- Non-git commands (3 tests): skips non-git, safe git commands, git log
+- Kill switch (1 test): exits silently when disabled
+
+**git-safety-mcp.sh tests (5 tests):**
+
+- Default branch: blocks force push via MCP, blocks branch delete targeting
+  default
+- Feature branch: auto-allows force push via MCP
+- Non-matching: skips unrelated MCP tools
+- Kill switch: exits silently when disabled
 
 **subagent-start.sh tests:**
 
@@ -828,8 +930,8 @@ distributed.
 - Add slash commands for common operations (no commands exist yet; the
   `plugin/commands/` directory is prepared)
 - Improve stop-reminder.sh keyword patterns based on real-world usage data
-- Consider adding PreToolUse/PostToolUse hooks for design doc validation before
-  writes
+- ~~Consider adding PreToolUse/PostToolUse hooks~~ (implemented: allow-design-writes.sh,
+  git-safety.sh, git-safety-mcp.sh)
 
 ### Phase 2: Medium-term
 
@@ -882,10 +984,10 @@ distributed.
 
 ---
 
-**Document Status:** Current -- covers all major architectural components as
-implemented after the feat/hook-permissions branch migration from compiled binary
-to pure bash hooks. Missing coverage: detailed per-skill internal architecture,
-detailed command system design (no commands exist yet).
+**Document Status:** Current -- covers all major architectural components
+including the branch lifecycle workflow (git safety hooks, session tag management,
+squash workflow skills). Missing coverage: detailed per-skill internal
+architecture, detailed command system design (no commands exist yet).
 
 **Next Steps:** Add design docs for individual subsystems (skill framework
 internals, agent orchestration patterns) as complexity warrants separate

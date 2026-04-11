@@ -38,14 +38,18 @@ design-docs-plugin/
 │   │   ├── session-start.sh         # SessionStart context injection
 │   │   ├── subagent-start.sh        # SubagentStart context injection
 │   │   ├── stop-reminder.sh         # Stop post-implementation nudge
-│   │   └── allow-design-writes.sh   # PreToolUse auto-approve design dirs
+│   │   ├── allow-design-writes.sh   # PreToolUse auto-approve design dirs
+│   │   ├── git-safety.sh           # PreToolUse git safety (Bash)
+│   │   └── git-safety-mcp.sh       # PreToolUse git safety (MCP)
 │   ├── commands/                    # (no commands yet)
-│   ├── skills/                      # 35 skills
+│   ├── skills/                      # 37 skills
 │   │   ├── design-init/             # 15 design-* skills
 │   │   ├── context-validate/        # 5 context-* skills
 │   │   ├── docs-generate-readme/    # 9 docs-* skills
 │   │   ├── plan-create/             # 5 plan-* skills
-│   │   └── finalize/                # 1 finalize skill
+│   │   ├── finalize/                # squash workflow: finalize
+│   │   ├── review/                  # squash workflow: PR review
+│   │   └── merge-prep/             # squash workflow: final squash
 │   ├── agents/
 │   │   ├── design-doc-agent.md
 │   │   ├── context-doc-agent.md

@@ -41,11 +41,13 @@
 		"./skills/docs-sync",
 		"./skills/docs-update",
 		"./skills/finalize",
+		"./skills/merge-prep",
 		"./skills/plan-complete",
 		"./skills/plan-create",
 		"./skills/plan-explore",
 		"./skills/plan-list",
-		"./skills/plan-validate"
+		"./skills/plan-validate",
+		"./skills/review"
 	],
 	"agents": ["./agents/context-doc-agent.md", "./agents/design-doc-agent.md", "./agents/docs-gen-agent.md"]
 }

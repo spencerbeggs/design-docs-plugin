@@ -79,17 +79,18 @@ if [ "$FOUND" != "true" ]; then
   exit 0
 fi
 
-# Output soft nudge as plain text (added to Claude's context)
-cat <<'NUDGE'
-Implementation work was detected in this session. Consider whether design
-documentation should be updated to reflect these changes. If architecture,
-data flows, API boundaries, or system behavior changed, delegate to the
-design-doc-agent to update the relevant design docs in `.claude/design/`.
+# Output soft nudge as JSON with hookEventName (using jq for safe encoding)
+NUDGE_MSG="Implementation work was detected in this session. Consider whether design documentation should be updated to reflect these changes. If architecture, data flows, API boundaries, or system behavior changed, delegate to the design-doc-agent to update the relevant design docs in \`.claude/design/\`.
 
-Use `/design-docs:finalize` for the full end-of-branch workflow (design
-docs, user docs, changeset, commit, PR).
+Use \`/design-docs:finalize\` for the full end-of-branch workflow (design docs, user docs, changeset, commit, PR).
 
-If no design doc updates are needed, proceed normally.
-NUDGE
+If no design doc updates are needed, proceed normally."
+
+jq -n --arg msg "$NUDGE_MSG" '{
+  hookSpecificOutput: {
+    hookEventName: "Stop",
+    additionalContext: $msg
+  }
+}'
 
 exit 0

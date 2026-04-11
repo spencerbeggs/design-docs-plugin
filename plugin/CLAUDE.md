@@ -10,7 +10,9 @@ This is the distributable plugin directory. Everything here ships to end users v
 * `hooks/subagent-start.sh` -- SubagentStart context injection
 * `hooks/stop-reminder.sh` -- Stop post-implementation nudge
 * `hooks/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
-* `skills/` -- 35 SKILL.md files across design-*, context-*, docs-*, plan-*, finalize groups
+* `hooks/git-safety.sh` -- PreToolUse git safety for Bash commands
+* `hooks/git-safety-mcp.sh` -- PreToolUse git safety for GitKraken MCP tools
+* `skills/` -- 37 SKILL.md files across design-*, context-*, docs-*, plan-*, finalize, review, merge-prep groups
 * `agents/` -- design-doc-agent, context-doc-agent, docs-gen-agent
 * `commands/` -- (no commands yet)
 
@@ -22,7 +24,7 @@ All hooks check `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `fals
 
 ### session-start.sh (SessionStart)
 
-Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. If `.claude/design/` does not exist, shows initialization guidance instead.
+Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it.
 
 ### subagent-start.sh (SubagentStart)
 
@@ -36,6 +38,14 @@ Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON a
 
 Auto-approves Write and Edit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
 
+### git-safety.sh (PreToolUse)
+
+Git safety checks for Bash commands. Blocks destructive git operations (force push, hard reset, rebase, branch delete) on the default branch. Auto-allows these operations on feature branches to support squash-merge workflows. Always blocks `gh repo delete`, branch protection modification via `gh api`, and `gh pr merge --admin`. Requires `jq`.
+
+### git-safety-mcp.sh (PreToolUse)
+
+Git safety checks for GitKraken MCP tools. Same rules as git-safety.sh but reads tool name and parameters from MCP tool input format. Covers `mcp__gitkraken__git_push`, `mcp__gitkraken__git_branch`, and `mcp__gitkraken__git_checkout`. Requires `jq`.
+
 ## Key Skills
 
 ### finalize
@@ -43,9 +53,32 @@ Auto-approves Write and Edit operations targeting `.claude/design/` and `.claude
 End-of-branch orchestration workflow invoked via `/design-docs:finalize`.
 Updates design docs, CLAUDE.md files, and user docs by delegating to
 existing plugin skills (design-sync, context-update, docs-update), then
-creates a changeset, commits, pushes, and opens a PR.
+creates a changeset, squashes all branch commits into a single clean
+commit, pushes, and opens a PR.
 
-Flags: `--no-pr`, `--docs-only`, `--dry-run`
+Flags: `--no-pr`, `--no-squash`, `--docs-only`, `--dry-run`
+
+User-invocable only (`disable-model-invocation: true`).
+
+### review
+
+PR review cycle workflow invoked via `/design-docs:review`. Fetches active
+(unresolved, not outdated) PR comments, triages by severity, addresses
+fixes, runs verification and lightweight doc check, then commits and pushes.
+Designed for iterative review cycles with small fix commits.
+
+Flags: `--force-docs`, `--no-push`, `--dry-run`
+
+User-invocable only (`disable-model-invocation: true`).
+
+### merge-prep
+
+Final merge preparation invoked via `/design-docs:merge-prep`. Squashes all
+branch commits from merge-base into a single clean commit and force pushes.
+No docs pipeline — docs were handled during finalize and review. Verifies
+PR approval before proceeding.
+
+Flags: `--no-push`, `--dry-run`
 
 User-invocable only (`disable-model-invocation: true`).
 
