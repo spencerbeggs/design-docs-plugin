@@ -1,5 +1,11 @@
 # design-docs-plugin
 
+## 0.3.1
+
+### Bug Fixes
+
+* [`addaf6e`](https://github.com/spencerbeggs/design-docs-plugin/commit/addaf6ee214966fd1af5c9b6c9e601cafd3fe95e) Fixed `stop-reminder` hook emitting an invalid JSON output format that caused a Claude Code schema validation error on every trigger. The hook was emitting `hookSpecificOutput.additionalContext`, which is only valid for `UserPromptSubmit`, `PostToolUse`, and `PostToolBatch` hooks. Stop hooks require the top-level `systemMessage` field — the output is now `{ "systemMessage": "..." }`.
+
 ## 0.3.0
 
 ### Features
