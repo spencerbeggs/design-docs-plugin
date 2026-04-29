@@ -32,7 +32,7 @@ Injects condensed (<50 word) design docs awareness into every spawned subagent v
 
 ### stop-reminder.sh (Stop)
 
-Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON as a loop guard, then scans `last_assistant_message` for multi-word implementation keyword patterns. Outputs plain text reminder if detected. Does not block — context-only v1 with a documented escalation path. Skips if `.claude/design/` does not exist. Requires `jq`.
+Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON as a loop guard, then scans `last_assistant_message` for multi-word implementation keyword patterns. If detected, emits JSON with a top-level `systemMessage` field carrying the reminder. (Stop hooks do not support `hookSpecificOutput.additionalContext` — that field is only valid for UserPromptSubmit, PostToolUse, and PostToolBatch.) Does not block — context-only v1 with a documented escalation path. Skips if `.claude/design/` does not exist. Requires `jq`.
 
 ### allow-design-writes.sh (PreToolUse)
 
