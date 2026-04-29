@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-04-10
-last-synced: 2026-04-10
+updated: 2026-04-29
+last-synced: 2026-04-29
 completeness: 95
 related: []
 dependencies: []
@@ -142,9 +142,13 @@ Soft post-implementation nudge. Reads stdin JSON and checks `stop_hook_active`
 as a loop guard (bails if true to prevent infinite loops). Scans
 `last_assistant_message` for multi-word implementation keyword patterns (e.g.,
 "created file", "refactored", "implemented", "added feature"). If implementation
-signals are detected, outputs a plain text reminder suggesting design doc updates
-and the `/design-docs:finalize` workflow. Does not block -- context-only.
-Requires `jq` for JSON parsing.
+signals are detected, outputs a JSON object with a top-level `systemMessage`
+field containing a reminder suggesting design doc updates and the
+`/design-docs:finalize` workflow. Stop hooks do not support
+`hookSpecificOutput.additionalContext` (that field is only valid for
+UserPromptSubmit, PostToolUse, and PostToolBatch), so `systemMessage` is the
+correct schema for surfacing context to Claude on stop. Does not block --
+context-only. Requires `jq` for JSON parsing.
 
 **allow-design-writes.sh (PreToolUse, matcher: Write|Edit, timeout 3s):**
 
@@ -433,8 +437,8 @@ agents.
   manages session/start git tag on feature branches)
 - `hooks/subagent-start.sh` -- SubagentStart handler (outputs JSON
   additionalContext)
-- `hooks/stop-reminder.sh` -- Stop handler (keyword detection + plain text
-  nudge)
+- `hooks/stop-reminder.sh` -- Stop handler (keyword detection + JSON
+  `systemMessage` nudge)
 - `hooks/allow-design-writes.sh` -- PreToolUse handler (auto-approves design
   dir writes)
 - `hooks/git-safety.sh` -- PreToolUse handler (branch-aware git safety for
@@ -443,10 +447,18 @@ agents.
   GitKraken MCP tools)
 
 **Communication:** Hooks receive JSON on stdin (SubagentStart, Stop, PreToolUse)
-or nothing (SessionStart). Hooks output either plain text (becomes
-`claudeContext`) or structured JSON (for `hookSpecificOutput` with
-`permissionDecision`). Exit code 0 indicates success. PreToolUse hooks output
-`permissionDecision: "allow"` or `"deny"` with a reason string.
+or nothing (SessionStart). Hooks output structured JSON shaped per the
+Claude Code hook schema for the specific event:
+
+- SessionStart: plain text becomes `claudeContext`.
+- SubagentStart: JSON `hookSpecificOutput.additionalContext` (valid only on
+  hook events that support it).
+- Stop: JSON top-level `systemMessage` (Stop hooks do not support
+  `hookSpecificOutput.additionalContext`).
+- PreToolUse: JSON `hookSpecificOutput` with `permissionDecision: "allow"` or
+  `"deny"` plus a reason string.
+
+Exit code 0 indicates success.
 
 #### Layer 3: Skills
 
@@ -547,8 +559,11 @@ Claude Code          session-start.sh
    `last_assistant_message`
 5. If `stop_hook_active` is not false: exits (loop guard)
 6. If no implementation keywords detected: exits silently
-7. If implementation keywords found: outputs soft nudge mentioning design docs
-   and `/design-docs:finalize`
+7. If implementation keywords found: outputs a JSON object with a top-level
+   `systemMessage` field carrying the soft nudge that mentions design docs
+   and `/design-docs:finalize`. Stop hooks must use `systemMessage` rather
+   than `hookSpecificOutput.additionalContext`, which the Claude Code schema
+   only permits for UserPromptSubmit, PostToolUse, and PostToolBatch.
 
 #### Interaction 4: Skill Invocation
 
@@ -634,6 +649,20 @@ Claude Code          session-start.sh
   "last_assistant_message": "I created the file and implemented..."
 }
 ```
+
+**Stop Hook Output (JSON on stdout):**
+
+```json
+{
+  "systemMessage": "Reminder: if this work touched architecture, data flows, or APIs, update the relevant design docs. Run /design-docs:finalize to wrap up the branch."
+}
+```
+
+Note: Stop hooks use a top-level `systemMessage` field rather than
+`hookSpecificOutput.additionalContext`. The Claude Code hook schema only
+permits `additionalContext` for `UserPromptSubmit`, `PostToolUse`, and
+`PostToolBatch`; emitting it from a Stop hook produces a schema validation
+error.
 
 **Design Config (design.config.json):**
 
@@ -916,7 +945,10 @@ distributed.
 **stop-reminder.sh tests:**
 
 - Loop guard: exits silently when `stop_hook_active` is true or missing
-- Keyword detection: outputs nudge when implementation keywords are found
+- Keyword detection: outputs JSON with a top-level `systemMessage` field
+  containing the nudge when implementation keywords are found (asserts
+  `json.systemMessage`, not `json.hookSpecificOutput.additionalContext`,
+  because Stop hooks do not support that field)
 - No keywords: exits silently when no implementation signals detected
 - Disabled state: outputs nothing
 - Not initialized: outputs nothing

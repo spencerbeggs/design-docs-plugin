@@ -69,19 +69,17 @@ describe("stop-reminder.sh", () => {
 			expect(result.stdout).toContain("design-doc-agent");
 		});
 
-		test("outputs valid JSON with hookEventName", () => {
+		test("outputs valid JSON with systemMessage", () => {
 			const dir = setupDesignDir();
 			const result = runHook(makeInput(false, "I refactored the auth module and created a new endpoint."), {
 				CLAUDE_PROJECT_DIR: dir,
 			});
 
 			expect(result.exitCode).toBe(0);
-			const json = JSON.parse(result.stdout) as {
-				hookSpecificOutput: { hookEventName: string; additionalContext: string };
-			};
-			expect(json.hookSpecificOutput).toBeDefined();
-			expect(json.hookSpecificOutput.hookEventName).toBe("Stop");
-			expect(json.hookSpecificOutput.additionalContext).toContain("Implementation work was detected");
+			const json = JSON.parse(result.stdout) as { systemMessage: string };
+			expect(json.systemMessage).toBeDefined();
+			expect(json.systemMessage).toContain("Implementation work was detected");
+			expect(json).not.toHaveProperty("hookSpecificOutput");
 		});
 
 		test("exits silently for Q&A messages", () => {
