@@ -26,7 +26,7 @@ Strict GitHub-flavored markdown. Allowed advanced features:
 - Tables
 - Collapsed sections via `<details><summary>...</summary>...</details>`
 - Fenced code blocks (always with a language identifier)
-- Mermaid diagrams (` ```mermaid `)
+- Mermaid diagrams (fenced code blocks with `mermaid` as the language identifier)
 
 Allowed HTML elements: `br`, `details`, `summary`, `img`, `sup`, `sub`. No other raw HTML.
 

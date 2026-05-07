@@ -160,8 +160,8 @@ and follows the JSON schema at:
     }
   },
   "context": {
-    "rootMaxLines": 500,
-    "childMaxLines": 300,
+    "rootMaxWords": 2000,
+    "childMaxWords": 1000,
     "requireDesignDocPointers": true
   }
 }
@@ -327,7 +327,7 @@ Updates quality standards for design docs, user docs, or context files.
 ```bash
 /design-config update-quality \
   --designDocs.maxLineLength=120 \
-  --context.rootMaxLines=500
+  --context.rootMaxWords=2000
 ```
 
 ### Update Module
@@ -438,10 +438,10 @@ The complete JSON schema is located at:
 - `userDocs.level1.maxLineLength`: 80-120
 - `userDocs.level2.maxLineLength`: 80-150
 
-**Context lines:**
+**Context word counts:**
 
-- `context.rootMaxLines`: 100-1000 (default 500)
-- `context.childMaxLines`: 100-500 (default 300)
+- `context.rootMaxWords`: 200-5000 (default 2000)
+- `context.childMaxWords`: 100-2000 (default 1000)
 
 ## Common Use Cases
 
@@ -467,7 +467,7 @@ The complete JSON schema is located at:
 ```bash
 /design-config update-quality \
   --designDocs.maxLineLength=100 \
-  --context.rootMaxLines=600
+  --context.rootMaxWords=2500
 ```
 
 ### Enable New Skills

@@ -73,7 +73,7 @@ Requires <runtime> <engineRange>.
 
 <minimal worked example showing the most common usage in a single code block>
 
-## Features          ← or "At a glance" or similar
+## Features
 
 <bulleted list of capabilities, each one sentence>
 

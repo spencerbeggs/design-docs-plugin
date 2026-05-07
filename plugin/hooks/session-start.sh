@@ -20,12 +20,15 @@ cat > /dev/null
 # Also derives GITHUB_REPOSITORY from the git remote if not already set.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
-    printf 'export GH_TOKEN=%q\n' "${GITHUB_PERSONAL_ACCESS_TOKEN}" >> "$CLAUDE_ENV_FILE"
+    grep -q "^export GH_TOKEN=" "$CLAUDE_ENV_FILE" 2>/dev/null || \
+      printf 'export GH_TOKEN=%q\n' "${GITHUB_PERSONAL_ACCESS_TOKEN}" >> "$CLAUDE_ENV_FILE"
   fi
   if [ -z "${GITHUB_REPOSITORY:-}" ] && command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
     REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-    if [[ "$REMOTE_URL" =~ github\.com[:/]([^/]+/[^.]+)(\.git)?$ ]]; then
-      printf 'export GITHUB_REPOSITORY=%q\n' "${BASH_REMATCH[1]}" >> "$CLAUDE_ENV_FILE"
+    if [[ "$REMOTE_URL" =~ github\.com[:/]([^/]+/[^/]+) ]]; then
+      DETECTED_REPO="${BASH_REMATCH[1]%.git}"
+      grep -q "^export GITHUB_REPOSITORY=" "$CLAUDE_ENV_FILE" 2>/dev/null || \
+        printf 'export GITHUB_REPOSITORY=%q\n' "$DETECTED_REPO" >> "$CLAUDE_ENV_FILE"
     fi
   fi
 fi

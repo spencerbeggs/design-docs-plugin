@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -248,5 +248,133 @@ describe("session tag management", () => {
 		// The merge-base of an even branch IS HEAD, so tag should be at HEAD
 		const tagRef = git(repoDir, "rev-parse", "session/start");
 		expect(tagRef).toBe(headCommit);
+	});
+});
+
+// --- CLAUDE_ENV_FILE credential persistence tests ---
+
+describe("env-file credential persistence", () => {
+	let tempDir: string;
+
+	afterEach(() => {
+		if (tempDir) {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
+
+	test("appends GH_TOKEN export to CLAUDE_ENV_FILE when PAT is set", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const result = runHook({
+			CLAUDE_PROJECT_DIR: tempDir,
+			CLAUDE_ENV_FILE: envFile,
+			GITHUB_PERSONAL_ACCESS_TOKEN: "test-pat-token",
+		});
+
+		expect(result.exitCode).toBe(0);
+		const envContent = readFileSync(envFile, "utf8");
+		expect(envContent).toContain("export GH_TOKEN=");
+		expect(envContent).toContain("test-pat-token");
+	});
+
+	test("does not append GH_TOKEN if CLAUDE_ENV_FILE is not set", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
+
+		const result = runHook({
+			CLAUDE_PROJECT_DIR: tempDir,
+			GITHUB_PERSONAL_ACCESS_TOKEN: "test-pat-token",
+		});
+
+		expect(result.exitCode).toBe(0);
+		// No env file written — hook should succeed without error
+		expect(result.stderr).not.toContain("Error");
+	});
+
+	test("does not duplicate GH_TOKEN on repeated runs", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const env = {
+			CLAUDE_PROJECT_DIR: tempDir,
+			CLAUDE_ENV_FILE: envFile,
+			GITHUB_PERSONAL_ACCESS_TOKEN: "test-pat-token",
+		};
+
+		runHook(env);
+		runHook(env);
+
+		const envContent = readFileSync(envFile, "utf8");
+		const matches = envContent.match(/export GH_TOKEN=/g) ?? [];
+		expect(matches.length).toBe(1);
+	});
+
+	test("extracts GITHUB_REPOSITORY from https remote URL with dotted repo name", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		const repoDir = join(tempDir, "repo");
+		mkdirSync(join(repoDir, ".claude", "design"), { recursive: true });
+
+		// Set up a minimal git repo with a remote that has a dot in the repo name
+		const initProc = Bun.spawnSync(["git", "init", "-b", "main"], { cwd: repoDir });
+		expect(initProc.exitCode).toBe(0);
+		const remoteProc = Bun.spawnSync(["git", "remote", "add", "origin", "https://github.com/owner/repo.docs.git"], {
+			cwd: repoDir,
+		});
+		expect(remoteProc.exitCode).toBe(0);
+
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const { GITHUB_REPOSITORY: _unused, ...envWithoutRepo } = process.env;
+		const proc = Bun.spawnSync(["bash", HOOK_PATH], {
+			cwd: repoDir,
+			env: {
+				...envWithoutRepo,
+				CLAUDE_PROJECT_DIR: repoDir,
+				CLAUDE_ENV_FILE: envFile,
+			},
+			stdin: "pipe",
+		});
+
+		expect(proc.exitCode).toBe(0);
+		const envContent = readFileSync(envFile, "utf8");
+		expect(envContent).toContain("export GITHUB_REPOSITORY=");
+		expect(envContent).toContain("owner/repo.docs");
+	});
+
+	test("extracts GITHUB_REPOSITORY from SSH remote URL", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		const repoDir = join(tempDir, "repo");
+		mkdirSync(join(repoDir, ".claude", "design"), { recursive: true });
+
+		const initProc = Bun.spawnSync(["git", "init", "-b", "main"], { cwd: repoDir });
+		expect(initProc.exitCode).toBe(0);
+		const remoteProc = Bun.spawnSync(["git", "remote", "add", "origin", "git@github.com:owner/my-repo.git"], {
+			cwd: repoDir,
+		});
+		expect(remoteProc.exitCode).toBe(0);
+
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const { GITHUB_REPOSITORY: _unused, ...envWithoutRepo } = process.env;
+		const proc = Bun.spawnSync(["bash", HOOK_PATH], {
+			cwd: repoDir,
+			env: {
+				...envWithoutRepo,
+				CLAUDE_PROJECT_DIR: repoDir,
+				CLAUDE_ENV_FILE: envFile,
+			},
+			stdin: "pipe",
+		});
+
+		expect(proc.exitCode).toBe(0);
+		const envContent = readFileSync(envFile, "utf8");
+		expect(envContent).toContain("owner/my-repo");
 	});
 });

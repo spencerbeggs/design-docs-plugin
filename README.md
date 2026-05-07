@@ -4,7 +4,7 @@ A Claude Code plugin for managing design documentation, CLAUDE.md context files,
 
 ## What's Included
 
-* **3 lifecycle hooks** -- SessionStart injects philosophy-first design doc context into each session; SubagentStart reinforces design doc awareness in spawned subagents; Stop nudges you to update docs after implementation work. All configurable via `DESIGN_DOCS_CONTEXT_ENABLED`.
+* **2 lifecycle hooks** -- SessionStart injects philosophy-first design doc context into each session and sets up branch session tags; PreToolUse auto-approves writes to `.claude/design/` and `.claude/plans/` so agents never get blocked mid-update. Both configurable via `DESIGN_DOCS_CONTEXT_ENABLED`.
 * **47 skills across 6 categories** -- covering design doc creation, context file management, documentation generation, user-facing docs, implementation planning, and branch finalization
 * **3 specialized agents** -- for orchestrating complex multi-step documentation workflows
 
@@ -20,7 +20,7 @@ Skills for working with CLAUDE.md context files: validating structure, generatin
 
 ### docs-* (7 skills)
 
-Skills for generating user-facing documentation: README generation, API docs, changelog management, and documentation site scaffolding.
+Skills for generating standalone documentation: CONTRIBUTING.md, SECURITY.md, repository documentation sites, and ancillary repo docs. README generation lives in the `user-docs-*` category.
 
 ### user-docs-* (10 skills)
 

@@ -6,7 +6,9 @@
 			"Write(.claude/design/**)",
 			"Write(.claude/plans/**)",
 			"Edit(.claude/design/**)",
-			"Edit(.claude/plans/**)"
+			"Edit(.claude/plans/**)",
+			"mcp__github",
+			"mcp__playwright"
 		]
 	},
 	"enableAllProjectMcpServers": true,
