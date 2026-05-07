@@ -1,6 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
-	"$id": "https://spencerbegg.gs/schemas/design-config/1.0.0/schema.json",
+	"$id": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
 	"title": "Design Documentation System Configuration",
 	"description": "Configuration schema for the design documentation system with modules, skills, and quality standards",
 	"type": "object",
@@ -259,19 +259,19 @@
 					"type": "object",
 					"description": "CLAUDE.md context file standards",
 					"properties": {
-						"rootMaxLines": {
+						"rootMaxWords": {
 							"type": "integer",
-							"description": "Maximum lines for root CLAUDE.md",
-							"minimum": 100,
-							"maximum": 1000,
-							"default": 500
+							"description": "Maximum word count for root CLAUDE.md",
+							"minimum": 200,
+							"maximum": 5000,
+							"default": 2000
 						},
-						"childMaxLines": {
+						"childMaxWords": {
 							"type": "integer",
-							"description": "Maximum lines for package CLAUDE.md",
+							"description": "Maximum word count for package CLAUDE.md",
 							"minimum": 100,
-							"maximum": 500,
-							"default": 300
+							"maximum": 2000,
+							"default": 1000
 						},
 						"requireDesignDocPointers": {
 							"type": "boolean",

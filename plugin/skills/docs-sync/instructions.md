@@ -120,7 +120,7 @@ For each affected user doc:
 #### Level 1: Sync README
 
 ```bash
-# Regenerate README using docs-generate-readme
+# Regenerate README using user-docs-create-readme
 # This is the simplest approach for READMEs
 ```
 
@@ -303,7 +303,7 @@ Reason: READMEs are short and standardized, full regen is fast and consistent
 Process:
 
 1. Detect changes in design docs
-2. Regenerate README using docs-generate-readme
+2. Regenerate README using user-docs-create-readme
 3. Preserve custom badges and screenshots
 4. Validate output
 5. Update timestamp
@@ -540,14 +540,14 @@ Fix errors before committing
 - Uses `.claude/design/design.config.json` for configuration
 - Reads design docs from `designDocsPath`
 - Updates files in `userDocs` paths
-- May invoke `docs-generate-readme` for full README regeneration
-- May invoke `docs-review` for validation
+- May invoke `user-docs-create-readme` for full README regeneration
+- May invoke `user-docs-review` for validation
 - Respects quality standards for each level
 
 ## Related Skills
 
-- `/docs-generate-readme` - Full README regeneration
+- `/design-docs:user-docs-create-readme` - Full README regeneration
 - `/docs-generate-repo` - Full repo docs regeneration
 - `/docs-generate-site` - Full site docs regeneration
-- `/docs-review` - Validate sync quality
+- `/design-docs:user-docs-review` - Validate sync quality
 - `/design-sync` - Sync design docs with code (reverse direction)

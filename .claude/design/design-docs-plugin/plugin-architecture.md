@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-04-29
-last-synced: 2026-04-29
+updated: 2026-05-06
+last-synced: 2026-05-06
 completeness: 95
 related: []
 dependencies: []
@@ -36,12 +36,11 @@ The design-docs plugin provides design documentation management, implementation
 plan tracking, CLAUDE.md context file maintenance, and user-facing documentation
 generation to Claude Code users. It ships as pure bash hooks and markdown
 skills/agents with no compiled binary, no TypeScript runtime, and no runtime
-dependencies. The plugin has 37 skills organized across 3 specialized agents,
-activated through six hooks: a SessionStart hook that injects context and manages
-session tags, a SubagentStart hook for subagent awareness, a Stop hook for
-post-implementation nudges, a PreToolUse hook for auto-approving design directory
-writes, and two PreToolUse git safety hooks that protect the default branch from
-destructive operations while auto-allowing them on feature branches.
+dependencies. The plugin has 47 skills organized across 3 specialized agents,
+activated through two hooks: a SessionStart hook that injects context and manages
+session tags, and a PreToolUse hook for auto-approving design directory writes.
+SubagentStart, Stop, and git-safety hooks were removed in 0.3.x; those
+responsibilities were delegated to the session workflow and the commit plugin.
 
 The plugin follows a **sidecar distribution pattern**: it is developed inside a
 monorepo with full dev tooling (linting, testing, CI), but only the `plugin/`
@@ -58,9 +57,9 @@ repository. This separation ensures dev infrastructure never ships.
   (`skills/{name}/SKILL.md`) with optional supporting files
 - Agents as orchestrators: agents coordinate multiple skills within a shared
   context, reducing redundant file reads and enabling multi-step workflows
-- Hook reinforcement system: six hooks (SessionStart, SubagentStart, Stop,
-  three PreToolUse) work together to ensure design docs stay current, auto-
-  approve safe operations, and protect the default branch
+- Minimal hook footprint: two hooks (SessionStart, PreToolUse) handle context
+  injection and auto-approval; git safety and subagent awareness are delegated
+  externally
 
 **When to reference this document:**
 
@@ -83,7 +82,7 @@ design-docs-plugin/
 +-- plugin/             # DISTRIBUTABLE -- everything here ships to users
 |   +-- .claude-plugin/ # Plugin manifest (plugin.json)
 |   +-- hooks/          # Bash hook scripts + hooks.json
-|   +-- skills/         # 35 skill directories
+|   +-- skills/         # 47 skill directories
 |   +-- agents/         # 3 agent definitions
 |   +-- commands/       # (no commands yet)
 |   +-- CLAUDE.md
@@ -102,8 +101,8 @@ and bash.
 The plugin identity is declared in `plugin/.claude-plugin/plugin.json`:
 
 - **name**: `design-docs`
-- **version**: `0.2.0` (managed by changesets)
-- **skills**: 37 skill directory paths
+- **version**: `0.3.1` (managed by changesets)
+- **skills**: 47 skill directory paths
 - **agents**: 3 agent markdown files
 - **commands**: none currently
 
@@ -129,27 +128,6 @@ available skills organized by category. On feature branches, manages the
 merge-base if missing, reports existing tag without moving it. Outputs branch
 session context as XML within the design documentation system block.
 
-**subagent-start.sh (SubagentStart, timeout 3s):**
-
-Injects a condensed (<50 word) design docs awareness message into every spawned
-subagent via JSON `additionalContext`. Tells subagents to flag architecture-
-relevant changes to the parent agent. Consumes stdin (required by hook protocol)
-and skips silently if the design docs system is not initialized.
-
-**stop-reminder.sh (Stop, timeout 10s):**
-
-Soft post-implementation nudge. Reads stdin JSON and checks `stop_hook_active`
-as a loop guard (bails if true to prevent infinite loops). Scans
-`last_assistant_message` for multi-word implementation keyword patterns (e.g.,
-"created file", "refactored", "implemented", "added feature"). If implementation
-signals are detected, outputs a JSON object with a top-level `systemMessage`
-field containing a reminder suggesting design doc updates and the
-`/design-docs:finalize` workflow. Stop hooks do not support
-`hookSpecificOutput.additionalContext` (that field is only valid for
-UserPromptSubmit, PostToolUse, and PostToolBatch), so `systemMessage` is the
-correct schema for surfacing context to Claude on stop. Does not block --
-context-only. Requires `jq` for JSON parsing.
-
 **allow-design-writes.sh (PreToolUse, matcher: Write|Edit, timeout 3s):**
 
 Auto-approves Write and Edit operations targeting `.claude/design/` and
@@ -157,35 +135,25 @@ Auto-approves Write and Edit operations targeting `.claude/design/` and
 update documentation. Reads stdin JSON, extracts `tool_input.file_path`, and
 outputs a JSON `permissionDecision: "allow"` if the path matches. Requires `jq`.
 
-**git-safety.sh (PreToolUse, matcher: Bash, timeout 5s):**
+**Removed hooks (0.3.x):**
 
-Git safety checks for Bash commands. Parses the command string from stdin JSON
-and detects destructive git operations: force push, hard reset, soft reset,
-rebase, and branch deletion. On the default branch, denies these operations. On
-feature branches, auto-allows them to support squash-merge workflows. Always
-blocks `gh repo delete`, branch protection modification via `gh api`, and
-`gh pr merge --admin` regardless of branch. Uses `git rev-parse --abbrev-ref HEAD`
-for current branch detection and `git symbolic-ref refs/remotes/origin/HEAD` with
-`main` fallback for default branch detection. Requires `jq`.
-
-**git-safety-mcp.sh (PreToolUse, matcher: mcp__gitkraken__git_push|git_branch|git_checkout, timeout 5s):**
-
-Git safety checks for GitKraken MCP tools. Same branch-aware rules as
-git-safety.sh but reads tool name and structured parameters from MCP tool input
-format instead of parsing a command string. Handles `mcp__gitkraken__git_push`
-(force flag), `mcp__gitkraken__git_branch` (delete action targeting default),
-and `mcp__gitkraken__git_checkout` (force flag targeting default). Requires `jq`.
+`subagent-start.sh`, `stop-reminder.sh`, `git-safety.sh`, and
+`git-safety-mcp.sh` were removed. SubagentStart and Stop responsibilities are
+delegated to the session workflow; git safety is handled by the commit plugin.
+Their tests (`subagent-start.test.ts`, `stop-reminder.test.ts`,
+`git-safety.test.ts`, `git-safety-mcp.test.ts`) were also removed.
 
 ### Skills
 
-37 skill directories organized in 5 categories:
+47 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
-| design-* | 15 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config |
-| context-* | 5 | validate, audit, review, update, split |
-| docs-* | 9 | generate-readme, generate-contributing, generate-security, generate-repo, generate-site, review, review-package, sync, update |
+| design-* | 16 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, docs-style |
+| context-* | 6 | validate, audit, review, update, split, docs-style |
+| docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
+| user-docs-* | 10 | add-page, badges, build-badges, build-toc, create-docs, create-readme, detect-shape, humanize, review, style |
 | workflow | 3 | finalize (end-of-branch orchestration with squash), review (PR feedback cycles), merge-prep (final squash before merge) |
 
 Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool
@@ -193,8 +161,9 @@ permissions. Skills that need isolation use `context: fork` in frontmatter.
 Skills are invoked as `/design-docs:{skill-name}`.
 
 The three workflow skills form a branch lifecycle: `/finalize` squashes commits
-and opens a PR, `/review` addresses PR feedback in small fix commits, and
-`/merge-prep` does a final squash for merge. All three are user-invocable only
+and opens a PR, `/review` addresses PR feedback in small fix commits (supports
+`--squash` to fold review commits into the previous commit), and `/merge-prep`
+does a final squash for merge. All three are user-invocable only
 (`disable-model-invocation: true`).
 
 ### Agents
@@ -203,7 +172,8 @@ Three agents orchestrate multi-skill workflows:
 
 - `agents/design-doc-agent.md` -- Design docs and plans lifecycle
 - `agents/context-doc-agent.md` -- CLAUDE.md context files
-- `agents/docs-gen-agent.md` -- User-facing documentation generation
+- `agents/user-docs.md` -- User-facing documentation generation (replaced
+  `docs-gen-agent.md` in 0.3.x; covers user-docs-*and docs-* skills)
 
 Agent frontmatter declares skills and tools. All three agents include `hooks`
 frontmatter with a PreToolUse entry for `allow-design-writes.sh` to auto-approve
@@ -267,27 +237,29 @@ scripts on the feat/hook-permissions branch.
    - Why rejected: The build infrastructure was disproportionate to the hook
      logic complexity. Bash scripts start faster than the binary's fast path.
 
-#### Decision 3: Hook Reinforcement System
+#### Decision 3: Minimal Hook Footprint (0.3.x)
 
-**Context:** Design docs only stay valuable if they are updated after
-implementation work. A single SessionStart injection is insufficient.
+**Context:** The original three-hook reinforcement system (SessionStart,
+SubagentStart, Stop) added maintenance overhead and the Stop/git-safety hooks
+introduced `jq` as a runtime dependency. In 0.3.x those responsibilities were
+delegated externally.
 
 **Options considered:**
 
-1. **Three-hook reinforcement (Chosen):**
+1. **Two-hook minimal footprint (Current):**
    - SessionStart: full context injection (philosophy + skill listing)
-   - SubagentStart: condensed awareness for spawned subagents
-   - Stop: soft post-implementation nudge with keyword detection
-   - Pros: Multiple touchpoints catch different scenarios; non-blocking
-   - Cons: Three hooks to maintain; Stop hook requires `jq`
-   - Why chosen: Different moments need different interventions. SessionStart
-     teaches, SubagentStart propagates, Stop reminds.
+   - PreToolUse: auto-approve design directory writes
+   - SubagentStart, Stop, and git-safety hooks removed
+   - Pros: Reduced surface area, no jq dependency for critical hooks, no hook
+     loop guard needed, fewer tests to maintain
+   - Why chosen: External tooling (commit plugin, session workflow) can handle
+     subagent awareness and git safety more reliably
 
-2. **SessionStart only:**
-   - Pros: Simple, single hook
-   - Cons: Subagents have no awareness; no post-implementation reminder
-   - Why rejected: Context is lost in subagent forks and forgotten after long
-     implementation sessions
+2. **Three-hook reinforcement (Previous, 0.2.x):**
+   - Pros: Multiple touchpoints; self-contained plugin
+   - Cons: jq dependency, loop guard complexity, six hooks to maintain
+   - Why superseded: Maintenance cost exceeded benefit once external tools
+     provided equivalent coverage
 
 #### Decision 4: Skills as Directories with SKILL.md
 
@@ -327,26 +299,14 @@ implementation work. A single SessionStart injection is insufficient.
 
 #### Pattern 3: Kill Switch + First-Install Detection
 
-- **Where used:** All three hooks
+- **Where used:** Both hooks (session-start.sh, allow-design-writes.sh)
 - **Why used:** Graceful degradation when the user has not initialized the
   design docs system, and a single env var to disable everything
 - **Implementation:** Each hook checks `DESIGN_DOCS_CONTEXT_ENABLED` first
   (kill switch), then checks for `.claude/design/` directory existence
   (first-install detection). Both conditions exit silently.
 
-#### Pattern 4: Branch-Aware Git Safety
-
-- **Where used:** `git-safety.sh` and `git-safety-mcp.sh` PreToolUse hooks
-- **Why used:** Squash-merge workflows require destructive operations (force
-  push, soft reset, rebase) on feature branches but never on the default branch
-- **Implementation:** Hooks detect the current branch via
-  `git rev-parse --abbrev-ref HEAD` and the default branch via
-  `git symbolic-ref refs/remotes/origin/HEAD` with `main` fallback. On the
-  default branch, destructive operations are denied. On feature branches, they
-  are auto-allowed with a permissionDecision response. Certain operations
-  (repo deletion, protection removal, admin merge) are always blocked.
-
-#### Pattern 5: Session Tag Convention
+#### Pattern 4: Session Tag Convention
 
 - **Where used:** `session-start.sh`, finalize skill, merge-prep skill
 - **Why used:** Tracks session boundaries on feature branches for squash-merge
@@ -355,17 +315,6 @@ implementation work. A single SessionStart injection is insufficient.
   merge-base of the feature branch with the default branch. Created by
   session-start.sh if missing, moved by finalize after squash, deleted by
   merge-prep after final squash.
-
-#### Pattern 6: Loop Guard for Stop Hook
-
-- **Where used:** `stop-reminder.sh`
-- **Why used:** The Stop hook's nudge can cause Claude to continue working,
-  which triggers another Stop event. Without a guard, this creates an infinite
-  loop.
-- **Implementation:** The hook reads `stop_hook_active` from stdin JSON. If it
-  is true (or missing/null), the hook exits immediately. Only fires when
-  `stop_hook_active` is explicitly false, meaning this is the first stop after
-  actual user-initiated work.
 
 ### Constraints and Trade-offs
 
@@ -386,13 +335,14 @@ implementation work. A single SessionStart injection is insufficient.
 - **Mitigation:** All hooks are invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh`
   rather than direct execution
 
-#### Trade-off: jq Dependency for Stop Hook
+#### Trade-off: jq Dependency for allow-design-writes.sh
 
-- **What we gained:** Reliable JSON parsing for stdin (stop_hook_active,
-  last_assistant_message extraction)
-- **What we sacrificed:** Stop hook fails silently if jq is not installed
-- **Why it is worth it:** jq is ubiquitous on developer machines; the stop hook
-  is a soft nudge, not critical infrastructure
+- **What we gained:** Reliable JSON parsing for PreToolUse stdin
+- **What we sacrificed:** allow-design-writes.sh fails silently if jq is not
+  installed
+- **Why it is worth it:** jq is ubiquitous on developer machines; the hook is
+  a convenience auto-approval, not critical infrastructure. The stop-reminder
+  and git-safety hooks (which also required jq) were removed in 0.3.x.
 
 ---
 
@@ -412,7 +362,7 @@ implementation work. A single SessionStart injection is insufficient.
 
 - `.claude-plugin/plugin.json` -- Plugin identity manifest (name, version,
   skills, agents)
-- `hooks/hooks.json` -- Hook configuration (hand-written, declares three hooks)
+- `hooks/hooks.json` -- Hook configuration (hand-written, declares two hooks)
 - `CLAUDE.md` -- Plugin workspace context for contributors
 
 **Communication:** Claude Code reads `hooks.json` to discover hooks and invokes
@@ -424,10 +374,7 @@ agents.
 **Responsibilities:**
 
 - Session context injection and session tag management (SessionStart)
-- Subagent awareness propagation (SubagentStart)
-- Post-implementation nudging (Stop)
 - Auto-approving design directory writes (PreToolUse)
-- Git safety: branch-aware permission decisions (PreToolUse)
 - Feature flag evaluation (DESIGN_DOCS_CONTEXT_ENABLED)
 - First-install detection (.claude/design/ existence)
 
@@ -435,26 +382,14 @@ agents.
 
 - `hooks/session-start.sh` -- SessionStart handler (outputs markdown context,
   manages session/start git tag on feature branches)
-- `hooks/subagent-start.sh` -- SubagentStart handler (outputs JSON
-  additionalContext)
-- `hooks/stop-reminder.sh` -- Stop handler (keyword detection + JSON
-  `systemMessage` nudge)
 - `hooks/allow-design-writes.sh` -- PreToolUse handler (auto-approves design
   dir writes)
-- `hooks/git-safety.sh` -- PreToolUse handler (branch-aware git safety for
-  Bash commands)
-- `hooks/git-safety-mcp.sh` -- PreToolUse handler (branch-aware git safety for
-  GitKraken MCP tools)
 
-**Communication:** Hooks receive JSON on stdin (SubagentStart, Stop, PreToolUse)
-or nothing (SessionStart). Hooks output structured JSON shaped per the
-Claude Code hook schema for the specific event:
+**Communication:** Hooks receive JSON on stdin (PreToolUse) or nothing
+(SessionStart). Hooks output structured JSON shaped per the Claude Code hook
+schema for the specific event:
 
 - SessionStart: plain text becomes `claudeContext`.
-- SubagentStart: JSON `hookSpecificOutput.additionalContext` (valid only on
-  hook events that support it).
-- Stop: JSON top-level `systemMessage` (Stop hooks do not support
-  `hookSpecificOutput.additionalContext`).
 - PreToolUse: JSON `hookSpecificOutput` with `permissionDecision: "allow"` or
   `"deny"` plus a reason string.
 
@@ -473,14 +408,15 @@ Exit code 0 indicates success.
 
 **Components:**
 
-37 skill directories organized in 5 categories:
+47 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
-| design-* | 15 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config |
-| context-* | 5 | validate, audit, review, update, split |
-| docs-* | 9 | generate-readme, generate-contributing, generate-security, generate-repo, generate-site, review, review-package, sync, update |
+| design-* | 16 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, docs-style |
+| context-* | 6 | validate, audit, review, update, split, docs-style |
+| docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
+| user-docs-* | 10 | add-page, badges, build-badges, build-toc, create-docs, create-readme, detect-shape, humanize, review, style |
 | workflow | 3 | finalize, review, merge-prep |
 
 **Communication:** Skills are invoked as `/design-docs:{skill-name}`. Each skill
@@ -499,7 +435,7 @@ assignment.
 
 - `agents/design-doc-agent.md` -- Design docs and plans lifecycle
 - `agents/context-doc-agent.md` -- CLAUDE.md context files
-- `agents/docs-gen-agent.md` -- User-facing documentation generation
+- `agents/user-docs.md` -- User-facing documentation generation
 
 **Communication:** Agent frontmatter declares skills and tools; the agent
 markdown body describes purpose, available skills, common workflows, and best
@@ -532,40 +468,7 @@ Claude Code          session-start.sh
     |                     |
 ```
 
-#### Interaction 2: Subagent Spawning
-
-**Participants:** Claude Code, subagent-start.sh
-
-**Flow:**
-
-1. Claude Code spawns a subagent
-2. Claude Code reads `hooks.json`, finds SubagentStart hook
-3. Claude Code invokes `bash ${CLAUDE_PLUGIN_ROOT}/hooks/subagent-start.sh`
-4. Script checks kill switch and first-install detection
-5. Script consumes stdin (required by hook protocol)
-6. Script outputs JSON with `hookSpecificOutput.additionalContext`
-7. Subagent receives the context as a system-level injection
-
-#### Interaction 3: Post-Implementation Nudge
-
-**Participants:** Claude Code, stop-reminder.sh
-
-**Flow:**
-
-1. Claude Code agent reaches a stop point
-2. Claude Code reads `hooks.json`, finds Stop hook
-3. Claude Code invokes `bash ${CLAUDE_PLUGIN_ROOT}/hooks/stop-reminder.sh`
-4. Script reads stdin JSON, extracts `stop_hook_active` and
-   `last_assistant_message`
-5. If `stop_hook_active` is not false: exits (loop guard)
-6. If no implementation keywords detected: exits silently
-7. If implementation keywords found: outputs a JSON object with a top-level
-   `systemMessage` field carrying the soft nudge that mentions design docs
-   and `/design-docs:finalize`. Stop hooks must use `systemMessage` rather
-   than `hookSpecificOutput.additionalContext`, which the Claude Code schema
-   only permits for UserPromptSubmit, PostToolUse, and PostToolBatch.
-
-#### Interaction 4: Skill Invocation
+#### Interaction 2: Skill Invocation
 
 **Participants:** User, Claude Code, SKILL.md, Agent (optional)
 
@@ -579,7 +482,7 @@ Claude Code          session-start.sh
 6. Agent uses co-located supporting files (frontmatter-rules.md,
    error-messages.md) as needed
 
-#### Interaction 5: Agent Multi-Skill Workflow
+#### Interaction 3: Agent Multi-Skill Workflow
 
 **Participants:** User, design-doc-agent, multiple skills
 
@@ -601,9 +504,9 @@ Claude Code          session-start.sh
   injected context.
 - **Kill switch:** Setting `DESIGN_DOCS_CONTEXT_ENABLED=false` causes all hooks
   to exit 0 immediately with no output.
-- **Missing jq:** The stop-reminder.sh hook requires jq for JSON parsing. If jq
-  is not installed, the `set -euo pipefail` will cause the script to exit on the
-  first jq call, and the nudge is silently skipped.
+- **Missing jq:** The allow-design-writes.sh hook requires jq for JSON parsing.
+  If jq is not installed, the script exits on the first jq call, and the
+  auto-approval is silently skipped (permission prompts appear normally).
 - **Skill errors:** Skills report errors via structured output (severity levels:
   ERROR, WARNING, INFO) with actionable fix recommendations.
 
@@ -618,51 +521,13 @@ Claude Code          session-start.sh
 ```json
 {
   "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 5 }] }],
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh", "timeout": 5 }] }],
     "PreToolUse": [
-      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash .../allow-design-writes.sh", "timeout": 3 }] },
-      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash .../git-safety.sh", "timeout": 5 }] },
-      { "matcher": "mcp__gitkraken__git_push|...", "hooks": [{ "type": "command", "command": "bash .../git-safety-mcp.sh", "timeout": 5 }] }
-    ],
-    "SubagentStart": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 3 }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "bash ...", "timeout": 10 }] }]
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/allow-design-writes.sh", "timeout": 3 }] }
+    ]
   }
 }
 ```
-
-**SubagentStart Hook Output (JSON):**
-
-```json
-{
-  "hookSpecificOutput": {
-    "hookEventName": "SubagentStart",
-    "additionalContext": "This project uses design docs..."
-  }
-}
-```
-
-**Stop Hook Input (JSON on stdin):**
-
-```json
-{
-  "stop_hook_active": false,
-  "last_assistant_message": "I created the file and implemented..."
-}
-```
-
-**Stop Hook Output (JSON on stdout):**
-
-```json
-{
-  "systemMessage": "Reminder: if this work touched architecture, data flows, or APIs, update the relevant design docs. Run /design-docs:finalize to wrap up the branch."
-}
-```
-
-Note: Stop hooks use a top-level `systemMessage` field rather than
-`hookSpecificOutput.additionalContext`. The Claude Code hook schema only
-permits `additionalContext` for `UserPromptSubmit`, `PostToolUse`, and
-`PostToolBatch`; emitting it from a Stop hook produces a schema validation
-error.
 
 **Design Config (design.config.json):**
 
@@ -724,7 +589,7 @@ tools: string          # comma-separated tool list
 
 ### Data Flow Diagrams
 
-#### Flow 1: Hook Reinforcement System
+#### Flow 1: Hook System
 
 ```text
 [Session Start]
@@ -734,19 +599,14 @@ tools: string          # comma-separated tool list
   Check DESIGN_DOCS_CONTEXT_ENABLED env var
   Check .claude/design/ exists
   Output: philosophy-first context + skill listing
+  Manage session/start git tag on feature branches
   |
   v
 [Claude Code Session Active]
   |
-  +-- spawns subagent --> [subagent-start.sh]
-  |                         Output: JSON additionalContext (<50 words)
-  |                         Subagent knows to flag design-doc-relevant changes
-  |
-  +-- agent stops --> [stop-reminder.sh]
-                        Read stdin JSON (stop_hook_active, last_assistant_message)
-                        Loop guard check
-                        Keyword pattern scanning
-                        Output: soft nudge if implementation detected
+  +-- Write/Edit to .claude/design/ or .claude/plans/ --> [allow-design-writes.sh]
+                                                           Output: permissionDecision: "allow"
+                                                           (prevents repeated permission prompts)
 ```
 
 #### Flow 2: Design Doc Lifecycle
@@ -884,16 +744,13 @@ structure:
 ```text
 __test__/
 +-- hooks/
-|   +-- session-start.test.ts     # Tests for SessionStart hook + session tags
-|   +-- subagent-start.test.ts    # Tests for SubagentStart hook
-|   +-- stop-reminder.test.ts     # Tests for Stop hook
+|   +-- session-start.test.ts       # Tests for SessionStart hook + session tags
 |   +-- allow-design-writes.test.ts # Tests for PreToolUse auto-approve
-|   +-- git-safety.test.ts        # Tests for git safety Bash hook (18 tests)
-|   +-- git-safety-mcp.test.ts    # Tests for git safety MCP hook (5 tests)
 ```
 
 Tests live outside `plugin/` because `plugin/` ships to users. Tests must not be
-distributed.
+distributed. Tests for the removed hooks (subagent-start, stop-reminder,
+git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ### Framework and Configuration
 
@@ -916,42 +773,11 @@ distributed.
   branch is even with main
 - All paths exit with code 0
 
-**git-safety.sh tests (18 tests):**
+**allow-design-writes.sh tests:**
 
-- Default branch (6 tests): blocks force push (--force, -f, --force-with-lease),
-  hard reset, rebase, branch deletion
-- Feature branch (5 tests): auto-allows force push, soft reset, hard reset,
-  rebase, force-with-lease
-- Always blocked (3 tests): gh repo delete, gh api branch protection, gh pr
-  merge --admin
-- Non-git commands (3 tests): skips non-git, safe git commands, git log
-- Kill switch (1 test): exits silently when disabled
-
-**git-safety-mcp.sh tests (5 tests):**
-
-- Default branch: blocks force push via MCP, blocks branch delete targeting
-  default
-- Feature branch: auto-allows force push via MCP
-- Non-matching: skips unrelated MCP tools
-- Kill switch: exits silently when disabled
-
-**subagent-start.sh tests:**
-
-- Outputs JSON with `hookSpecificOutput` containing `additionalContext`
-- Disabled state: outputs nothing
-- Not initialized: outputs nothing
-- Consumes stdin without hanging
-
-**stop-reminder.sh tests:**
-
-- Loop guard: exits silently when `stop_hook_active` is true or missing
-- Keyword detection: outputs JSON with a top-level `systemMessage` field
-  containing the nudge when implementation keywords are found (asserts
-  `json.systemMessage`, not `json.hookSpecificOutput.additionalContext`,
-  because Stop hooks do not support that field)
-- No keywords: exits silently when no implementation signals detected
-- Disabled state: outputs nothing
-- Not initialized: outputs nothing
+- Approves Write/Edit operations targeting `.claude/design/` and `.claude/plans/`
+- Passes through operations targeting other paths
+- Disabled state: outputs nothing when `DESIGN_DOCS_CONTEXT_ENABLED=false`
 
 ---
 
@@ -961,9 +787,7 @@ distributed.
 
 - Add slash commands for common operations (no commands exist yet; the
   `plugin/commands/` directory is prepared)
-- Improve stop-reminder.sh keyword patterns based on real-world usage data
-- ~~Consider adding PreToolUse/PostToolUse hooks~~ (implemented: allow-design-writes.sh,
-  git-safety.sh, git-safety-mcp.sh)
+- ~~Consider adding PreToolUse/PostToolUse hooks~~ (implemented: allow-design-writes.sh)
 
 ### Phase 2: Medium-term
 
@@ -971,23 +795,17 @@ distributed.
   `integration.ci` config section
 - Add Level 3 site documentation generation (RSPress framework support)
 - Implement plan-design bidirectional linking validation in pre-commit hooks
-- Explore replacing jq dependency in stop-reminder.sh with pure bash JSON
-  parsing for the simple fields used
 
 ### Phase 3: Long-term
 
 - Multi-project design doc federation (cross-repo design doc references)
 - Design doc versioning with semantic diffing
 - Interactive design doc explorer (HTML export with navigation)
-- Escalation path for stop hook: graduate from soft nudge to stronger
-  intervention based on configurable policy
 
 ### Potential Refactoring
 
 - Extract common hook patterns (kill switch, first-install detection) into a
-  shared bash library sourced by each hook
-- Consider adding a `hooks/lib/` directory for shared bash functions as the
-  hook count grows
+  shared bash library sourced by each hook if hook count grows
 
 ---
 
@@ -1017,9 +835,10 @@ distributed.
 ---
 
 **Document Status:** Current -- covers all major architectural components
-including the branch lifecycle workflow (git safety hooks, session tag management,
-squash workflow skills). Missing coverage: detailed per-skill internal
-architecture, detailed command system design (no commands exist yet).
+including the branch lifecycle workflow (session tag management, squash workflow
+skills), the user-docs skill suite, and the reduced two-hook footprint (0.3.x).
+Missing coverage: detailed per-skill internal architecture, detailed command
+system design (no commands exist yet).
 
 **Next Steps:** Add design docs for individual subsystems (skill framework
 internals, agent orchestration patterns) as complexity warrants separate

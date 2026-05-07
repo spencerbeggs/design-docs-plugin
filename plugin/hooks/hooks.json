@@ -21,48 +21,6 @@
 						"timeout": 3
 					}
 				]
-			},
-			{
-				"matcher": "Bash",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/git-safety.sh",
-						"timeout": 5
-					}
-				]
-			},
-			{
-				"matcher": "mcp__gitkraken__git_push|mcp__gitkraken__git_branch|mcp__gitkraken__git_checkout",
-				"hooks": [
-					{
-						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/git-safety-mcp.sh",
-						"timeout": 5
-					}
-				]
-			}
-		],
-		"SubagentStart": [
-			{
-				"hooks": [
-					{
-						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/subagent-start.sh",
-						"timeout": 3
-					}
-				]
-			}
-		],
-		"Stop": [
-			{
-				"hooks": [
-					{
-						"type": "command",
-						"command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/stop-reminder.sh",
-						"timeout": 10
-					}
-				]
 			}
 		]
 	}

@@ -4,7 +4,7 @@ description: Generate SECURITY.md for vulnerability reporting. Use when creating
   or updating security policies with supported versions and reporting instructions.
 allowed-tools: Read, Glob, Edit, Write
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Generate SECURITY.md
@@ -124,9 +124,9 @@ A generated SECURITY.md is successful when:
 - Reads `package.json` for version and contact info
 - Checks `.changeset/` for pending versions
 - Writes to repository root as `SECURITY.md`
-- Uses docs-gen-agent for generation
+- Uses user-docs agent for generation
 
 ## Related Skills
 
-- `/docs-generate-readme` - Generate package README
+- `/design-docs:user-docs-create-readme` - Generate package README
 - `/docs-generate-contributing` - Generate CONTRIBUTING.md

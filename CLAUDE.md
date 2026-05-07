@@ -36,16 +36,13 @@ design-docs-plugin/
 │   ├── hooks/
 │   │   ├── hooks.json               # Hook configuration
 │   │   ├── session-start.sh         # SessionStart context injection
-│   │   ├── subagent-start.sh        # SubagentStart context injection
-│   │   ├── stop-reminder.sh         # Stop post-implementation nudge
-│   │   ├── allow-design-writes.sh   # PreToolUse auto-approve design dirs
-│   │   ├── git-safety.sh           # PreToolUse git safety (Bash)
-│   │   └── git-safety-mcp.sh       # PreToolUse git safety (MCP)
+│   │   └── allow-design-writes.sh   # PreToolUse auto-approve design dirs
 │   ├── commands/                    # (no commands yet)
-│   ├── skills/                      # 37 skills
-│   │   ├── design-init/             # 15 design-* skills
-│   │   ├── context-validate/        # 5 context-* skills
-│   │   ├── docs-generate-readme/    # 9 docs-* skills
+│   ├── skills/                      # 47 skills
+│   │   ├── design-init/             # 16 design-* skills
+│   │   ├── context-audit/           # 6 context-* skills
+│   │   ├── docs-generate-contributing/ # 7 docs-* skills
+│   │   ├── user-docs-add-page/      # 10 user-docs-* skills
 │   │   ├── plan-create/             # 5 plan-* skills
 │   │   ├── finalize/                # squash workflow: finalize
 │   │   ├── review/                  # squash workflow: PR review
@@ -53,7 +50,7 @@ design-docs-plugin/
 │   ├── agents/
 │   │   ├── design-doc-agent.md
 │   │   ├── context-doc-agent.md
-│   │   └── docs-gen-agent.md
+│   │   └── user-docs.md
 │   └── CLAUDE.md
 ├── docs/
 ├── lib/

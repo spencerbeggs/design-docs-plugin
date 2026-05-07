@@ -4,7 +4,7 @@ description: Generate Level 3 (documentation sites) from design docs. Use when
   creating feature-rich, interactive documentation for RSPress/Docusaurus sites.
 allowed-tools: Read, Glob, Edit, Write
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Generate Documentation Site
@@ -182,7 +182,7 @@ Generated site documentation is successful when:
 
 ## Related Skills
 
-- `/docs-generate-readme` - Generate Level 1 README
+- `/design-docs:user-docs-create-readme` - Generate Level 1 README
 - `/docs-generate-repo` - Generate Level 2 repository docs
 - `/rspress-page` - Create individual RSPress pages
 - `/docs-sync` - Sync docs with changes

@@ -16,7 +16,7 @@ standards.
 
 This skill provides comprehensive quality auditing for LLM context files
 by running all validation checks, analyzing content efficiency, verifying
-design doc pointers, checking line limits, and generating detailed audit
+design doc pointers, checking word limits, and generating detailed audit
 reports with prioritized recommendations.
 
 ## Quick Start
@@ -59,12 +59,12 @@ reports with prioritized recommendations.
 High-level audit process:
 
 1. **Parse parameters** to determine audit scope and strictness
-2. **Load design.config.json** to get quality standards (line limits, etc.)
+2. **Load design.config.json** to get quality standards (word limits, etc.)
 3. **Discover CLAUDE.md files** using Glob (root + package-level)
 4. **Run validation checks** (structure, formatting, markdown quality)
 5. **Analyze content quality** (efficiency, organization, token usage)
 6. **Check design doc pointers** (existence, validity, coverage)
-7. **Verify line limits** (root: 500, child: 300 from config)
+7. **Verify word limits** (root: 2000, child: 1000 from config)
 8. **Calculate health scores** (file, package, overall)
 9. **Identify issues** by severity (critical, high, medium, low)
 10. **Generate recommendations** prioritized by impact
@@ -93,7 +93,7 @@ The audit generates a structured report with:
 For each CLAUDE.md file:
 
 - File path and role (root vs child)
-- Line count vs limit
+- Word count vs limit
 - Structure validation results
 - Content quality score
 - Design doc pointer status
@@ -110,7 +110,7 @@ Prioritized list of improvements:
 
 ### Quality Metrics
 
-- Average line count
+- Average word count
 - Design doc pointer coverage
 - Content efficiency score
 - Token optimization score
@@ -119,7 +119,7 @@ Prioritized list of improvements:
 
 The audit passes when:
 
-- All files under line limits (root: 500, child: 300)
+- All files under word limits (root: 2000, child: 1000)
 - No critical or high severity issues
 - All design doc pointers valid and exist
 - Content is lean imperative instructions (not implementation details)

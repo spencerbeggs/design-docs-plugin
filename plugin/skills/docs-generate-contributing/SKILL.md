@@ -4,7 +4,7 @@ description: Generate CONTRIBUTING.md for developer onboarding. Use when creatin
   or updating contribution guides with setup instructions and development workflows.
 allowed-tools: Read, Glob, Edit, Write
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Generate CONTRIBUTING.md
@@ -144,10 +144,10 @@ A generated CONTRIBUTING.md is successful when:
 - Reads `package.json` for scripts and engines
 - Reads config files (biome.jsonc, tsconfig.json, vitest.config.ts)
 - Writes to module root as `CONTRIBUTING.md`
-- Uses docs-gen-agent for generation
+- Uses user-docs agent for generation
 
 ## Related Skills
 
-- `/docs-generate-readme` - Generate package README
+- `/design-docs:user-docs-create-readme` - Generate package README
 - `/docs-generate-repo` - Generate Level 2 docs
 - `/docs-sync` - Sync docs with changes

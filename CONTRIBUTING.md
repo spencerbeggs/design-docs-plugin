@@ -26,9 +26,9 @@ Thank you for your interest in contributing to design-docs-plugin.
 3. Verify the setup:
 
    ```bash
-   bun run build
    bun run test
    bun run typecheck
+   bun run validate
    ```
 
 ## Development Workflow
@@ -50,7 +50,7 @@ Thank you for your interest in contributing to design-docs-plugin.
    bun run lint:md:fix       # Auto-fix markdown issues
    bun run typecheck         # Type-check
    bun run test              # Run tests
-   bun run build             # Build the plugin
+   bun run validate          # Validate plugin manifest
    ```
 
 4. Commit with conventional commit format (enforced by commitlint)
@@ -61,18 +61,16 @@ Thank you for your interest in contributing to design-docs-plugin.
 | Directory | Purpose | Ships to Users? |
 | --- | --- | --- |
 | `plugin/` | Plugin source, hooks, skills, agents | Yes |
-| `plugin/src/` | Shared source code | Yes |
 | `__test__/` | All tests | No |
 | `lib/` | Dev tooling configs | No |
 | `docs/` | Public documentation | No |
 
 ### Where to Put Things
 
-* **Shared source code** -- `plugin/src/{descriptive-name}.ts` (no barrel/index files)
-* **Hook handlers** -- `plugin/hooks/{name}.hook.ts`
+* **Hooks** -- `plugin/hooks/{name}.sh` (pure bash)
 * **Skills** -- `plugin/skills/{name}/SKILL.md`
 * **Agents** -- `plugin/agents/{name}.md`
-* **Tests** -- `__test__/` (mirrors plugin/ structure, e.g., `__test__/hooks/context.hook.test.ts`)
+* **Tests** -- `__test__/` (mirrors plugin/ structure, e.g., `__test__/hooks/session-start.test.ts`)
 
 ## Commit Conventions
 
@@ -126,11 +124,11 @@ This project uses [changesets](https://github.com/changesets/changesets) for ver
 3. The changeset is committed with your PR
 4. On merge, the release workflow processes changesets
 
-Version bumps automatically update both `plugin/package.json` and `plugin/.claude-plugin/plugin.json`.
+Version bumps automatically update `plugin/.claude-plugin/plugin.json`.
 
 ## Pull Request Process
 
-1. Ensure all checks pass (lint, typecheck, test, build)
+1. Ensure all checks pass (lint, typecheck, test, validate)
 2. Include a changeset if your change affects the plugin
 3. Fill out the PR template
 4. Sign off your commits (DCO)

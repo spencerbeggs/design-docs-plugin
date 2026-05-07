@@ -7,13 +7,9 @@ This is the distributable plugin directory. Everything here ships to end users v
 * `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
 * `hooks/hooks.json` -- Hook configuration consumed by Claude Code
 * `hooks/session-start.sh` -- SessionStart context injection
-* `hooks/subagent-start.sh` -- SubagentStart context injection
-* `hooks/stop-reminder.sh` -- Stop post-implementation nudge
 * `hooks/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
-* `hooks/git-safety.sh` -- PreToolUse git safety for Bash commands
-* `hooks/git-safety-mcp.sh` -- PreToolUse git safety for GitKraken MCP tools
-* `skills/` -- 37 SKILL.md files across design-*, context-*, docs-*, plan-*, finalize, review, merge-prep groups
-* `agents/` -- design-doc-agent, context-doc-agent, docs-gen-agent
+* `skills/` -- 47 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep groups
+* `agents/` -- design-doc-agent, context-doc-agent, user-docs
 * `commands/` -- (no commands yet)
 
 ## Hooks
@@ -26,25 +22,9 @@ All hooks check `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `fals
 
 Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it.
 
-### subagent-start.sh (SubagentStart)
-
-Injects condensed (<50 word) design docs awareness into every spawned subagent via JSON `additionalContext`. Tells subagents to flag architecture-relevant changes to the parent agent. Skips if `.claude/design/` does not exist.
-
-### stop-reminder.sh (Stop)
-
-Soft nudge after implementation work. Reads `stop_hook_active` from stdin JSON as a loop guard, then scans `last_assistant_message` for multi-word implementation keyword patterns. If detected, emits JSON with a top-level `systemMessage` field carrying the reminder. (Stop hooks do not support `hookSpecificOutput.additionalContext` — that field is only valid for UserPromptSubmit, PostToolUse, and PostToolBatch.) Does not block — context-only v1 with a documented escalation path. Skips if `.claude/design/` does not exist. Requires `jq`.
-
 ### allow-design-writes.sh (PreToolUse)
 
 Auto-approves Write and Edit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
-
-### git-safety.sh (PreToolUse)
-
-Git safety checks for Bash commands. Blocks destructive git operations (force push, hard reset, rebase, branch delete) on the default branch. Auto-allows these operations on feature branches to support squash-merge workflows. Always blocks `gh repo delete`, branch protection modification via `gh api`, and `gh pr merge --admin`. Requires `jq`.
-
-### git-safety-mcp.sh (PreToolUse)
-
-Git safety checks for GitKraken MCP tools. Same rules as git-safety.sh but reads tool name and parameters from MCP tool input format. Covers `mcp__gitkraken__git_push`, `mcp__gitkraken__git_branch`, and `mcp__gitkraken__git_checkout`. Requires `jq`.
 
 ## Key Skills
 
@@ -67,7 +47,7 @@ PR review cycle workflow invoked via `/design-docs:review`. Fetches active
 fixes, runs verification and lightweight doc check, then commits and pushes.
 Designed for iterative review cycles with small fix commits.
 
-Flags: `--force-docs`, `--no-push`, `--dry-run`
+Flags: `--force-docs`, `--no-push`, `--dry-run`, `--squash`
 
 User-invocable only (`disable-model-invocation: true`).
 

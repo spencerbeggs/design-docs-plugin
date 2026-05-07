@@ -4,7 +4,7 @@ description: Comprehensive documentation review and update. Use before merging
   branches to ensure all docs are current, complete, and consistent.
 allowed-tools: Read, Glob, Grep, Edit, Write, WebSearch
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Comprehensive Documentation Update
@@ -74,7 +74,7 @@ Apply safe fixes for metadata issues identified in review.
 Generate or update the package README.
 
 ```bash
-# Internally runs: /docs-generate-readme
+# Internally runs: /design-docs:user-docs-create-readme
 ```
 
 Ensure:
@@ -195,9 +195,9 @@ After completion, provide a summary:
 
 This skill orchestrates:
 
-- `/docs-review-package` - Package.json review
-- `/docs-generate-readme` - README generation
-- `/docs-generate-contributing` - CONTRIBUTING.md generation
-- `/docs-generate-security` - SECURITY.md generation
-- `/docs-generate-repo` - Level 2 docs generation
-- `/docs-review` - Documentation quality review
+- `/design-docs:docs-review-package` — Package.json review
+- `/design-docs:user-docs-create-readme` — README generation
+- `/design-docs:docs-generate-contributing` — CONTRIBUTING.md generation
+- `/design-docs:docs-generate-security` — SECURITY.md generation
+- `/design-docs:docs-generate-repo` — Level 2 docs generation
+- `/design-docs:user-docs-review` — Documentation quality review
