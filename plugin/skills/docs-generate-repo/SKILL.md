@@ -4,7 +4,7 @@ description: Generate Level 2 (repository docs) from design docs. Use when
   creating comprehensive topic-based documentation for developers.
 allowed-tools: Read, Glob, Edit, Write
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Generate Repository Documentation
@@ -162,7 +162,7 @@ Generated repository documentation is successful when:
 
 ## Related Skills
 
-- `/docs-generate-readme` - Generate Level 1 package README
+- `/design-docs:user-docs-create-readme` - Generate Level 1 package README
 - `/docs-generate-site` - Generate Level 3 site documentation
 - `/docs-sync` - Sync docs with design doc changes
 - `/design-review` - Review source design docs

@@ -12,6 +12,7 @@
 	"commands": [],
 	"skills": [
 		"./skills/context-audit",
+		"./skills/context-docs-style",
 		"./skills/context-review",
 		"./skills/context-split",
 		"./skills/context-update",
@@ -20,6 +21,7 @@
 		"./skills/design-audit",
 		"./skills/design-compare",
 		"./skills/design-config",
+		"./skills/design-docs-style",
 		"./skills/design-export",
 		"./skills/design-index",
 		"./skills/design-init",
@@ -32,11 +34,9 @@
 		"./skills/design-update",
 		"./skills/design-validate",
 		"./skills/docs-generate-contributing",
-		"./skills/docs-generate-readme",
 		"./skills/docs-generate-repo",
 		"./skills/docs-generate-security",
 		"./skills/docs-generate-site",
-		"./skills/docs-review",
 		"./skills/docs-review-package",
 		"./skills/docs-sync",
 		"./skills/docs-update",
@@ -47,7 +47,17 @@
 		"./skills/plan-explore",
 		"./skills/plan-list",
 		"./skills/plan-validate",
-		"./skills/review"
+		"./skills/review",
+		"./skills/user-docs-add-page",
+		"./skills/user-docs-badges",
+		"./skills/user-docs-build-badges",
+		"./skills/user-docs-build-toc",
+		"./skills/user-docs-create-docs",
+		"./skills/user-docs-create-readme",
+		"./skills/user-docs-detect-shape",
+		"./skills/user-docs-humanize",
+		"./skills/user-docs-review",
+		"./skills/user-docs-style"
 	],
-	"agents": ["./agents/context-doc-agent.md", "./agents/design-doc-agent.md", "./agents/docs-gen-agent.md"]
+	"agents": ["./agents/context-doc-agent.md", "./agents/design-doc-agent.md", "./agents/user-docs.md"]
 }

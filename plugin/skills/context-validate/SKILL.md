@@ -20,7 +20,7 @@ This skill validates LLM context files by:
 3. Checking for required sections
 4. Analyzing content quality and organization
 5. Verifying design doc references
-6. Checking line limits and organization
+6. Checking word limits and organization
 7. Reporting issues with severity levels
 
 ## Instructions
@@ -60,8 +60,8 @@ Extract parameters from the user's request:
 Read `.claude/design/design.config.json` to understand:
 
 - Context quality standards (`quality.context`)
-- Root max lines limit (default: 500)
-- Child max lines limit (default: 300)
+- Root max words limit (default: 2000)
+- Child max words limit (default: 1000)
 - Whether design doc pointers are required
 
 **Example config:**
@@ -70,8 +70,8 @@ Read `.claude/design/design.config.json` to understand:
 {
   "quality": {
     "context": {
-      "rootMaxLines": 500,
-      "childMaxLines": 300,
+      "rootMaxWords": 2000,
+      "childMaxWords": 1000,
       "requireDesignDocPointers": true
     }
   }
@@ -139,10 +139,10 @@ For each CLAUDE.md file, perform validation checks:
 - Lists are properly formatted
 - Tables are properly formatted (if present)
 
-**Line Length:**
+**Word Count:**
 
-- Root: ≤ 500 lines (configurable)
-- Package: ≤ 300 lines (configurable)
+- Root: ≤ 2000 words (configurable)
+- Package: ≤ 1000 words (configurable)
 - Flag violations with severity
 
 **Organization:**
@@ -273,7 +273,7 @@ Generate validation report:
 ### {file-path}
 
 **Status:** ✅ PASS / ⚠️  WARNINGS / ❌ FAIL
-**Lines:** {count} / {limit}
+**Words:** {count} / {limit}
 **Type:** Root / Package
 
 #### Errors
@@ -284,7 +284,7 @@ Generate validation report:
 
 #### Warnings
 
-- [Line X] Line limit exceeded ({actual} > {limit})
+- [Word count] Word limit exceeded ({actual} > {limit})
 - [Content] Overview is verbose (350 words, recommend <200)
 - [References] Design doc not referenced (observability.md exists)
 
@@ -306,7 +306,7 @@ Generate validation report:
 
 | Rule | Validation |
 | :--- | :--------- |
-| Max lines | 500 (configurable) |
+| Max words | 2000 (configurable) |
 | Required sections | Project Overview, Commands, Architecture, Tooling |
 | Design doc refs | Optional but recommended |
 | Heading level | Must start with H1 |
@@ -316,7 +316,7 @@ Generate validation report:
 
 | Rule | Validation |
 | :--- | :--------- |
-| Max lines | 300 (configurable) |
+| Max words | 1000 (configurable) |
 | Required sections | Package Overview, API/Exports, Development, Testing |
 | Design doc refs | Required if design docs exist |
 | File paths | Should reference package-relative paths |
@@ -325,7 +325,7 @@ Generate validation report:
 #### Severity Levels
 
 - **ERROR**: Must be fixed (missing sections, broken refs, invalid markdown)
-- **WARNING**: Should be fixed (line limit, quality issues, missing refs)
+- **WARNING**: Should be fixed (word limit, quality issues, missing refs)
 - **INFO**: Nice to have (optimization suggestions, style improvements)
 
 ## Error Messages
@@ -339,13 +339,13 @@ ERROR: Missing required section: {section}
 - Fix: Add section following CLAUDE.md template
 ```
 
-### Line Limit Exceeded
+### Word Limit Exceeded
 
 ```text
-WARNING: File exceeds line limit
-- Limit: {limit} lines
-- Actual: {actual} lines
-- Overage: {actual - limit} lines
+WARNING: File exceeds word limit
+- Limit: {limit} words
+- Actual: {actual} words
+- Overage: {actual - limit} words
 - Fix: Split into child CLAUDE.md files or remove redundant content
 ```
 
@@ -423,7 +423,7 @@ WARNING: Section is verbose
 ### CLAUDE.md
 
 **Status:** ⚠️  WARNINGS
-**Lines:** 487 / 500
+**Words:** 2150 / 2000
 **Type:** Root
 
 #### Errors
@@ -480,7 +480,7 @@ None found.
 ### pkgs/effect-type-registry/CLAUDE.md
 
 **Status:** ❌ FAIL
-**Lines:** 245 / 300
+**Words:** 1180 / 1000
 **Type:** Package
 
 #### Errors
@@ -546,7 +546,7 @@ None found.
 ### CLAUDE.md (Root)
 
 **Status:** ⚠️  WARNINGS
-**Lines:** 487 / 500
+**Words:** 2150 / 2000
 **Type:** Root
 
 #### Warnings
@@ -557,7 +557,7 @@ None found.
 ### pkgs/effect-type-registry/CLAUDE.md
 
 **Status:** ❌ FAIL
-**Lines:** 245 / 300
+**Words:** 1180 / 1000
 **Type:** Package
 
 #### Errors
@@ -567,7 +567,7 @@ None found.
 ### pkgs/rspress-plugin-api-extractor/CLAUDE.md
 
 **Status:** ✅ PASS
-**Lines:** 278 / 300
+**Words:** 890 / 1000
 **Type:** Package
 
 No issues found.
@@ -575,7 +575,7 @@ No issues found.
 ### website/CLAUDE.md
 
 **Status:** ✅ PASS
-**Lines:** 156 / 300
+**Words:** 480 / 1000
 **Type:** Package
 
 No issues found.
@@ -623,7 +623,7 @@ A valid CLAUDE.md file has:
 
 - ✅ All required sections present
 - ✅ Proper markdown structure
-- ✅ Within line limit
+- ✅ Within word limit
 - ✅ Valid design doc references
 - ✅ No markdown linting errors
 - ✅ Concise, imperative content

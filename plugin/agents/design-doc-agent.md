@@ -426,7 +426,7 @@ The design-doc-agent works closely with:
 
 - **context-doc-agent**: Design docs are referenced from CLAUDE.md files using
   `@` syntax
-- **docs-gen-agent**: Design docs inform user-facing documentation
+- **user-docs**: Design docs inform user-facing documentation
 - **Main Claude agent**: Delegates design doc tasks to this specialized agent
 
 ## Tool Access

@@ -4,7 +4,7 @@ description: Sync user documentation with design doc changes. Use when design do
   have been updated and user docs need to reflect the changes.
 allowed-tools: Read, Glob, Edit, Write
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Sync User Documentation
@@ -109,7 +109,7 @@ Mark synced docs with current timestamp.
 
 ## Related Skills
 
-- `/docs-generate-readme` - Regenerate README
+- `/design-docs:user-docs-create-readme` - Regenerate README
 - `/docs-generate-repo` - Regenerate repo docs
 - `/docs-generate-site` - Regenerate site docs
-- `/docs-review` - Review sync quality
+- `/design-docs:user-docs-review` - Review sync quality

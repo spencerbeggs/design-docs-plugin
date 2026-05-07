@@ -30,8 +30,8 @@ Read `.claude/design/design.config.json` to get quality standards:
 {
   "quality": {
     "context": {
-      "rootMaxLines": 500,
-      "childMaxLines": 300,
+      "rootMaxWords": 2000,
+      "childMaxWords": 1000,
       "requireDesignDocPointers": true
     }
   },
@@ -46,8 +46,8 @@ Read `.claude/design/design.config.json` to get quality standards:
 
 **Store:**
 
-- `rootMaxLines` (default: 500)
-- `childMaxLines` (default: 300)
+- `rootMaxWords` (default: 2000)
+- `childMaxWords` (default: 1000)
 - `requireDesignDocPointers` (default: true)
 - Module paths for child context discovery
 
@@ -73,7 +73,7 @@ Validate path exists and is a CLAUDE.md file.
 
 - File path
 - Role: "root" or "child" (package-level)
-- Expected line limit
+- Expected word limit
 - Module name (for children)
 
 ## Step 4: Validation Checks
@@ -99,19 +99,18 @@ Check markdown structure:
 - All code fences (```) are closed
 - Bullet lists use consistent markers
 
-### 4.2 Line Count Check
+### 4.2 Word Count Check
 
-Count total lines (excluding blank lines):
+Count total words:
 
 ```bash
-# Count non-blank lines
-grep -c -v '^[[:space:]]*$' {file}
+wc -w < {file}
 ```
 
 **Compare:**
 
-- Root CLAUDE.md: ≤ `rootMaxLines` (500)
-- Child CLAUDE.md: ≤ `childMaxLines` (300)
+- Root CLAUDE.md: ≤ `rootMaxWords` (2000)
+- Child CLAUDE.md: ≤ `childMaxWords` (1000)
 
 **Severity:**
 
@@ -200,7 +199,7 @@ Perform deep content analysis:
 
 Calculate based on:
 
-- Line density: fewer lines = higher score
+- Word density: fewer words = higher score
 - Bullet point ratio: more bullets = higher score
 - Link ratio: more design doc links = higher score
 - Code example ratio: fewer examples = higher score
@@ -209,7 +208,7 @@ Calculate based on:
 
 ```text
 efficiency = (
-  (1 - lineCount/limit) * 40 +
+  (1 - wordCount/limit) * 40 +
   (bulletPoints/totalParagraphs) * 30 +
   (designDocLinks/sections) * 20 +
   (1 - codeLines/totalLines) * 10
@@ -250,7 +249,7 @@ Combine validation results:
 ```text
 health = (
   structureValid * 25 +
-  lineLimitPass * 25 +
+  wordLimitPass * 25 +
   contentQuality * 25 +
   pointerStatus * 25
 )
@@ -280,21 +279,21 @@ Categorize all findings by severity:
 
 ### Critical Issues (Must Fix)
 
-- File exceeds limit by > 20%
+- File exceeds word limit by > 20%
 - Broken design doc pointers
 - Invalid markdown syntax
 - Missing required sections
 
 ### High Priority (Should Fix)
 
-- File exceeds limit by 10-20%
+- File exceeds word limit by 10-20%
 - Missing design doc pointers
 - Inefficient content structure
 - Poor token optimization
 
 ### Medium Priority (Nice to Have)
 
-- File exceeds limit by < 10%
+- File exceeds word limit by < 10%
 - Formatting inconsistencies
 - Could improve organization
 - Minor content issues

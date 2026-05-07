@@ -47,7 +47,7 @@ This skill manages configuration by:
 The design.config.json file is located at `.claude/design/design.config.json`
 and follows the JSON schema at:
 
-`.claude/skills/design-config/json-schemas/current.json`
+`https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json`
 
 ### Top-Level Structure
 
@@ -221,7 +221,7 @@ Validates design.config.json against the JSON schema.
 **Steps:**
 
 1. Read `.claude/design/design.config.json`
-2. Read schema from `json-schemas/current.json`
+2. Fetch schema from `https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json`
 3. Validate JSON structure
 4. Check all required fields present
 5. Validate field types and values
@@ -233,7 +233,7 @@ Validates design.config.json against the JSON schema.
 ```bash
 # Using Node.js with ajv
 npm install -g ajv-cli
-ajv validate -s json-schemas/current.json -d .claude/design/design.config.json
+curl -s https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json | ajv validate -s /dev/stdin -d .claude/design/design.config.json
 
 # Using Python with jsonschema
 pip install jsonschema
@@ -376,17 +376,13 @@ Manages the list of enabled skills.
 
 The complete JSON schema is located at:
 
-`.claude/skills/design-config/json-schemas/current.json`
-
-**Schema URL:**
-
-`https://spencerbegg.gs/schemas/design-config/1.0.0/schema.json`
+`https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json`
 
 **To reference in config:**
 
 ```json
 {
-  "$schema": ".claude/skills/design-config/json-schemas/current.json",
+  "$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
   "version": "1.0.0",
   ...
 }
@@ -493,7 +489,7 @@ The complete JSON schema is located at:
 ```text
 ERROR: Configuration validation failed
 
-Schema: .claude/skills/design-config/json-schemas/current.json
+Schema: https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json
 Config: .claude/design/design.config.json
 
 Errors:

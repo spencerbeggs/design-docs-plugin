@@ -14,6 +14,22 @@ fi
 # Consume stdin to prevent broken pipe errors
 cat > /dev/null
 
+# Persist GitHub credentials for gh-pr-review.sh across this session.
+# Maps GITHUB_PERSONAL_ACCESS_TOKEN → GH_TOKEN so the review script can
+# call the GitHub API without requiring re-export each turn.
+# Also derives GITHUB_REPOSITORY from the git remote if not already set.
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  if [ -n "${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
+    printf 'export GH_TOKEN=%q\n' "${GITHUB_PERSONAL_ACCESS_TOKEN}" >> "$CLAUDE_ENV_FILE"
+  fi
+  if [ -z "${GITHUB_REPOSITORY:-}" ] && command -v git &>/dev/null && git rev-parse --is-inside-work-tree &>/dev/null 2>&1; then
+    REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+    if [[ "$REMOTE_URL" =~ github\.com[:/]([^/]+/[^.]+)(\.git)?$ ]]; then
+      printf 'export GITHUB_REPOSITORY=%q\n' "${BASH_REMATCH[1]}" >> "$CLAUDE_ENV_FILE"
+    fi
+  fi
+fi
+
 # --- Session tag management ---
 # Creates or reports a session/start tag on feature branches to mark where
 # the session began. Used by finalize/review/merge-prep for squash boundaries.
@@ -102,7 +118,7 @@ Update design docs when you have:
 Delegate to specialized agents rather than editing directly:
 - design-doc-agent — design docs and implementation plans
 - context-doc-agent — CLAUDE.md context files
-- docs-gen-agent — user-facing documentation (READMEs, etc.)
+- user-docs — user-facing documentation (READMEs, etc.)
 </how_to_update>
 
 <available_skills>
@@ -118,9 +134,10 @@ Delegate to specialized agents rather than editing directly:
     /design-docs:context-validate, context-audit, context-review, context-update, context-split
   </skill_group>
   <skill_group name=\"user_docs\">
-    /design-docs:docs-generate-readme, docs-generate-repo, docs-generate-site,
-    docs-generate-contributing, docs-generate-security, docs-review, docs-review-package,
-    docs-sync, docs-update
+    /design-docs:user-docs-create-readme, user-docs-create-docs, user-docs-add-page,
+    user-docs-badges, user-docs-build-badges, user-docs-build-toc, user-docs-detect-shape,
+    user-docs-humanize, user-docs-review, docs-generate-contributing, docs-generate-security,
+    docs-review-package, docs-sync, docs-update
   </skill_group>
   <skill_group name=\"finalization\">
     /design-docs:finalize — end-of-branch workflow (update all docs, create changeset, squash, push, open PR)

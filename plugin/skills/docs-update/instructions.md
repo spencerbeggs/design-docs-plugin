@@ -77,7 +77,7 @@ Apply safe fixes only:
 
 **If README.md missing:**
 
-Generate new README using docs-generate-readme guidance:
+Generate new README using user-docs-create-readme guidance:
 
 - Add badges (npm version, license, node version)
 - Write clear problem statement

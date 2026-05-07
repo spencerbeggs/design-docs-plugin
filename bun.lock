@@ -6,7 +6,7 @@
       "name": "claude-plugin-template-root",
       "devDependencies": {
         "@savvy-web/changesets": "^0.8.0",
-        "@savvy-web/commitlint": "^0.7.1",
+        "@savvy-web/commitlint": "^0.8.0",
         "@savvy-web/lint-staged": "^1.0.0",
         "@types/bun": "1.3.11",
         "@types/node": "^25.5.0",
@@ -172,7 +172,7 @@
 
     "@savvy-web/changesets": ["@savvy-web/changesets@0.8.0", "", { "dependencies": { "@changesets/get-github-info": "^0.8.0", "@effect/cli": "^0.75.0", "@effect/platform": "^0.96.0", "@effect/platform-node": "^0.106.0", "@savvy-web/silk-effects": "^0.2.2", "effect": "^3.21.0", "jsonc-effect": "^0.2.1", "mdast-util-heading-range": "^4.0.0", "mdast-util-to-string": "^4.0.0", "remark-gfm": "^4.0.1", "remark-parse": "^11.0.0", "remark-stringify": "^11.0.0", "tinyglobby": "^0.2.16", "unified": "^11.0.5", "unified-lint-rule": "^3.0.1", "unist-util-visit": "^5.1.0", "workspaces-effect": "^0.3.0" }, "peerDependencies": { "@changesets/cli": "^2.30.0" }, "bin": { "savvy-changesets": "esm/bin/savvy-changesets.js" } }, "sha512-U/Kt19wmT8Dkzk4w41TjCDUGqtHCnzdgVPRCpEEqNctphaV3onkD6mFy47CljL2qwRMlFwvswwMBA9qXZtSTTQ=="],
 
-    "@savvy-web/commitlint": ["@savvy-web/commitlint@0.7.1", "", { "dependencies": { "@effect/cli": "^0.75.1", "@effect/cluster": "^0.58.2", "@effect/platform": "^0.96.1", "@effect/platform-node": "^0.106.0", "@effect/printer": "^0.49.0", "@effect/printer-ansi": "^0.49.0", "@effect/rpc": "^0.75.1", "@effect/sql": "^0.51.1", "@savvy-web/silk-effects": "^0.3.0", "effect": "^3.21.2", "shell-quote": "^1.8.3", "workspaces-effect": "^0.5.0", "zod": "^4.3.6" }, "peerDependencies": { "@commitlint/cli": "^20.5.0", "@commitlint/config-conventional": "^20.5.0", "commitizen": "^4.3.0", "husky": "^9.1.0" }, "bin": { "savvy-commit": "bin/savvy-commit.js" } }, "sha512-riLOyo01K1ayb1CmgVQtfiF7fXZzfw8nXDazCLjNYiRtFqyPBQAoI2ED8YTPEUuZDO5KxQwy1zSIRRbLrsVlYQ=="],
+    "@savvy-web/commitlint": ["@savvy-web/commitlint@0.8.0", "", { "dependencies": { "@effect/cli": "^0.75.1", "@effect/cluster": "^0.58.2", "@effect/platform": "^0.96.1", "@effect/platform-node": "^0.106.0", "@effect/printer": "^0.49.0", "@effect/printer-ansi": "^0.49.0", "@effect/rpc": "^0.75.1", "@effect/sql": "^0.51.1", "@savvy-web/silk-effects": "^0.3.0", "effect": "^3.21.2", "shell-quote": "^1.8.3", "workspaces-effect": "^0.5.0", "zod": "^4.4.3" }, "peerDependencies": { "@commitlint/cli": "^20.5.3", "@commitlint/config-conventional": "^20.5.3", "commitizen": "^4.3.0", "husky": "^9.1.0" }, "bin": { "savvy-commit": "bin/savvy-commit.js" } }, "sha512-Way159kr7vOMgHd+psaOXQ5D87NvPSXS1vxJVZXAiXil2fsbD4bmu0EebBBoUIvduT3eumDmZOwle6QPxHz4kA=="],
 
     "@savvy-web/lint-staged": ["@savvy-web/lint-staged@1.0.0", "", { "dependencies": { "@effect/cli": "^0.75.1", "@effect/platform": "^0.96.1", "@effect/platform-node": "^0.106.0", "@savvy-web/silk-effects": "^0.3.0", "effect": "^3.21.2", "jsonc-effect": "^0.2.1", "prettier": "^3.8.3", "sort-package-json": "^3.6.1", "workspaces-effect": "^0.4.1", "yaml": "^2.8.3", "yaml-lint": "^1.7.0" }, "peerDependencies": { "@biomejs/biome": "2.4.12", "@types/node": "^25.6.0", "@typescript/native-preview": "^7.0.0-dev.20260124.1", "husky": "^9.1.0", "lint-staged": "^16.4.0", "markdownlint-cli2": "^0.22.0", "markdownlint-cli2-formatter-codequality": "^0.0.7", "turbo": "^2.9.0", "typescript": "^6.0.0" }, "optionalPeers": ["@biomejs/biome"], "bin": { "savvy-lint": "bin/savvy-lint.js" } }, "sha512-r+IoAhZeiGw+cKX+0Ly3Y+EX+MKEpJe2Z9Kjkob9z95YADWZT5tTHiTYt0+n5TWLv4qd2nY6/uTeZtZ4u/I1/Q=="],
 
@@ -904,7 +904,7 @@
 
     "yargs-parser": ["yargs-parser@21.1.1", "", {}, "sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw=="],
 
-    "zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+    "zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 

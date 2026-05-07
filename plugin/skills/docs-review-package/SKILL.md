@@ -4,7 +4,7 @@ description: Review package.json for completeness and best practices. Use when
   auditing metadata, checking dependency versions, or validating peerDependencies.
 allowed-tools: Read, Glob, Grep, WebSearch
 context: fork
-agent: docs-gen-agent
+agent: user-docs
 ---
 
 # Review Package.json
@@ -196,10 +196,10 @@ A package.json review is successful when:
 - Reads `package.json` from module path
 - Optionally queries npm registry for version info
 - Reports findings (does not auto-fix versions)
-- Uses docs-gen-agent for review
+- Uses user-docs agent for review
 
 ## Related Skills
 
-- `/docs-generate-readme` - Generate package README
+- `/design-docs:user-docs-create-readme` - Generate package README
 - `/docs-generate-contributing` - Generate CONTRIBUTING.md
 - `/docs-sync` - Sync docs with package.json changes
