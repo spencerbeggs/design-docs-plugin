@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-05-06
-last-synced: 2026-05-06
+updated: 2026-05-11
+last-synced: 2026-05-11
 completeness: 95
 related: []
 dependencies: []
@@ -39,8 +39,10 @@ skills/agents with no compiled binary, no TypeScript runtime, and no runtime
 dependencies. The plugin has 47 skills organized across 3 specialized agents,
 activated through two hooks: a SessionStart hook that injects context and manages
 session tags, and a PreToolUse hook for auto-approving design directory writes.
-SubagentStart, Stop, and git-safety hooks were removed in 0.3.x; those
-responsibilities were delegated to the session workflow and the commit plugin.
+Hooks are organized by event name in subdirectories (`hooks/<event-kebab>/`)
+with shared bash helpers in `hooks/lib/`. SubagentStart, Stop, and git-safety
+hooks were removed in 0.3.x; those responsibilities were delegated to the
+session workflow and the commit plugin.
 
 The plugin follows a **sidecar distribution pattern**: it is developed inside a
 monorepo with full dev tooling (linting, testing, CI), but only the `plugin/`
@@ -52,7 +54,13 @@ repository. This separation ensures dev infrastructure never ships.
 - Sidecar isolation: the `plugin/` directory is fully self-contained and
   independently distributable
 - Pure bash hooks: no compiled binary, no TypeScript runtime, no build step --
-  hooks are plain bash scripts invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh`
+  hooks are plain bash scripts invoked via
+  `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/<name>.sh`
+- Event-subdirectory layout: hooks live under
+  `hooks/<event-kebab>/<name>.sh` (e.g. `session-start/context-inject.sh`,
+  `pre-tool-use/allow-design-writes.sh`); shared helpers live in `hooks/lib/`
+  and are sourced via relative paths so the plugin works regardless of where
+  it is installed
 - Convention over configuration: skills follow a strict directory structure
   (`skills/{name}/SKILL.md`) with optional supporting files
 - Agents as orchestrators: agents coordinate multiple skills within a shared
@@ -79,16 +87,21 @@ The monorepo has four top-level areas with distinct responsibilities:
 
 ```text
 design-docs-plugin/
-+-- plugin/             # DISTRIBUTABLE -- everything here ships to users
-|   +-- .claude-plugin/ # Plugin manifest (plugin.json)
-|   +-- hooks/          # Bash hook scripts + hooks.json
-|   +-- skills/         # 47 skill directories
-|   +-- agents/         # 3 agent definitions
-|   +-- commands/       # (no commands yet)
++-- plugin/                       # DISTRIBUTABLE -- everything here ships to users
+|   +-- .claude-plugin/           # Plugin manifest (plugin.json)
+|   +-- hooks/
+|   |   +-- hooks.json            # Hook configuration (event -> script paths)
+|   |   +-- lib/                  # Shared bash helpers sourced by hook scripts
+|   |   +-- session-start/        # SessionStart scripts
+|   |   +-- pre-tool-use/         # PreToolUse scripts
+|   |   +-- fixtures/             # Reserved for hook-payload fixtures
+|   +-- skills/                   # 47 skill directories
+|   +-- agents/                   # 3 agent definitions
+|   +-- commands/                 # (no commands yet)
 |   +-- CLAUDE.md
-+-- __test__/           # ALL tests (mirrors plugin/ structure)
-+-- docs/               # User-facing public documentation
-+-- lib/                # Dev tooling configs and scripts
++-- __test__/                     # ALL tests (mirrors plugin/ structure)
++-- docs/                         # User-facing public documentation
++-- lib/                          # Dev tooling configs and scripts
 ```
 
 **Boundary rule:** Nothing outside `plugin/` ships to users. Tests live in
@@ -109,31 +122,55 @@ The plugin identity is declared in `plugin/.claude-plugin/plugin.json`:
 ### Hook System
 
 Hooks are pure bash scripts declared in `plugin/hooks/hooks.json` (hand-written,
-not generated). Each hook entry uses the `command` type with
-`bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh` to avoid executable bit issues when
-distributed from repos that strip them.
+not generated). Scripts live in per-event subdirectories
+(`hooks/<event-kebab>/<name>.sh`) so path-based plugin-bash-engineer skills
+auto-load when an author opens a hook file. Each hook entry in `hooks.json` uses
+the `command` type with
+`bash ${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/<name>.sh` to avoid executable
+bit issues when distributed from repos that strip them.
+
+Shared helpers live in `hooks/lib/` and are sourced from each hook script via
+relative paths (`source "$(dirname "${BASH_SOURCE[0]}")/../lib/<name>.sh"`):
+
+- `lib/hook-output.sh` -- canonical JSON emitters (`emit_session_start`,
+  `emit_permission_allow`, `emit_noop`). Centralizes the response envelope so
+  hooks never hand-roll JSON and so a future schema change touches one file.
+- `lib/hook-debug.sh` -- structured stderr logging (`hook_debug`, `hook_error`)
+  gated on `DESIGN_DOCS_HOOK_DEBUG`; optionally appends to
+  `/tmp/design-docs-hook-errors.log` when `DESIGN_DOCS_HOOK_LOG=1`.
+- `lib/source-session-env.sh` -- loads `$CLAUDE_ENV_FILE` exports written by
+  the SessionStart hook so that non-producer hooks (PreToolUse, PostToolUse)
+  see `DESIGN_DOCS_*` variables in their own subprocess.
 
 All hooks check the `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Setting
 it to `"false"` disables all hook behavior (kill switch).
 
-**session-start.sh (SessionStart, timeout 5s):**
+**session-start/context-inject.sh (SessionStart, timeout 5s):**
 
 Injects philosophy-first design documentation context into every Claude Code
 session. Fires on all SessionStart sources (startup, resume, compact, clear).
-Includes first-install detection: if `.claude/design/` does not exist, shows
-initialization guidance instead of the full context. The context message explains
-what design docs are, why they matter, when to update them, and lists all
-available skills organized by category. On feature branches, manages the
-`session/start` local git tag for session boundary tracking -- creates at
-merge-base if missing, reports existing tag without moving it. Outputs branch
-session context as XML within the design documentation system block.
+Reads the SessionStart envelope from stdin and falls back to the envelope's
+`cwd` if `CLAUDE_PROJECT_DIR` is unset. Includes first-install detection: if
+`.claude/design/` does not exist, creates the directory and emits initialization
+guidance instead of the full context. The context message explains what design
+docs are, why they matter, when to update them, and lists all available skills
+organized by category. On feature branches, manages the `session/start` local
+git tag for session boundary tracking -- creates at merge-base if missing,
+reports existing tag without moving it. Outputs branch session context as XML
+within the design documentation system block. Writes `DESIGN_DOCS_GH_TOKEN`,
+`GITHUB_REPOSITORY`, `DESIGN_DOCS_PROJECT_DIR`, `DESIGN_DOCS_DATA_DIR`, and
+`DESIGN_DOCS_PLUGIN_ROOT` to `$CLAUDE_ENV_FILE` so downstream skills can recover
+plugin paths and GitHub auth via the three-tier fallback. Emits JSON via
+`emit_session_start`; emits `{}` no-op when `jq` is missing.
 
-**allow-design-writes.sh (PreToolUse, matcher: Write|Edit, timeout 3s):**
+**pre-tool-use/allow-design-writes.sh (PreToolUse, matcher: `Write|Edit|MultiEdit`, timeout 3s):**
 
-Auto-approves Write and Edit operations targeting `.claude/design/` and
-`.claude/plans/` directories. Prevents repeated permission prompts when agents
-update documentation. Reads stdin JSON, extracts `tool_input.file_path`, and
-outputs a JSON `permissionDecision: "allow"` if the path matches. Requires `jq`.
+Auto-approves Write, Edit, and MultiEdit operations targeting `.claude/design/`
+and `.claude/plans/` directories. Prevents repeated permission prompts when
+agents update documentation. Reads stdin JSON, extracts
+`tool_input.file_path`, and emits `permissionDecision: "allow"` via
+`emit_permission_allow` when the path matches. Fails open when `jq` is missing
+(logs an error via `hook_error` and exits 0, deferring to normal permissions).
 
 **Removed hooks (0.3.x):**
 
@@ -176,10 +213,10 @@ Three agents orchestrate multi-skill workflows:
   `docs-gen-agent.md` in 0.3.x; covers user-docs-*and docs-* skills)
 
 Agent frontmatter declares skills and tools. All three agents include `hooks`
-frontmatter with a PreToolUse entry for `allow-design-writes.sh` to auto-approve
-Write/Edit operations to design directories in subagent contexts. The agent
-markdown body describes purpose, available skills, common workflows, and best
-practices.
+frontmatter with a PreToolUse entry for `pre-tool-use/allow-design-writes.sh`
+to auto-approve Write/Edit/MultiEdit operations to design directories in
+subagent contexts. The agent markdown body describes purpose, available skills,
+common workflows, and best practices.
 
 ---
 
@@ -299,22 +336,38 @@ delegated externally.
 
 #### Pattern 3: Kill Switch + First-Install Detection
 
-- **Where used:** Both hooks (session-start.sh, allow-design-writes.sh)
+- **Where used:** Both hooks (`session-start/context-inject.sh`,
+  `pre-tool-use/allow-design-writes.sh`)
 - **Why used:** Graceful degradation when the user has not initialized the
   design docs system, and a single env var to disable everything
 - **Implementation:** Each hook checks `DESIGN_DOCS_CONTEXT_ENABLED` first
-  (kill switch), then checks for `.claude/design/` directory existence
-  (first-install detection). Both conditions exit silently.
+  (kill switch). The SessionStart hook auto-creates `.claude/design/` and
+  emits an initialization message if it was missing; the PreToolUse hook
+  simply exits 0 (deferring to normal permissions) when criteria are not met.
 
 #### Pattern 4: Session Tag Convention
 
-- **Where used:** `session-start.sh`, finalize skill, merge-prep skill
+- **Where used:** `session-start/context-inject.sh`, finalize skill,
+  merge-prep skill
 - **Why used:** Tracks session boundaries on feature branches for squash-merge
   workflows. The tag provides a stable anchor point for squash operations.
 - **Implementation:** `session/start` is a local-only git tag created at the
   merge-base of the feature branch with the default branch. Created by
-  session-start.sh if missing, moved by finalize after squash, deleted by
-  merge-prep after final squash.
+  `session-start/context-inject.sh` if missing, moved by finalize after squash,
+  deleted by merge-prep after final squash.
+
+#### Pattern 5: Shared Hook Lib via Relative Source
+
+- **Where used:** Both hook scripts source `hooks/lib/hook-output.sh` and
+  `hooks/lib/hook-debug.sh`
+- **Why used:** Centralizes the response-envelope JSON shape and stderr
+  logging so hooks never hand-roll JSON and so a future schema change touches
+  one file. Keeps the hooks small enough to read end-to-end.
+- **Implementation:** Each hook resolves the lib directory relative to its
+  own location: `_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"`
+  then sources `hook-output.sh` and `hook-debug.sh`. Works regardless of
+  where the plugin is installed because the relative path is stable inside
+  the distributable.
 
 ### Constraints and Trade-offs
 
@@ -332,17 +385,22 @@ delegated externally.
 - **Description:** Git repos and distribution mechanisms may strip executable
   permission bits
 - **Impact:** Hook scripts cannot rely on being executable
-- **Mitigation:** All hooks are invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh`
-  rather than direct execution
+- **Mitigation:** All hooks are invoked via
+  `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/<name>.sh` rather than direct
+  execution
 
-#### Trade-off: jq Dependency for allow-design-writes.sh
+#### Trade-off: jq Dependency for Hook JSON
 
-- **What we gained:** Reliable JSON parsing for PreToolUse stdin
-- **What we sacrificed:** allow-design-writes.sh fails silently if jq is not
-  installed
-- **Why it is worth it:** jq is ubiquitous on developer machines; the hook is
-  a convenience auto-approval, not critical infrastructure. The stop-reminder
-  and git-safety hooks (which also required jq) were removed in 0.3.x.
+- **What we gained:** Reliable JSON parsing for PreToolUse stdin and
+  jq-encoded response envelopes from `lib/hook-output.sh`
+- **What we sacrificed:** Both hooks degrade when jq is missing -- the
+  PreToolUse hook logs `hook_error "jq not found, deferring to normal permissions"`
+  and exits 0, and the SessionStart hook logs the same and emits `{}` (no-op)
+  rather than blocking the session
+- **Why it is worth it:** jq is ubiquitous on developer machines; both hooks
+  fail open (the session still starts, the permission flow still works) so a
+  missing dependency degrades gracefully. The stop-reminder and git-safety
+  hooks (which also required jq) were removed in 0.3.x.
 
 ---
 
@@ -380,18 +438,25 @@ agents.
 
 **Components:**
 
-- `hooks/session-start.sh` -- SessionStart handler (outputs markdown context,
-  manages session/start git tag on feature branches)
-- `hooks/allow-design-writes.sh` -- PreToolUse handler (auto-approves design
-  dir writes)
+- `hooks/session-start/context-inject.sh` -- SessionStart handler (outputs
+  XML context via `emit_session_start`, manages session/start git tag on
+  feature branches, persists `DESIGN_DOCS_*` env vars to `$CLAUDE_ENV_FILE`)
+- `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse handler
+  (auto-approves design dir writes via `emit_permission_allow`)
+- `hooks/lib/hook-output.sh` -- canonical JSON emitters shared by both hooks
+- `hooks/lib/hook-debug.sh` -- structured stderr logging shared by both hooks
+- `hooks/lib/source-session-env.sh` -- helper for non-producer hooks to load
+  the SessionStart env file into their subprocess
 
-**Communication:** Hooks receive JSON on stdin (PreToolUse) or nothing
-(SessionStart). Hooks output structured JSON shaped per the Claude Code hook
-schema for the specific event:
+**Communication:** Hooks receive a JSON envelope on stdin (both SessionStart
+and PreToolUse get an envelope with `session_id`, `cwd`, `hook_event_name`,
+and event-specific fields). Hooks output structured JSON shaped per the
+Claude Code hook schema for the specific event:
 
-- SessionStart: plain text becomes `claudeContext`.
-- PreToolUse: JSON `hookSpecificOutput` with `permissionDecision: "allow"` or
-  `"deny"` plus a reason string.
+- SessionStart: `hookSpecificOutput.additionalContext` carries the XML
+  context block (emitted via `emit_session_start`).
+- PreToolUse: `hookSpecificOutput.permissionDecision: "allow"` plus a reason
+  string (emitted via `emit_permission_allow`).
 
 Exit code 0 indicates success.
 
@@ -445,27 +510,41 @@ practices.
 
 #### Interaction 1: Session Startup
 
-**Participants:** Claude Code, session-start.sh
+**Participants:** Claude Code, `session-start/context-inject.sh`
 
 **Flow:**
 
 1. User starts a Claude Code session (or resumes, compacts, or clears)
 2. Claude Code reads `hooks.json`, finds SessionStart hook
-3. Claude Code invokes `bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh`
-4. Script checks `DESIGN_DOCS_CONTEXT_ENABLED` (kill switch)
-5. Script checks for `.claude/design/` directory (first-install detection)
-6. If not initialized: outputs initialization guidance, exits
-7. If initialized: outputs full philosophy-first context with skill listings
+3. Claude Code invokes
+   `bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start/context-inject.sh` with
+   the SessionStart envelope on stdin
+4. Script sources `lib/hook-output.sh` and `lib/hook-debug.sh` from the
+   relative `../lib/` path
+5. Script checks `DESIGN_DOCS_CONTEXT_ENABLED` (kill switch)
+6. Script parses the envelope, picks up `cwd` as a fallback for
+   `CLAUDE_PROJECT_DIR`, writes `DESIGN_DOCS_*` env vars to
+   `$CLAUDE_ENV_FILE`, and manages the `session/start` tag on feature
+   branches
+7. If `.claude/design/` is missing: creates it and emits an initialization
+   message
+8. If initialized: emits the full philosophy-first context with skill listings
+   via `emit_session_start`
 
 ```text
-Claude Code          session-start.sh
-    |                     |
-    |-- SessionStart ---->|
-    |                     |-- check env var
-    |                     |-- check .claude/design/
-    |                     |-- output context
-    |<-- claudeContext ---|
-    |                     |
+Claude Code           session-start/context-inject.sh
+    |                          |
+    |-- SessionStart -------->-|
+    |    (envelope on stdin)   |-- source ../lib/hook-output.sh
+    |                          |-- source ../lib/hook-debug.sh
+    |                          |-- check DESIGN_DOCS_CONTEXT_ENABLED
+    |                          |-- parse envelope, derive PROJECT_DIR
+    |                          |-- persist env to $CLAUDE_ENV_FILE
+    |                          |-- manage session/start tag
+    |                          |-- ensure .claude/design/ exists
+    |                          |-- emit_session_start "$CONTEXT"
+    |<-- additionalContext ----|
+    |                          |
 ```
 
 #### Interaction 2: Skill Invocation
@@ -504,9 +583,14 @@ Claude Code          session-start.sh
   injected context.
 - **Kill switch:** Setting `DESIGN_DOCS_CONTEXT_ENABLED=false` causes all hooks
   to exit 0 immediately with no output.
-- **Missing jq:** The allow-design-writes.sh hook requires jq for JSON parsing.
-  If jq is not installed, the script exits on the first jq call, and the
-  auto-approval is silently skipped (permission prompts appear normally).
+- **Missing jq:** Both hooks degrade gracefully when jq is missing. The
+  PreToolUse hook logs via `hook_error` and exits 0, deferring to normal
+  permissions. The SessionStart hook logs via `hook_error` and emits `{}`
+  (no-op) so the session still starts.
+- **Debug logging:** Setting `DESIGN_DOCS_HOOK_DEBUG=1` enables `hook_debug`
+  output to stderr. Setting `DESIGN_DOCS_HOOK_LOG=1` additionally appends
+  every log line to `/tmp/design-docs-hook-errors.log` (overridable via
+  `DESIGN_DOCS_HOOK_LOG_PATH`).
 - **Skill errors:** Skills report errors via structured output (severity levels:
   ERROR, WARNING, INFO) with actionable fix recommendations.
 
@@ -521,9 +605,28 @@ Claude Code          session-start.sh
 ```json
 {
   "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh", "timeout": 5 }] }],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start/context-inject.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
-      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/allow-design-writes.sh", "timeout": 3 }] }
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/allow-design-writes.sh\"",
+            "timeout": 3
+          }
+        ]
+      }
     ]
   }
 }
@@ -595,18 +698,26 @@ tools: string          # comma-separated tool list
 [Session Start]
   |
   v
-[session-start.sh]
+[hooks/session-start/context-inject.sh]
+  Source lib/hook-output.sh, lib/hook-debug.sh
   Check DESIGN_DOCS_CONTEXT_ENABLED env var
-  Check .claude/design/ exists
+  Parse stdin envelope; derive PROJECT_DIR
+  Persist DESIGN_DOCS_* env to $CLAUDE_ENV_FILE
+  Ensure .claude/design/ exists
   Output: philosophy-first context + skill listing
   Manage session/start git tag on feature branches
   |
   v
 [Claude Code Session Active]
   |
-  +-- Write/Edit to .claude/design/ or .claude/plans/ --> [allow-design-writes.sh]
-                                                           Output: permissionDecision: "allow"
-                                                           (prevents repeated permission prompts)
+  +-- Write/Edit/MultiEdit to .claude/design/ or .claude/plans/
+        |
+        v
+      [hooks/pre-tool-use/allow-design-writes.sh]
+        Source lib/hook-output.sh, lib/hook-debug.sh
+        Read tool_input.file_path from stdin
+        Output: permissionDecision: "allow"
+        (prevents repeated permission prompts)
 ```
 
 #### Flow 2: Design Doc Lifecycle
@@ -744,9 +855,13 @@ structure:
 ```text
 __test__/
 +-- hooks/
-|   +-- session-start.test.ts       # Tests for SessionStart hook + session tags
-|   +-- allow-design-writes.test.ts # Tests for PreToolUse auto-approve
+|   +-- session-start.test.ts       # Tests plugin/hooks/session-start/context-inject.sh
+|   +-- allow-design-writes.test.ts # Tests plugin/hooks/pre-tool-use/allow-design-writes.sh
 ```
+
+Test file names track the hook concept (one test file per hook) rather than
+the on-disk path, but each `HOOK_PATH` constant points at the new event-
+subdirectory location under `plugin/hooks/<event-kebab>/`.
 
 Tests live outside `plugin/` because `plugin/` ships to users. Tests must not be
 distributed. Tests for the removed hooks (subagent-start, stop-reminder,
@@ -761,7 +876,7 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ### What Is Tested
 
-**session-start.sh tests:**
+**session-start/context-inject.sh tests** (`__test__/hooks/session-start.test.ts`):
 
 - Enabled state: outputs context containing "Design Documentation System",
   agent names, "institutional memory"
@@ -773,9 +888,10 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
   branch is even with main
 - All paths exit with code 0
 
-**allow-design-writes.sh tests:**
+**pre-tool-use/allow-design-writes.sh tests** (`__test__/hooks/allow-design-writes.test.ts`):
 
-- Approves Write/Edit operations targeting `.claude/design/` and `.claude/plans/`
+- Approves Write/Edit/MultiEdit operations targeting `.claude/design/` and
+  `.claude/plans/`
 - Passes through operations targeting other paths
 - Disabled state: outputs nothing when `DESIGN_DOCS_CONTEXT_ENABLED=false`
 
@@ -787,7 +903,11 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 - Add slash commands for common operations (no commands exist yet; the
   `plugin/commands/` directory is prepared)
-- ~~Consider adding PreToolUse/PostToolUse hooks~~ (implemented: allow-design-writes.sh)
+- ~~Consider adding PreToolUse/PostToolUse hooks~~ (implemented:
+  `pre-tool-use/allow-design-writes.sh`)
+- ~~Extract common hook patterns (kill switch, JSON emit, debug logging) into
+  a shared bash library~~ (implemented: `hooks/lib/hook-output.sh`,
+  `hooks/lib/hook-debug.sh`, `hooks/lib/source-session-env.sh`)
 
 ### Phase 2: Medium-term
 
@@ -804,8 +924,11 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ### Potential Refactoring
 
-- Extract common hook patterns (kill switch, first-install detection) into a
-  shared bash library sourced by each hook if hook count grows
+- Migrate hook tests from `Bun.spawnSync` to BATS (Bash Automated Testing
+  System) so the test harness matches the implementation language
+- Promote `lib/source-session-env.sh` to a standard preamble for any new
+  non-producer hook (PostToolUse, UserPromptSubmit, etc.) so the
+  `DESIGN_DOCS_*` env contract is uniform across the hook set
 
 ---
 
@@ -836,7 +959,8 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 **Document Status:** Current -- covers all major architectural components
 including the branch lifecycle workflow (session tag management, squash workflow
-skills), the user-docs skill suite, and the reduced two-hook footprint (0.3.x).
+skills), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and
+the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x).
 Missing coverage: detailed per-skill internal architecture, detailed command
 system design (no commands exist yet).
 

@@ -7,72 +7,57 @@ set -euo pipefail
 
 # Default values
 MODULE=""
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 STATUS_FILTER=""
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 DESIGN_DOC=""
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 OWNER=""
 FORMAT="summary"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
-SHOW_PHASES=false
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 SHOW_HEALTH=true
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 ORPHANS_ONLY=false
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 STALE_ONLY=false
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 BLOCKED_ONLY=false
 AGE_THRESHOLD=30
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
-TODAY=$(date +%Y-%m-%d)
+
+# Portable YYYY-MM-DD → epoch helper. BSD/macOS date uses -j -f, GNU date
+# uses -d. Echoes 0 on failure (caller treats that as "unknown" / very old).
+date_to_epoch() {
+	local d="$1"
+	if date -j -f "%Y-%m-%d" "$d" +%s >/dev/null 2>&1; then
+		date -j -f "%Y-%m-%d" "$d" +%s
+	elif date -d "$d" +%s >/dev/null 2>&1; then
+		date -d "$d" +%s
+	else
+		echo 0
+	fi
+}
 
 # Colors
 RED='\033[0;31m'
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
-GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
-CYAN='\033[0;36m'
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
-MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Emoji indicators
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_READY="📅"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_IN_PROGRESS="🚧"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_BLOCKED="⏸️ "
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_COMPLETED="✅"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_ABANDONED="❌"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_WARNING="⚠️ "
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_CHECK="✅"
-# shellcheck disable=SC2034  # Will be used in Day 2-4 implementation
 EMOJI_PLAN="📋"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
 	case $1 in
 		--status=*)
-			# shellcheck disable=SC2034  # Will be used in Day 2 implementation
 			STATUS_FILTER="${1#*=}"
 			shift
 			;;
 		--design-doc=*)
-			# shellcheck disable=SC2034  # Will be used in Day 2 implementation
 			DESIGN_DOC="${1#*=}"
 			shift
 			;;
 		--owner=*)
-			# shellcheck disable=SC2034  # Will be used in Day 2 implementation
 			OWNER="${1#*=}"
 			shift
 			;;
@@ -80,28 +65,19 @@ while [[ $# -gt 0 ]]; do
 			FORMAT="${1#*=}"
 			shift
 			;;
-		--show-phases)
-			# shellcheck disable=SC2034  # Will be used in Day 4 implementation
-			SHOW_PHASES=true
-			shift
-			;;
 		--no-health)
-			# shellcheck disable=SC2034  # Will be used in Day 3 implementation
 			SHOW_HEALTH=false
 			shift
 			;;
 		--orphans)
-			# shellcheck disable=SC2034  # Will be used in Day 3 implementation
 			ORPHANS_ONLY=true
 			shift
 			;;
 		--stale)
-			# shellcheck disable=SC2034  # Will be used in Day 3 implementation
 			STALE_ONLY=true
 			shift
 			;;
 		--blocked)
-			# shellcheck disable=SC2034  # Will be used in Day 3 implementation
 			BLOCKED_ONLY=true
 			shift
 			;;
@@ -118,7 +94,6 @@ while [[ $# -gt 0 ]]; do
 			  --design-doc=PATH         Filter by design doc path
 			  --owner=USERNAME          Filter by owner
 			  --format=FORMAT           Output format (summary|detailed|timeline|json)
-			  --show-phases             Show phase details
 			  --no-health               Hide health analysis
 			  --orphans                 Show only orphaned plans
 			  --stale                   Show only stale plans
@@ -165,16 +140,29 @@ if ! [[ "$AGE_THRESHOLD" =~ ^[0-9]+$ ]]; then
 	exit 1
 fi
 
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [[ -z "$PROJECT_DIR" ]]; then
+	PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+
 # Load configuration
-CONFIG_FILE=".claude/design/design.config.json"
+CONFIG_FILE="$PROJECT_DIR/.claude/design/design.config.json"
 if [[ ! -f "$CONFIG_FILE" ]]; then
 	echo -e "${RED}ERROR: Configuration file not found: $CONFIG_FILE${NC}" >&2
 	exit 1
 fi
 
-PLANS_DIR=$(jq -r '.paths.plans' "$CONFIG_FILE")
-if [[ -z "$PLANS_DIR" ]] || [[ "$PLANS_DIR" == "null" ]]; then
-	PLANS_DIR=".claude/plans"
+PLANS_DIR_REL=$(jq -r '.paths.plans' "$CONFIG_FILE")
+if [[ -z "$PLANS_DIR_REL" ]] || [[ "$PLANS_DIR_REL" == "null" ]]; then
+	PLANS_DIR_REL=".claude/plans"
+fi
+# Anchor PLANS_DIR against PROJECT_DIR if the config value is relative
+if [[ "$PLANS_DIR_REL" = /* ]]; then
+	PLANS_DIR="$PLANS_DIR_REL"
+else
+	PLANS_DIR="$PROJECT_DIR/$PLANS_DIR_REL"
 fi
 
 # Verify plans directory exists
@@ -345,8 +333,7 @@ for plan_file in "${PLAN_FILES[@]}"; do
 
 	if [[ "$STALE_ONLY" == true ]]; then
 		if [[ -n "$updated" ]]; then
-			updated_epoch=$(date -j -f "%Y-%m-%d" "$updated" +%s \
-				2>/dev/null || echo 0)
+			updated_epoch=$(date_to_epoch "$updated")
 			now_epoch=$(date +%s)
 			days_old=$(( (now_epoch - updated_epoch) / 86400 ))
 
@@ -391,7 +378,7 @@ check_staleness() {
 	fi
 
 	local updated_epoch
-	updated_epoch=$(date -j -f "%Y-%m-%d" "$updated" +%s 2>/dev/null || echo 0)
+	updated_epoch=$(date_to_epoch "$updated")
 	local now_epoch
 	now_epoch=$(date +%s)
 	local days_old=$(( (now_epoch - updated_epoch) / 86400 ))
@@ -429,7 +416,7 @@ check_schedule() {
 	fi
 
 	local target_epoch
-	target_epoch=$(date -j -f "%Y-%m-%d" "$target" +%s 2>/dev/null || echo 0)
+	target_epoch=$(date_to_epoch "$target")
 	local now_epoch
 	now_epoch=$(date +%s)
 
@@ -605,8 +592,7 @@ output_summary() {
 
 				# Calculate age
 				if [[ -n "$updated" ]]; then
-					updated_epoch=$(date -j -f "%Y-%m-%d" "$updated" +%s \
-						2>/dev/null || echo 0)
+					updated_epoch=$(date_to_epoch "$updated")
 					now_epoch=$(date +%s)
 					days_old=$(( (now_epoch - updated_epoch) / 86400 ))
 					age_str="$days_old day(s) old"

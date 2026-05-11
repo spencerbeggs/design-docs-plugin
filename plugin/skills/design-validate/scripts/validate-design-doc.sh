@@ -3,8 +3,18 @@ set -euo pipefail
 
 # Usage: validate-design-doc.sh <file-path>
 # Exit codes: 0 = valid, 1 = invalid
+#
+# <file-path> may be absolute or relative. Relative paths resolve against
+# DESIGN_DOCS_PROJECT_DIR / CLAUDE_PROJECT_DIR / git toplevel / cwd.
 
-FILE="$1"
+FILE="${1:?file-path required}"
+if [[ "$FILE" != /* ]]; then
+  PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+  if [ -z "$PROJECT_DIR" ]; then
+    PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  fi
+  FILE="$PROJECT_DIR/$FILE"
+fi
 
 # Extract module from path: .claude/design/{module}/{file}.md
 MODULE=$(echo "$FILE" | sed -n 's|.claude/design/\([^/]*\)/.*|\1|p')

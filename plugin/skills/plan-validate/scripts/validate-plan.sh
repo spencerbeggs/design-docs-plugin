@@ -3,8 +3,22 @@ set -euo pipefail
 
 # validate-plan.sh - Validate plan document frontmatter
 # Usage: ./validate-plan.sh <plan-file>
+#
+# <plan-file> may be absolute or relative. Relative paths are resolved
+# against DESIGN_DOCS_PROJECT_DIR / CLAUDE_PROJECT_DIR / git toplevel /
+# cwd (in that order) so the script behaves the same whether invoked
+# from the host (cwd = project) or from a subshell with a drifted cwd.
 
 PLAN_FILE="${1:-}"
+
+# Anchor a relative path against the user's project root.
+if [ -n "$PLAN_FILE" ] && [[ "$PLAN_FILE" != /* ]]; then
+	PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+	if [ -z "$PROJECT_DIR" ]; then
+		PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+	fi
+	PLAN_FILE="$PROJECT_DIR/$PLAN_FILE"
+fi
 
 # Colors for output
 RED='\033[0;31m'

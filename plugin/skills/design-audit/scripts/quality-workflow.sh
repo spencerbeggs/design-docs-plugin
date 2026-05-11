@@ -4,9 +4,23 @@ set -euo pipefail
 # Quality improvement workflow for design documentation
 # Identifies quality issues and generates improvement roadmap
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DESIGN_DIR="$PROJECT_ROOT/.claude/design"
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks. Never dirname-walk from
+# this script's location — that lands inside the plugin install.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+DESIGN_DIR="$PROJECT_DIR/.claude/design"
+
+# Resolve plugin install root for sibling-skill reference.
+# Dirname-walk is the standalone-invocation fallback only.
+PLUGIN_ROOT="${DESIGN_DOCS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
+if [ -z "$PLUGIN_ROOT" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+fi
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
 
 echo "======================================="
 echo "Design Documentation Quality Analysis"
@@ -15,7 +29,7 @@ echo ""
 
 # Run validation first
 echo "Running validation..."
-if ! "$SCRIPT_DIR/validate-all-docs.sh"; then
+if ! "$VALIDATE_SCRIPT"; then
   echo ""
   echo "❌ Quality check stopped: Fix validation errors first"
   exit 1
@@ -143,6 +157,7 @@ if [[ "$DRAFT_STATUS" -gt 0 ]]; then
 fi
 
 echo ""
-echo "Run 'pnpm run docs:maintenance' to check for stale docs"
-echo "Run 'pnpm run docs:release' before releases"
+echo "Next steps:"
+echo "  - Invoke /design-docs:design-audit to check for stale docs"
+echo "  - Invoke /design-docs:design-validate before releases"
 echo ""

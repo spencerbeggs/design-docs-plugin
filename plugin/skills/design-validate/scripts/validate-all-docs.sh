@@ -5,8 +5,15 @@ set -euo pipefail
 # Validates all design documentation files in .claude/design/
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DESIGN_DIR="$PROJECT_ROOT/.claude/design"
+
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks. Never dirname-walk from
+# $SCRIPT_DIR — that lands inside the plugin install.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+DESIGN_DIR="$PROJECT_DIR/.claude/design"
 
 # Check if design directory exists
 if [[ ! -d "$DESIGN_DIR" ]]; then

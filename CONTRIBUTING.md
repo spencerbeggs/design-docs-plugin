@@ -67,7 +67,7 @@ Thank you for your interest in contributing to design-docs-plugin.
 
 ### Where to Put Things
 
-* **Hooks** -- `plugin/hooks/{name}.sh` (pure bash)
+* **Hooks** -- `plugin/hooks/<event-kebab>/{name}.sh` (pure bash). Shared helpers in `plugin/hooks/lib/`.
 * **Skills** -- `plugin/skills/{name}/SKILL.md`
 * **Agents** -- `plugin/agents/{name}.md`
 * **Tests** -- `__test__/` (mirrors plugin/ structure, e.g., `__test__/hooks/session-start.test.ts`)

@@ -46,6 +46,25 @@ Exception: cardinal types whose shapes must stay stable across many files. If a 
 
 ## Prose mechanics
 
-- **No artificial line-breaks** Each paragraph and list item occupies a single source line; the renderer wraps it.
 - **Sentence case** for headings. First word capitalized, rest lowercase, except acronyms (`API`, `CLI`) and proper nouns (`TypeScript`, `Effect`).
 - **No Oxford commas.** Write `A, B and C`, not `A, B, and C`.
+
+### No artificial line breaks
+
+Each paragraph and each list item occupies a single source line. The renderer handles wrapping. Do not insert hard line breaks inside a sentence or bullet point. If you encounter a pre-existing violation of this rule, you MUST fix it when you edit the file for other reasons, but do not add new violations.
+
+Wrong:
+
+```markdown
+This is a paragraph that has an articifial line break in the 
+middle of a sentence, which is against the style rules.
+- This is a bullet item
+  that continues on a second source line.
+```
+
+Right:
+This paragraph occupies a single source line, with no artificial breaks. The renderer will wrap it appropriately.
+
+```markdown
+- This is a bullet item that stays on a single source line.
+```

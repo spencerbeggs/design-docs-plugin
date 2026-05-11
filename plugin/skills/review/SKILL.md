@@ -3,7 +3,7 @@ name: review
 description: Fetch and address PR review feedback. Filters resolved/outdated
   comments, triages by severity, makes fixes, runs lightweight doc check,
   commits and pushes. Use during PR review cycles.
-allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit
+allowed-tools: Skill, Read, Glob, Grep, Bash(git *), Bash(gh *), Bash(bun *), Bash(bash *), Write, Edit
 disable-model-invocation: true
 argument-hint: "[pr-number] [--force-docs] [--no-push] [--dry-run] [--squash]"
 ---
@@ -17,12 +17,16 @@ Designed for iterative review cycles where small fix commits are preferred.
 ## GitHub API operations
 
 Several steps call `gh-pr-review.sh` to perform GitHub operations (resolving
-threads, minimizing stale comments). This requires `GH_TOKEN` to be set. The
-session-start hook maps `GITHUB_PERSONAL_ACCESS_TOKEN` → `GH_TOKEN` at the
-start of every session — if you have a PAT configured, it is already available.
+threads, minimizing stale comments). This requires `DESIGN_DOCS_GH_TOKEN` to be
+set. The session-start hook maps `GITHUB_PERSONAL_ACCESS_TOKEN` →
+`DESIGN_DOCS_GH_TOKEN` at the start of every session — if you have a PAT
+configured, it is already available. The plugin uses a namespaced variable so it
+does not override the user's own `GH_TOKEN` if they have one set for unrelated
+purposes; `gh-pr-review.sh` translates the namespaced value into `GH_TOKEN` at
+each `gh` call site.
 
-If `GH_TOKEN` is not set, all `gh-pr-review.sh` calls are skipped gracefully;
-the code-change workflow still runs normally.
+If `DESIGN_DOCS_GH_TOKEN` is not set, all `gh-pr-review.sh` calls are skipped
+gracefully; the code-change workflow still runs normally.
 
 Local agents never call `approve-pr`. Approval is left to the cloud reviewer
 after it confirms the push resolves all outstanding issues.
@@ -55,13 +59,15 @@ Store this value for use in Step 7.5.
 If a PR number was provided as an argument, use it directly:
 
 ```bash
-gh pr view $PR_NUMBER --json number,url,title,headRefName
+GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+  gh pr view $PR_NUMBER --json number,url,title,headRefName
 ```
 
 If no PR number, auto-detect from the current branch:
 
 ```bash
-gh pr view --json number,url,title,headRefName
+GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+  gh pr view --json number,url,title,headRefName
 ```
 
 If no PR exists for the current branch, stop:
@@ -81,12 +87,12 @@ summary comments from previous pushes clutter the thread and make it harder
 to see what is still open. This step runs before triage so the filtered
 comment list reflects current state only.
 
-**Skip this entire step if `GH_TOKEN` is not set.**
+**Skip this entire step if `DESIGN_DOCS_GH_TOKEN` is not set.**
 
 ### 1.5.1 Resolve context
 
 ```bash
-GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-$(gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null)}"
+GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-$(GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null)}"
 CURRENT_SHA=$(git rev-parse HEAD)
 SCRIPT="${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/gh-pr-review.sh"
 ```
@@ -94,10 +100,12 @@ SCRIPT="${CLAUDE_PLUGIN_ROOT}/skills/review/scripts/gh-pr-review.sh"
 ### 1.5.2 Detect cloud reviewer bot name
 
 Scan PR issue comments for patterns that match cloud review summaries to
-identify the bot's login automatically:
+identify the bot's login automatically. Inject the plugin's token at the
+call site so a stale shell `GH_TOKEN` cannot win:
 
 ```bash
-BOT_NAME=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+BOT_NAME=$(GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
+  gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
   --jq '.[] | select(.body | test("# Code Review|<!-- claude-(code-review|review-sticky:)")) | .user.login' \
   2>/dev/null | head -n1)
 ```
@@ -105,10 +113,12 @@ BOT_NAME=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
 ### 1.5.3 Minimize old summaries
 
 If a bot name was found, minimize review summaries from previous pushes that
-are now outdated:
+are now outdated. Pass `DESIGN_DOCS_GH_TOKEN` (not `GH_TOKEN`) so the script
+resolves the plugin-scoped token rather than the user's shell token:
 
 ```bash
-APP_BOT_NAME="$BOT_NAME" GH_TOKEN="$GH_TOKEN" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+APP_BOT_NAME="$BOT_NAME" DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+  GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
   bash "$SCRIPT" minimize-old-summaries "$PR_NUMBER" "$CURRENT_SHA"
 ```
 
@@ -121,11 +131,14 @@ If no bot name was detected, skip:
 ### 2.1 Get All Review Comments
 
 Fetch review comments (inline code comments) and issue comments (general PR
-comments):
+comments). Inject the plugin token and disable the pager on every `gh`
+invocation:
 
 ```bash
-gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate
-gh api repos/{owner}/{repo}/issues/{number}/comments --paginate
+GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+  gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate
+GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+  gh api repos/{owner}/{repo}/issues/{number}/comments --paginate
 ```
 
 ### 2.2 Filter to Active Comments
@@ -219,7 +232,7 @@ changes needed), then legitimate fixes by severity.
 
 ### 4.1 Already-Fixed Comments
 
-For each already-fixed comment (requires `GH_TOKEN`):
+For each already-fixed comment (requires `DESIGN_DOCS_GH_TOKEN`):
 
 1. Confirm one more time by reading the current code
 2. Post a reply explaining the current state:
@@ -227,18 +240,19 @@ For each already-fixed comment (requires `GH_TOKEN`):
 3. Resolve the thread:
 
    ```bash
-   GH_TOKEN="$GH_TOKEN" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+   DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+     GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
      bash "$SCRIPT" resolve-thread "$COMMENT_ID" "$PR_NUMBER" "$CURRENT_SHA"
    ```
 
 4. Report: `[already-fixed] [file:line] — Resolved: [brief description]`
 
-If `GH_TOKEN` is not set, skip the GitHub call and report that the thread
-could not be resolved but the issue is confirmed fixed in code.
+If `DESIGN_DOCS_GH_TOKEN` is not set, skip the GitHub call and report that the
+thread could not be resolved but the issue is confirmed fixed in code.
 
 ### 4.2 Invalid Comments
 
-For each invalid comment (requires `GH_TOKEN`):
+For each invalid comment (requires `DESIGN_DOCS_GH_TOKEN`):
 
 1. Read the referenced code and understand what the reviewer misidentified
 2. Post a reply explaining why the comment is incorrect and what the code
@@ -249,7 +263,8 @@ For each invalid comment (requires `GH_TOKEN`):
 3. Resolve the thread:
 
    ```bash
-   GH_TOKEN="$GH_TOKEN" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+   DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+     GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
      bash "$SCRIPT" resolve-thread "$COMMENT_ID" "$PR_NUMBER" "$CURRENT_SHA"
    ```
 

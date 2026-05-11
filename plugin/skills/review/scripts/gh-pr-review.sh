@@ -23,13 +23,20 @@
 #       Submit a formal APPROVE review on the PR. Use only when all
 #       previously reported issues are resolved and no new issues exist.
 #
-# Required environment:
-#   GH_TOKEN              GitHub token (App installation token or PAT)
+# Required environment (one of):
+#   DESIGN_DOCS_GH_TOKEN  Plugin-scoped GitHub token (preferred — set by
+#                         session-start.sh from GITHUB_PERSONAL_ACCESS_TOKEN)
+#   GH_TOKEN              Fallback (user's shell token; do not rely on this)
 #   GITHUB_REPOSITORY     "owner/repo" (auto under GitHub Actions)
 #
 # Optional environment:
 #   APP_BOT_NAME          Bot login (required for minimize-old-summaries)
 #   CLAUDE_COMMENT_ID     Sticky comment ID to exclude from minimization
+#
+# Implementation note: this script never propagates GH_TOKEN session-wide
+# (that would override the user's own gh auth). Instead, the resolved
+# token is injected into each `gh` invocation as `GH_TOKEN=… gh …` along
+# with `GH_PAGER=cat` to prevent pager blocking.
 
 set -euo pipefail
 
@@ -37,6 +44,19 @@ set -euo pipefail
 
 err() { echo "Error: $*" >&2; exit 1; }
 log() { echo "$*" >&2; }
+
+# Resolve the plugin's GitHub token. Prefer the namespaced var so a stale
+# GH_TOKEN in the user's shell never wins. Falls back to GH_TOKEN/GITHUB_TOKEN
+# for compatibility with CI environments that set them directly.
+_resolve_token() {
+	echo "${DESIGN_DOCS_GH_TOKEN:-${GH_TOKEN:-${GITHUB_TOKEN:-}}}"
+}
+
+# Wrapper for every `gh` invocation in this script. Injects the resolved
+# token and disables the pager. Use this instead of bare `gh ...`.
+_gh() {
+	GH_TOKEN="$(_resolve_token)" GH_PAGER=cat gh "$@"
+}
 
 _owner() {
 	local o="${GITHUB_REPOSITORY_OWNER:-}"
@@ -59,7 +79,7 @@ _repo() {
 # Returns 1 (and logs) on transport failure or GraphQL errors.
 _graphql() {
 	local resp
-	if ! resp=$(gh api graphql "$@" 2>&1); then
+	if ! resp=$(_gh api graphql "$@" 2>&1); then
 		log "gh api graphql failed: $resp"
 		return 1
 	fi
@@ -115,7 +135,7 @@ cmd_resolve_thread() {
 	log "resolve-thread: $owner/$repo#$pr comment=$cid sha=${sha:0:7}"
 
 	local reply_body="Issue addressed at commit ${sha:0:7}."
-	if ! gh api "repos/$owner/$repo/pulls/$pr/comments/$cid/replies" \
+	if ! _gh api "repos/$owner/$repo/pulls/$pr/comments/$cid/replies" \
 		--method POST -f body="$reply_body" --silent 2>/dev/null; then
 		log "Warning: reply to thread failed (may already be resolved)"
 	fi
@@ -140,7 +160,7 @@ cmd_minimize_comment() {
 	owner=$(_owner)
 	repo=$(_repo)
 
-	node_id=$(gh api "repos/$owner/$repo/issues/comments/$cid" --jq '.node_id' 2>/dev/null) \
+	node_id=$(_gh api "repos/$owner/$repo/issues/comments/$cid" --jq '.node_id' 2>/dev/null) \
 		|| err "Failed to look up comment $cid"
 
 	_graphql -f id="$node_id" -f query='
@@ -168,7 +188,7 @@ cmd_minimize_old_summaries() {
 	log "minimize-old-summaries: $owner/$repo#$pr bot=$bot sticky=$sticky sha=${sha:0:7}"
 
 	local comments
-	comments=$(gh api "repos/$owner/$repo/issues/$pr/comments" --paginate) \
+	comments=$(_gh api "repos/$owner/$repo/issues/$pr/comments" --paginate) \
 		|| err "Failed to list comments"
 
 	local victims
@@ -221,7 +241,7 @@ cmd_check_status() {
 	log "check-status: $owner/$repo sha=${sha:0:7}"
 
 	# Internal pipe avoids the action's bash policy splitting `gh | jq`.
-	gh api "repos/$owner/$repo/commits/$sha/check-runs" --paginate \
+	_gh api "repos/$owner/$repo/commits/$sha/check-runs" --paginate \
 		| jq --argjson names '["PR Title Validation","Conventional Commits","Code Quality","Markdown","Tests"]' \
 			'.check_runs[] | select([.name] | inside($names)) | {name, status, conclusion, details_url}'
 }
@@ -236,7 +256,7 @@ cmd_approve_pr() {
 
 	log "approve-pr: $owner/$repo#$pr sha=${sha:0:7}"
 
-	gh api "repos/$owner/$repo/pulls/$pr/reviews" \
+	_gh api "repos/$owner/$repo/pulls/$pr/reviews" \
 		--method POST \
 		-f event=APPROVE \
 		-f body="$body" \
@@ -261,15 +281,16 @@ Usage:
   gh-pr-review.sh approve-pr             <pr_number>  <commit_sha> [body]
 
 Environment:
-  GH_TOKEN            required
-  GITHUB_REPOSITORY   "owner/repo" (auto under Actions)
-  APP_BOT_NAME        required for minimize-old-summaries
-  CLAUDE_COMMENT_ID   sticky comment id to exclude from minimization
+  DESIGN_DOCS_GH_TOKEN  preferred GitHub token (set by session-start hook)
+  GH_TOKEN              fallback token
+  GITHUB_REPOSITORY     "owner/repo" (auto under Actions)
+  APP_BOT_NAME          required for minimize-old-summaries
+  CLAUDE_COMMENT_ID     sticky comment id to exclude from minimization
 EOF
 	exit 1
 }
 
-[[ -z "${GH_TOKEN:-}" ]] && err "GH_TOKEN is required"
+[[ -z "$(_resolve_token)" ]] && err "DESIGN_DOCS_GH_TOKEN (or GH_TOKEN) is required"
 
 cmd="${1:-}"
 shift || true

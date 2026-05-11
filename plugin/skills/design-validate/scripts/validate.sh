@@ -1,14 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Design Documentation Validation Script
 # Validates frontmatter, structure, and cross-references
+#
+# Modules are discovered from .claude/design/design.config.json when present
+# (categories are read from modules.<name>.categories). If the config is
+# missing or jq is not installed, modules are discovered by listing direct
+# subdirectories of .claude/design/ and category validation is skipped.
 #
 # Usage:
 #   ./validate.sh [module|all]
 #
 # Examples:
 #   ./validate.sh all
-#   ./validate.sh effect-type-registry
+#   ./validate.sh my-module-name
+
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
 
 ERRORS=0
 WARNINGS=0
@@ -178,44 +191,60 @@ validate_file() {
 	fi
 }
 
-# Validate modules based on argument
+# Discover modules: prefer the config file (gives us categories), fall back
+# to directory listing.
+CONFIG_FILE="$PROJECT_DIR/.claude/design/design.config.json"
+DESIGN_ROOT="$PROJECT_DIR/.claude/design"
+
+discover_modules_from_config() {
+	[ -f "$CONFIG_FILE" ] || return 1
+	command -v jq &>/dev/null || return 1
+	jq -r '.modules // {} | keys[]' "$CONFIG_FILE" 2>/dev/null
+}
+
+categories_for_module() {
+	local mod="$1"
+	if [ -f "$CONFIG_FILE" ] && command -v jq &>/dev/null; then
+		jq -c --arg m "$mod" '.modules[$m].categories // []' "$CONFIG_FILE" 2>/dev/null
+	else
+		echo ""
+	fi
+}
+
+discover_modules_from_fs() {
+	[ -d "$DESIGN_ROOT" ] || return 0
+	find "$DESIGN_ROOT" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort
+}
+
 MODULE_ARG="${1:-all}"
 
-if [ "$MODULE_ARG" = "all" ] || [ "$MODULE_ARG" = "effect-type-registry" ]; then
-	echo "## effect-type-registry"
-	echo ""
-	CATEGORIES='["architecture", "observability", "performance"]'
-	for file in .claude/design/effect-type-registry/*.md; do
-		[ -f "$file" ] || continue
-		echo "- **$(basename "$file")**"
-		validate_file "$file" "effect-type-registry" "$CATEGORIES"
-	done
+MODULES=""
+if MODULES=$(discover_modules_from_config) && [ -n "$MODULES" ]; then
+	:
+else
+	MODULES=$(discover_modules_from_fs)
+fi
+
+if [ -z "$MODULES" ]; then
+	echo "_No design doc modules found under ${DESIGN_ROOT}/_"
 	echo ""
 fi
 
-if [ "$MODULE_ARG" = "all" ] || [ "$MODULE_ARG" = "rspress-plugin-api-extractor" ]; then
-	echo "## rspress-plugin-api-extractor"
+while IFS= read -r module; do
+	[ -n "$module" ] || continue
+	if [ "$MODULE_ARG" != "all" ] && [ "$MODULE_ARG" != "$module" ]; then
+		continue
+	fi
+	echo "## $module"
 	echo ""
-	CATEGORIES='["architecture", "performance", "observability", "cross-linking", "import-generation", "source-mapping"]'
-	for file in .claude/design/rspress-plugin-api-extractor/*.md; do
+	CATEGORIES=$(categories_for_module "$module")
+	for file in "$DESIGN_ROOT/$module"/*.md; do
 		[ -f "$file" ] || continue
 		echo "- **$(basename "$file")**"
-		validate_file "$file" "rspress-plugin-api-extractor" "$CATEGORIES"
+		validate_file "$file" "$module" "$CATEGORIES"
 	done
 	echo ""
-fi
-
-if [ "$MODULE_ARG" = "all" ] || [ "$MODULE_ARG" = "design-doc-system" ]; then
-	echo "## design-doc-system"
-	echo ""
-	CATEGORIES='["meta", "documentation", "architecture"]'
-	for file in .claude/design/design-doc-system/*.md; do
-		[ -f "$file" ] || continue
-		echo "- **$(basename "$file")**"
-		validate_file "$file" "design-doc-system" "$CATEGORIES"
-	done
-	echo ""
-fi
+done <<< "$MODULES"
 
 # Summary
 echo "---"
