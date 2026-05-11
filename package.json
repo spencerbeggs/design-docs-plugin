@@ -1,6 +1,6 @@
 {
 	"name": "design-docs",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"private": true,
 	"description": "Root package for the design-docs-plugin monorepo",
 	"type": "module",
