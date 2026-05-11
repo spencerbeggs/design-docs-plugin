@@ -2,7 +2,7 @@
 name: merge-prep
 description: Final squash of all branch commits into one clean commit and
   force push for merge. Use after PR approval, before merging.
-allowed-tools: Bash, Read, Glob, Grep
+allowed-tools: Bash(git *), Bash(gh *), Read, Glob, Grep
 disable-model-invocation: true
 argument-hint: "[--no-push] [--dry-run]"
 ---
@@ -38,7 +38,7 @@ If on the default branch, stop:
 
 Detect the default branch:
 
-!`gh repo view --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || git rev-parse --verify main 2>/dev/null && echo main || echo master`
+!`GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh repo view --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || git rev-parse --verify main 2>/dev/null && echo main || echo master`
 
 Store as `BASE_BRANCH`.
 
@@ -53,7 +53,8 @@ Merge-prep should only operate on committed code.
 ### 0.4 PR Approval Check
 
 ```bash
-gh pr view --json reviewDecision -q '.reviewDecision'
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
+  gh pr view --json reviewDecision -q '.reviewDecision'
 ```
 
 If the result is `APPROVED`, proceed normally.
@@ -118,7 +119,7 @@ match, something went wrong — stop and report.
 Read the PR title and description:
 
 ```bash
-gh pr view --json title,body
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh pr view --json title,body
 ```
 
 Read any changeset files:
@@ -197,7 +198,7 @@ message is now more comprehensive), offer to update:
 If yes:
 
 ```bash
-gh pr edit --body "<updated body>"
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh pr edit --body "<updated body>"
 ```
 
 ## Error Recovery

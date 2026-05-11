@@ -34,10 +34,11 @@ design-docs-plugin/
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Plugin manifest (name, version, author)
 │   ├── hooks/
-│   │   ├── hooks.json               # Hook configuration
-│   │   ├── session-start.sh         # SessionStart context injection
-│   │   └── allow-design-writes.sh   # PreToolUse auto-approve design dirs
-│   ├── commands/                    # (no commands yet)
+│   │   ├── hooks.json                                  # Hook configuration
+│   │   ├── lib/                                        # Shared bash helpers (hook-output.sh, hook-debug.sh, source-session-env.sh)
+│   │   ├── fixtures/                                   # Reserved for hook-payload fixtures
+│   │   ├── session-start/context-inject.sh             # SessionStart context injection
+│   │   └── pre-tool-use/allow-design-writes.sh         # PreToolUse auto-approve design dirs
 │   ├── skills/                      # 47 skills
 │   │   ├── design-init/             # 16 design-* skills
 │   │   ├── context-audit/           # 6 context-* skills
@@ -75,14 +76,14 @@ design-docs-plugin/
 
 ## Naming Conventions
 
-* **Hooks**: `{name}.sh` in `plugin/hooks/` -- invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/{name}.sh`
+* **Hooks**: `{name}.sh` in `plugin/hooks/<event-kebab>/` -- invoked via `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/{name}.sh"`. Shared helpers live in `plugin/hooks/lib/`.
 * **Skills**: `plugin/skills/{name}/SKILL.md`
 * **Agents**: `plugin/agents/{name}.md`
 * **Tests**: Mirror plugin structure under `__test__/`
 
 ## Configuration
 
-All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `allow-design-writes.sh` PreToolUse hook auto-approves Write/Edit operations to `.claude/design/` and `.claude/plans/`.
+All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `pre-tool-use/allow-design-writes.sh` hook auto-approves Write/Edit/MultiEdit operations to `.claude/design/` and `.claude/plans/`.
 
 ## Testing
 

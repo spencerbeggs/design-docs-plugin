@@ -4,9 +4,23 @@ set -euo pipefail
 # Maintenance workflow for design documentation
 # Identifies stale docs and generates maintenance report
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DESIGN_DIR="$PROJECT_ROOT/.claude/design"
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks. Never dirname-walk from
+# this script's location — that lands inside the plugin install.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+DESIGN_DIR="$PROJECT_DIR/.claude/design"
+
+# Resolve plugin install root for sibling-skill reference.
+# Dirname-walk is the standalone-invocation fallback only.
+PLUGIN_ROOT="${DESIGN_DOCS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
+if [ -z "$PLUGIN_ROOT" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+fi
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
 
 echo "==================================="
 echo "Design Documentation Maintenance"
@@ -15,7 +29,7 @@ echo ""
 
 # Run validation on all docs
 echo "Running validation..."
-if "$SCRIPT_DIR/validate-all-docs.sh"; then
+if "$VALIDATE_SCRIPT"; then
   echo "✅ All design docs are valid"
 else
   echo "❌ Some design docs have validation errors"

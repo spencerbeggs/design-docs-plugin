@@ -3,7 +3,7 @@ name: finalize
 description: End-of-branch workflow. Updates design docs, CLAUDE.md files, and
   user docs, creates a changeset, squashes commits, pushes, and opens a PR.
   Use when finishing work on a branch before merge.
-allowed-tools: Skill, Read, Glob, Grep, Bash, Write, Edit
+allowed-tools: Skill, Read, Glob, Grep, Bash(git *), Bash(gh *), Bash(bun *), Bash(ls *), Write, Edit
 disable-model-invocation: true
 argument-hint: "[--no-pr] [--no-squash] [--docs-only] [--dry-run]"
 ---
@@ -28,6 +28,21 @@ If no arguments are provided, run the full workflow.
 ## Step 0: Preflight Checks
 
 Run these checks before any work. If any check fails, stop and report.
+
+### GitHub call convention
+
+Every `gh` invocation in this workflow must be prefixed with:
+
+```bash
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh …
+```
+
+Why: the session-start hook sets `DESIGN_DOCS_GH_TOKEN` from
+`GITHUB_PERSONAL_ACCESS_TOKEN`. If it's set, that token authenticates the
+call. If it's unset, the empty assignment scrubs any inherited `GH_TOKEN`
+in the shell so `gh` falls back to the keyring credentials that `gh auth
+status` reports — keeping the auth check and the writes on the same
+identity. `GH_PAGER=cat` prevents `gh` from blocking on a pager.
 
 ### 0.1 Branch Check
 
@@ -55,7 +70,7 @@ Wait for the user's response. If they say abort, stop the workflow.
 
 Detect the default branch:
 
-!`gh repo view --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || git rev-parse --verify main 2>/dev/null && echo main || echo master`
+!`GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh repo view --json defaultBranchRef -q '.defaultBranchRef.name' 2>/dev/null || git rev-parse --verify main 2>/dev/null && echo main || echo master`
 
 Store the result as `BASE_BRANCH` for use in subsequent steps.
 
@@ -87,7 +102,16 @@ Report: "Created session/start tag at merge-base."
 
 ### 0.6 GitHub Auth Check
 
-Run `gh auth status`. If not authenticated, warn the user:
+Run the auth check using the same env hygiene as every other `gh` call in
+this workflow — the check site and the use sites (7.1, 7.3) must agree on
+which credential is in play, otherwise the probe passes while the write
+later fails or posts to the wrong account:
+
+```bash
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh auth status
+```
+
+If not authenticated, warn the user:
 
 > "GitHub CLI is not authenticated. The PR step will be skipped.
 > Run `gh auth login` to enable PR creation, or continue with --no-pr."
@@ -282,7 +306,7 @@ git tag -f session/start HEAD
 ### 7.1 Check for Existing PR
 
 ```bash
-gh pr view --json number,url 2>/dev/null
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh pr view --json number,url 2>/dev/null
 ```
 
 If a PR already exists, report:
@@ -303,7 +327,7 @@ Generate a PR title from the changeset content or branch name. Generate the
 body from the branch diff summary and changeset description.
 
 ```bash
-gh pr create --title "[title]" --body "[body]"
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh pr create --title "[title]" --body "[body]"
 ```
 
 Report the PR URL to the user.

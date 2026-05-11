@@ -6,25 +6,32 @@ This is the distributable plugin directory. Everything here ships to end users v
 
 * `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
 * `hooks/hooks.json` -- Hook configuration consumed by Claude Code
-* `hooks/session-start.sh` -- SessionStart context injection
-* `hooks/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
+* `hooks/lib/` -- Shared bash helpers sourced by hook scripts
+  * `hook-output.sh` -- canonical JSON emitters (`emit_session_start`, `emit_permission_allow`, `emit_noop`)
+  * `hook-debug.sh` -- structured stderr logging (`hook_debug`, `hook_error`)
+  * `source-session-env.sh` -- loads `$CLAUDE_ENV_FILE` exports for non-producer hooks
+* `hooks/session-start/context-inject.sh` -- SessionStart context injection
+* `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
+* `hooks/fixtures/` -- Reserved for hook-payload fixtures (empty)
 * `skills/` -- 47 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep groups
 * `agents/` -- design-doc-agent, context-doc-agent, user-docs
-* `commands/` -- (no commands yet)
+* `commands/` -- (no commands yet; create the directory when adding the first command)
 
 ## Hooks
 
-Hooks are pure bash scripts invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<name>.sh`. This avoids executable bit issues when distributed from repos that strip them.
+Hooks are organized by event name as subdirectories: `hooks/<event-kebab>/<script>.sh`. Each script is invoked via `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/<script>.sh"`. This layout lets the path-based plugin-bash-engineer skills (`cc-hook-session-lifecycle`, `cc-hook-pre-tool-use`, …) auto-load when an author opens a hook file.
+
+Hook scripts source shared helpers from `hooks/lib/` via relative paths so they work regardless of where the plugin is installed.
 
 All hooks check `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior.
 
-### session-start.sh (SessionStart)
+### session-start/context-inject.sh (SessionStart)
 
-Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it.
+Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. Parses the envelope to pick up `cwd` as a fallback for `CLAUDE_PROJECT_DIR`. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it. Writes `DESIGN_DOCS_GH_TOKEN` and `GITHUB_REPOSITORY` to `$CLAUDE_ENV_FILE` for downstream skills.
 
-### allow-design-writes.sh (PreToolUse)
+### pre-tool-use/allow-design-writes.sh (PreToolUse)
 
-Auto-approves Write and Edit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
+Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
 
 ## Key Skills
 
@@ -64,9 +71,11 @@ User-invocable only (`disable-model-invocation: true`).
 
 ## Adding Hooks
 
-1. Create `hooks/{name}.sh` as a bash script
-1. Add an entry to `hooks/hooks.json` using `bash ${CLAUDE_PLUGIN_ROOT}/hooks/{name}.sh`
-1. Script outputs become `claudeContext` for SessionStart hooks, or stdout for other hook types
+1. Create `hooks/<event-kebab>/{name}.sh` as a bash script (e.g. `hooks/post-tool-use/log-edits.sh`)
+1. Source the shared lib helpers via `source "$(dirname "${BASH_SOURCE[0]}")/../lib/hook-output.sh"`
+1. Add an entry to `hooks/hooks.json` using `bash "${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/{name}.sh"`
+1. Use `emit_*` functions from `lib/hook-output.sh` for response JSON; never hand-roll the envelope
+1. Add a bun test at `__test__/hooks/{name}.test.ts` that pipes a payload into the script and asserts on exit code and stdout
 
 ## Adding Skills
 

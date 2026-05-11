@@ -4,9 +4,24 @@ set -euo pipefail
 # Release workflow for design documentation
 # Validates all docs are ready for release
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DESIGN_DIR="$PROJECT_ROOT/.claude/design"
+# Resolve user-project root: prefer the namespaced var that the SessionStart
+# hook persists, then the host-set CLAUDE_PROJECT_DIR, then git toplevel,
+# then cwd as a last resort. Never dirname-walk from this script's location —
+# that lands inside the plugin install, not the user's repo.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [ -z "$PROJECT_DIR" ]; then
+  PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+DESIGN_DIR="$PROJECT_DIR/.claude/design"
+
+# Resolve plugin install root for sibling-skill references. Dirname-walk is
+# the standalone-invocation fallback only.
+PLUGIN_ROOT="${DESIGN_DOCS_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
+if [ -z "$PLUGIN_ROOT" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+fi
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
 
 echo "==================================="
 echo "Design Documentation Release Check"
@@ -15,7 +30,7 @@ echo ""
 
 # Run validation on all docs
 echo "Step 1: Validating all design documentation..."
-if ! "$SCRIPT_DIR/validate-all-docs.sh"; then
+if ! "$VALIDATE_SCRIPT"; then
   echo ""
   echo "❌ Release check failed: Validation errors found"
   echo "Please fix all validation errors before releasing"

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const HOOK_PATH = join(import.meta.dir, "../../plugin/hooks/session-start.sh");
+const HOOK_PATH = join(import.meta.dir, "../../plugin/hooks/session-start/context-inject.sh");
 
 interface HookOutput {
 	hookSpecificOutput: {
@@ -73,11 +73,11 @@ describe("session-start.sh", () => {
 		expect(context).toContain("</EXTREMELY_IMPORTANT>");
 	});
 
-	test("outputs nothing when disabled", () => {
+	test("emits no-op when disabled", () => {
 		const result = runHook({ DESIGN_DOCS_CONTEXT_ENABLED: "false" });
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toBe("");
+		expect(JSON.parse(result.stdout)).toEqual({});
 	});
 
 	test("creates directories and includes init notice when .claude/design/ is missing", () => {
@@ -262,7 +262,7 @@ describe("env-file credential persistence", () => {
 		}
 	});
 
-	test("appends GH_TOKEN export to CLAUDE_ENV_FILE when PAT is set", () => {
+	test("appends DESIGN_DOCS_GH_TOKEN export to CLAUDE_ENV_FILE when PAT is set", () => {
 		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
 		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
 		const envFile = join(tempDir, "env.sh");
@@ -276,11 +276,13 @@ describe("env-file credential persistence", () => {
 
 		expect(result.exitCode).toBe(0);
 		const envContent = readFileSync(envFile, "utf8");
-		expect(envContent).toContain("export GH_TOKEN=");
+		expect(envContent).toContain("export DESIGN_DOCS_GH_TOKEN=");
 		expect(envContent).toContain("test-pat-token");
+		// Must NOT write canonical GH_TOKEN — that would override the user's own token
+		expect(envContent).not.toContain("export GH_TOKEN=");
 	});
 
-	test("does not append GH_TOKEN if CLAUDE_ENV_FILE is not set", () => {
+	test("does not append DESIGN_DOCS_GH_TOKEN if CLAUDE_ENV_FILE is not set", () => {
 		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
 		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
 
@@ -294,7 +296,7 @@ describe("env-file credential persistence", () => {
 		expect(result.stderr).not.toContain("Error");
 	});
 
-	test("does not duplicate GH_TOKEN on repeated runs", () => {
+	test("does not duplicate DESIGN_DOCS_GH_TOKEN on repeated runs", () => {
 		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
 		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
 		const envFile = join(tempDir, "env.sh");
@@ -310,7 +312,7 @@ describe("env-file credential persistence", () => {
 		runHook(env);
 
 		const envContent = readFileSync(envFile, "utf8");
-		const matches = envContent.match(/export GH_TOKEN=/g) ?? [];
+		const matches = envContent.match(/export DESIGN_DOCS_GH_TOKEN=/g) ?? [];
 		expect(matches.length).toBe(1);
 	});
 
@@ -345,6 +347,53 @@ describe("env-file credential persistence", () => {
 		const envContent = readFileSync(envFile, "utf8");
 		expect(envContent).toContain("export GITHUB_REPOSITORY=");
 		expect(envContent).toContain("owner/repo.docs");
+	});
+
+	test("persists DESIGN_DOCS_PROJECT_DIR/PLUGIN_ROOT/DATA_DIR to CLAUDE_ENV_FILE", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const result = runHook({
+			CLAUDE_PROJECT_DIR: tempDir,
+			CLAUDE_ENV_FILE: envFile,
+			CLAUDE_PLUGIN_ROOT: "/fake/plugin/root",
+			CLAUDE_PLUGIN_DATA: "/fake/plugin/data",
+		});
+
+		expect(result.exitCode).toBe(0);
+		const envContent = readFileSync(envFile, "utf8");
+		expect(envContent).toContain("export DESIGN_DOCS_PROJECT_DIR=");
+		expect(envContent).toContain(tempDir);
+		expect(envContent).toContain("export DESIGN_DOCS_PLUGIN_ROOT=");
+		expect(envContent).toContain("/fake/plugin/root");
+		expect(envContent).toContain("export DESIGN_DOCS_DATA_DIR=");
+		expect(envContent).toContain("/fake/plugin/data");
+	});
+
+	test("skips DESIGN_DOCS_DATA_DIR/PLUGIN_ROOT when CLAUDE_PLUGIN_* vars are unset", () => {
+		tempDir = mkdtempSync(join(tmpdir(), "hook-env-test-"));
+		mkdirSync(join(tempDir, ".claude", "design"), { recursive: true });
+		const envFile = join(tempDir, "env.sh");
+		writeFileSync(envFile, "");
+
+		const { CLAUDE_PLUGIN_ROOT: _r, CLAUDE_PLUGIN_DATA: _d, ...envWithoutPlugin } = process.env;
+		const proc = Bun.spawnSync(["bash", HOOK_PATH], {
+			cwd: tempDir,
+			env: {
+				...envWithoutPlugin,
+				CLAUDE_PROJECT_DIR: tempDir,
+				CLAUDE_ENV_FILE: envFile,
+			},
+			stdin: "pipe",
+		});
+
+		expect(proc.exitCode).toBe(0);
+		const envContent = readFileSync(envFile, "utf8");
+		expect(envContent).toContain("export DESIGN_DOCS_PROJECT_DIR=");
+		expect(envContent).not.toContain("export DESIGN_DOCS_PLUGIN_ROOT=");
+		expect(envContent).not.toContain("export DESIGN_DOCS_DATA_DIR=");
 	});
 
 	test("extracts GITHUB_REPOSITORY from SSH remote URL", () => {

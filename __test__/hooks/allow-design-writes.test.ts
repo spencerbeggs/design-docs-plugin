@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
-const HOOK_PATH = join(import.meta.dir, "../../plugin/hooks/allow-design-writes.sh");
+const HOOK_PATH = join(import.meta.dir, "../../plugin/hooks/pre-tool-use/allow-design-writes.sh");
 
 function runHook(stdin: string, env: Record<string, string> = {}) {
 	const proc = Bun.spawnSync(["bash", HOOK_PATH], {
@@ -15,9 +15,9 @@ function runHook(stdin: string, env: Record<string, string> = {}) {
 	};
 }
 
-function makeInput(filePath: string): string {
+function makeInput(filePath: string, toolName = "Write"): string {
 	return JSON.stringify({
-		tool_name: "Write",
+		tool_name: toolName,
 		tool_input: { file_path: filePath, content: "test" },
 	});
 }
@@ -39,6 +39,14 @@ describe("allow-design-writes.sh", () => {
 		expect(json.hookSpecificOutput.permissionDecision).toBe("allow");
 	});
 
+	test("auto-approves MultiEdit to design dirs", () => {
+		const result = runHook(makeInput("/Users/test/project/.claude/design/x/doc.md", "MultiEdit"));
+
+		expect(result.exitCode).toBe(0);
+		const json = JSON.parse(result.stdout);
+		expect(json.hookSpecificOutput.permissionDecision).toBe("allow");
+	});
+
 	test("does not auto-approve writes outside design dirs", () => {
 		const result = runHook(makeInput("/Users/test/project/src/main.ts"));
 
@@ -53,12 +61,12 @@ describe("allow-design-writes.sh", () => {
 		expect(result.stdout).toBe("");
 	});
 
-	test("exits silently when disabled", () => {
+	test("emits no-op when disabled", () => {
 		const result = runHook(makeInput("/Users/test/project/.claude/design/module/doc.md"), {
 			DESIGN_DOCS_CONTEXT_ENABLED: "false",
 		});
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toBe("");
+		expect(JSON.parse(result.stdout)).toEqual({});
 	});
 });

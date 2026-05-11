@@ -58,8 +58,15 @@ if [[ ! "$OUTCOME" =~ ^(success|partial|failed)$ ]]; then
 	exit 1
 fi
 
+# Resolve user-project root via env vars set by the SessionStart hook /
+# host, with git-toplevel and cwd as fallbacks.
+PROJECT_DIR="${DESIGN_DOCS_PROJECT_DIR:-${CLAUDE_PROJECT_DIR:-}}"
+if [[ -z "$PROJECT_DIR" ]]; then
+	PROJECT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+fi
+
 # Find plan file
-PLAN_FILE=".claude/plans/${PLAN_NAME}.md"
+PLAN_FILE="$PROJECT_DIR/.claude/plans/${PLAN_NAME}.md"
 if [[ ! -f "$PLAN_FILE" ]]; then
 	echo -e "${RED}ERROR: Plan file not found: $PLAN_FILE${NC}" >&2
 	exit 1
@@ -114,7 +121,7 @@ echo ""
 echo "Updating linked design docs:"
 while IFS= read -r doc_path; do
 	# Convert relative path to absolute
-	DESIGN_DOC=".claude/design/${doc_path}"
+	DESIGN_DOC="$PROJECT_DIR/.claude/design/${doc_path}"
 
 	if [[ ! -f "$DESIGN_DOC" ]]; then
 		echo -e "${RED}  ✗ Design doc not found: $doc_path${NC}"
