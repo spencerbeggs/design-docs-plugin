@@ -54,15 +54,15 @@ Each paragraph and each list item occupies a single source line. The renderer ha
 Wrong:
 
 ```markdown
-This is a paragraph that has an articifial line break in the 
+This is a paragraph that has an artificial line break in the 
 middle of a sentence, which is against the style rules.
 - This is a bullet item
   that continues on a second source line.
 ```
 
 Right:
-This paragraph occupies a single source line, with no artificial breaks. The renderer will wrap it appropriately.
 
 ```markdown
+This paragraph occupies a single source line, with no artificial breaks. The renderer wraps it appropriately.
 - This is a bullet item that stays on a single source line.
 ```
