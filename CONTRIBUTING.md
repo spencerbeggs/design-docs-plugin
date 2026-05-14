@@ -8,7 +8,7 @@ Thank you for your interest in contributing to design-docs-plugin.
 * [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI (for plugin validation)
 * Git
 
-## Getting Started
+## Getting started
 
 1. Fork and clone the repository:
 
@@ -31,15 +31,15 @@ Thank you for your interest in contributing to design-docs-plugin.
    bun run validate
    ```
 
-## Development Workflow
+## Development workflow
 
-### Branch Strategy
+### Branch strategy
 
 * `main` is protected -- no direct pushes
 * Create feature branches for all changes: `git checkout -b feature/my-change`
 * All merges use squash-merge
 
-### Making Changes
+### Making changes
 
 1. Create a feature branch
 2. Make your changes
@@ -56,7 +56,7 @@ Thank you for your interest in contributing to design-docs-plugin.
 4. Commit with conventional commit format (enforced by commitlint)
 5. Open a pull request
 
-### Project Structure
+### Project structure
 
 | Directory | Purpose | Ships to Users? |
 | --- | --- | --- |
@@ -65,14 +65,14 @@ Thank you for your interest in contributing to design-docs-plugin.
 | `lib/` | Dev tooling configs | No |
 | `docs/` | Public documentation | No |
 
-### Where to Put Things
+### Where to put things
 
 * **Hooks** -- `plugin/hooks/<event-kebab>/{name}.sh` (pure bash). Shared helpers in `plugin/hooks/lib/`.
 * **Skills** -- `plugin/skills/{name}/SKILL.md`
 * **Agents** -- `plugin/agents/{name}.md`
 * **Tests** -- `__test__/` (mirrors plugin/ structure, e.g., `__test__/hooks/session-start.test.ts`)
 
-## Commit Conventions
+## Commit conventions
 
 This project uses [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -83,7 +83,7 @@ docs: update README with skill examples
 chore: update dependencies
 ```
 
-### DCO Sign-Off
+### DCO sign-off
 
 All commits must include a Developer Certificate of Origin sign-off:
 
@@ -93,7 +93,7 @@ git commit -s -m "feat: add new feature"
 
 This adds `Signed-off-by: Your Name <your@email.com>` to the commit message. See the [DCO](DCO) file for details.
 
-## Pre-Commit Hooks
+## Pre-commit hooks
 
 The following checks run automatically on commit:
 
@@ -106,7 +106,7 @@ These are managed by Husky and should not be bypassed.
 
 * Tests use the [Bun test runner](https://bun.sh/docs/cli/test)
 * All tests live in `__test__/` at the repo root
-* Coverage thresholds: 80% for lines, functions, and statements
+* Coverage thresholds: 80% for lines, functions and statements
 * Run tests: `bun run test`
 
 ## Linting
@@ -126,7 +126,7 @@ This project uses [changesets](https://github.com/changesets/changesets) for ver
 
 Version bumps automatically update `plugin/.claude-plugin/plugin.json`.
 
-## Pull Request Process
+## Pull request process
 
 1. Ensure all checks pass (lint, typecheck, test, validate)
 2. Include a changeset if your change affects the plugin
@@ -134,6 +134,6 @@ Version bumps automatically update `plugin/.claude-plugin/plugin.json`.
 4. Sign off your commits (DCO)
 5. Request review
 
-## Code of Conduct
+## Code of conduct
 
 Be respectful and constructive. We're all here to build great things.

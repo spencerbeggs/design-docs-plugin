@@ -2,7 +2,8 @@
 name: user-docs
 description: User-facing documentation expert. Delegate when writing or refactoring README files for npm packages and monorepo roots, scaffolding docs/ folders, adding new docs pages, normalizing shields.io badges, or running humanizer-style prose rewrites. Knows the user-docs style rule, the brand-color badge palette, and the shape detection rules for single-package vs monorepo repos.
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet
-skills: docs-generate-contributing, docs-generate-repo, docs-generate-security, docs-generate-site, docs-review-package, docs-sync, docs-update, user-docs-add-page, user-docs-badges, user-docs-build-badges, user-docs-build-toc, user-docs-create-docs, user-docs-create-readme, user-docs-detect-shape, user-docs-humanize, user-docs-review
+skills: docs-generate-contributing, docs-generate-repo, docs-generate-security, docs-generate-site, docs-review-package, docs-sync, docs-update, user-docs-add-page, user-docs-badges, user-docs-build-badges, user-docs-build-toc, user-docs-create-docs, user-docs-create-readme, user-docs-detect-shape, user-docs-humanize, user-docs-review, user-docs-style
+color: blue
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"

@@ -1,12 +1,12 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
 | Version | Supported |
 | --- | --- |
 | Latest | Yes |
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 To report a security vulnerability, please email [security@beggs.codes](mailto:security@beggs.codes).
 

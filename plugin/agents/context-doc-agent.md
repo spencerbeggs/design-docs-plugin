@@ -1,8 +1,9 @@
 ---
 name: context-doc-agent
 description: Maintain CLAUDE.md context files. Use for reviewing, updating, validating, and optimizing LLM context documentation.
-skills: context-validate, context-audit, context-review, context-update, context-split
+skills: context-validate, context-audit, context-review, context-update, context-split, context-docs-style
 tools: Read, Grep, Glob, Edit, Write, Bash
+color: pink
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
