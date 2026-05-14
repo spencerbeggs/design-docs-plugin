@@ -146,9 +146,9 @@ GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat gh auth status
 
 If not authenticated, warn the user:
 
-> "GitHub CLI is not authenticated. The PR step will be skipped. Run `gh auth login` to enable PR creation, or continue with --no-pr."
+> "GitHub CLI is not authenticated. PR creation and the existing-PR check will fail without it. Run `gh auth login` to fix this, continue with `--no-pr` (push the branch but skip PR creation — `git push` uses git's own credentials, not gh), or continue with `--no-push` to skip the remote entirely."
 
-If the user wants to continue, treat the rest of the workflow as `--no-pr`.
+If the user wants to continue with `--no-pr`, treat the rest of the workflow as if `--no-pr` were set. Same for `--no-push`.
 
 ## Step 2: Analyze Branch Changes
 
@@ -203,7 +203,7 @@ Dispatch the `design-docs:user-docs` agent via the `Agent` tool. Pass a prompt c
 
 Dispatch the `changesets:changeset-manager` agent via the `Agent` tool. Pass a prompt following the Agent Dispatch Convention for Step 6 — the branch change summary, a concise description of what changed in shipped surface, the Step 3-5 reports, and a bump-type recommendation. The agent has the full changesets skill suite wired (`changesets:create`, `changesets:update`, `changesets:delete`, `changesets:merge`, `changesets:style`, `changesets:status`, `changesets:dependencies`, `changesets:config`) and decides whether to create a new changeset, update an existing one, or report that the diff has no changelog-worthy items.
 
-If the changesets plugin is not installed (the `changesets:changeset-manager` agent type is not available), fall back to creating the changeset manually:
+If the `Agent` call fails because the `changesets:changeset-manager` agent type is unknown (the changesets plugin is not installed), fall back to creating the changeset manually:
 
 1. Ask the user: "What type of change is this? (major/minor/patch)"
 2. Ask the user: "Describe the user-facing changes for the changelog:"
