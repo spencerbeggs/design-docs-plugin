@@ -13,7 +13,7 @@ when_to_use: >
   (use /design-docs:merge-prep).
 allowed-tools: Skill, Agent, Read, Glob, Grep, Bash(git *), Bash(gh *), Bash(bun *), Bash(ls *), Write, Edit, TaskCreate, TaskUpdate
 model: sonnet
-argument-hint: "[--no-pr] [--no-squash] [--no-context-docs] [--no-user-docs] [--dry-run]"
+argument-hint: "[--no-push] [--no-pr] [--no-squash] [--no-context-docs] [--no-user-docs] [--dry-run]"
 ---
 
 # Branch Finalization
@@ -24,7 +24,8 @@ Orchestrates the end-of-branch workflow: analyze what changed, dispatch each doc
 
 Parse `$ARGUMENTS` for flags:
 
-- `--no-pr` — skip push and PR (step 8)
+- `--no-push` — skip pushing to the remote in step 8 (implies no PR, since a PR requires a pushed branch)
+- `--no-pr` — push the branch in step 8 but skip PR creation (useful when the PR will be opened separately, e.g. by CI)
 - `--no-squash` — skip the squash step (step 7), commit docs/changeset normally
 - `--no-context-docs` — skip step 4 (Update CLAUDE.md Files / context-doc-agent dispatch)
 - `--no-user-docs` — skip step 5 (Update User Docs / user-docs agent dispatch)
@@ -53,14 +54,21 @@ In `--dry-run` mode, still create the task list so the user sees the plan, but o
 
 ## Agent Dispatch Convention
 
-Steps 3-5 dispatch documentation agents via the `Agent` tool rather than invoking individual sub-skills. Each agent has its full domain skill suite wired (including the matching `*-docs-style` skill that enforces project markdown conventions), so the work stays inside an isolated context with the right toolset and style rules already in scope.
+Steps 3-6 dispatch domain agents via the `Agent` tool rather than invoking individual sub-skills. Each agent has its full domain skill suite wired (including the matching `*-docs-style` or `changesets:style` skill that enforces project conventions), so the work stays inside an isolated context with the right toolset and rules already in scope.
 
-When dispatching an agent, pass a prompt that includes:
+When dispatching a documentation agent (Steps 3-5), pass a prompt that includes:
 
 1. The branch change summary from Step 2 (diff stat + commit list)
 2. The list of files modified by previous documentation steps in this finalize run (so the next agent has the full picture)
 3. A directive: "Review the documentation in your domain against these branch changes and update what needs updating. Use whichever of your skills apply."
 4. An instruction to report back which files were modified (or that no changes were needed)
+
+When dispatching the changeset-manager (Step 6), pass a prompt that includes:
+
+1. The branch change summary
+2. A concise description of what changed in shipped surface (features, breaking changes, behavior shifts, fixes) — not the file list
+3. The reports from Steps 3-5 about which doc files were modified, so the agent can decide which of those are user-facing changelog material and which are internal-only
+4. A bump-type recommendation if you have one (the agent makes the final call)
 
 Do not enumerate which specific skills the agent should run — the agent decides based on its skill suite.
 
@@ -193,13 +201,9 @@ Dispatch the `design-docs:user-docs` agent via the `Agent` tool. Pass a prompt c
 
 ## Step 6: Create Changeset
 
-Try to invoke the changesets plugin:
+Dispatch the `changesets:changeset-manager` agent via the `Agent` tool. Pass a prompt following the Agent Dispatch Convention for Step 6 — the branch change summary, a concise description of what changed in shipped surface, the Step 3-5 reports, and a bump-type recommendation. The agent has the full changesets skill suite wired (`changesets:create`, `changesets:update`, `changesets:delete`, `changesets:merge`, `changesets:style`, `changesets:status`, `changesets:dependencies`, `changesets:config`) and decides whether to create a new changeset, update an existing one, or report that the diff has no changelog-worthy items.
 
-```text
-/changesets:create
-```
-
-If the skill is not available (the changesets plugin is not installed), create the changeset manually:
+If the changesets plugin is not installed (the `changesets:changeset-manager` agent type is not available), fall back to creating the changeset manually:
 
 1. Ask the user: "What type of change is this? (major/minor/patch)"
 2. Ask the user: "Describe the user-facing changes for the changelog:"
@@ -286,7 +290,7 @@ git tag -f session/start HEAD
 
 ## Step 8: Push and Open PR
 
-**Skip if `--no-pr` flag is set.** Report that changes are committed locally.
+**Skip entirely if `--no-push` flag is set.** Report: "Changes committed locally on `$BRANCH`. Not pushed (--no-push). Run `git push -u origin HEAD` to push manually."
 
 ### Check for existing PR
 
@@ -305,6 +309,8 @@ Push and stop (don't create a duplicate PR).
 ```bash
 git push -u origin HEAD
 ```
+
+**Stop here if `--no-pr` flag is set.** Report: "Pushed to `origin/$BRANCH`. No PR opened (--no-pr). Open one manually via `gh pr create` or your CI workflow."
 
 ### Create PR
 

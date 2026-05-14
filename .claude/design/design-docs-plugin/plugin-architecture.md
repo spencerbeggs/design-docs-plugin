@@ -199,9 +199,9 @@ Skills are invoked as `/design-docs:{skill-name}`.
 
 The three workflow skills form a branch lifecycle: `/finalize` orchestrates the end-of-branch documentation update and squash-then-PR sequence, `/review` addresses PR feedback in small fix commits (supports `--squash` to fold review commits into the previous commit), and `/merge-prep` does a final squash for merge. `/review` and `/merge-prep` are user-invocable only (`disable-model-invocation: true`); `/finalize` is model-invokable so trigger phrases like "finalize this branch" or "wrap up" route to it via its `when_to_use` frontmatter hint.
 
-`/finalize` is a **plugin-with-agents orchestrator**: it does not call individual documentation skills directly. Instead, it dispatches each of the three documentation agents via the `Agent` tool — design-doc-agent for `.claude/design/`, context-doc-agent for `CLAUDE.md` files, user-docs for README/contributing/site docs — and lets each agent decide which of its own skills apply. The orchestrator passes the branch diff summary plus the running list of files modified by earlier agents so each subsequent agent has the full picture. See `plugin/skills/finalize/SKILL.md` for the per-step dispatch contract and prompt structure. The agent suite is what gives finalize its leverage: agents are first-class subagents with their own toolset and (via the matching `*-docs-style` skill) the right prose conventions in scope, so each documentation layer is updated in isolation rather than in the orchestrator's shared context.
+`/finalize` is a **plugin-with-agents orchestrator**: it does not call individual documentation skills directly. Instead, it dispatches each of the three documentation agents via the `Agent` tool — design-doc-agent for `.claude/design/`, context-doc-agent for `CLAUDE.md` files, user-docs for README/contributing/site docs — and lets each agent decide which of its own skills apply. Step 6 follows the same pattern by dispatching `changesets:changeset-manager` rather than invoking `/changesets:create` directly. The orchestrator passes the branch diff summary plus the running list of files modified by earlier agents so each subsequent agent has the full picture. See `plugin/skills/finalize/SKILL.md` for the per-step dispatch contract and prompt structure. The agent suite is what gives finalize its leverage: agents are first-class subagents with their own toolset and (via the matching `*-docs-style` or `changesets:style` skill) the right conventions in scope, so each layer is updated in isolation rather than in the orchestrator's shared context.
 
-Finalize uses negative-form skip flags rather than positive-form mode flags: each step runs by default, and `--no-context-docs`, `--no-user-docs`, `--no-squash`, `--no-pr`, and `--dry-run` selectively suppress steps. The orchestrator builds a `TaskCreate`-tracked task list before Step 1 and flips each task to `in_progress`/`completed` via `TaskUpdate` as steps run, so the user sees live progress and any failure leaves the failed task visibly mid-flight rather than silently marked done.
+Finalize uses negative-form skip flags rather than positive-form mode flags: each step runs by default, and `--no-context-docs`, `--no-user-docs`, `--no-squash`, `--no-push`, `--no-pr`, and `--dry-run` selectively suppress steps. `--no-push` and `--no-pr` are distinct: `--no-push` skips step 8 entirely (work stays local), while `--no-pr` pushes the branch but skips PR creation. The orchestrator builds a `TaskCreate`-tracked task list before Step 1 and flips each task to `in_progress`/`completed` via `TaskUpdate` as steps run, so the user sees live progress and any failure leaves the failed task visibly mid-flight rather than silently marked done.
 
 ### Agents
 
@@ -815,7 +815,7 @@ hooks:                 # PreToolUse entry that auto-approves design dir writes i
   git reset --soft $(git merge-base HEAD $BASE) ; git commit ; tag -f session/start HEAD
         |
         v
-[Step 8: Push and PR] (skipped by --no-pr)
+[Step 8: Push and PR] (skipped entirely by --no-push; PR-only skipped by --no-pr)
   git push -u origin HEAD ; gh pr create
 ```
 

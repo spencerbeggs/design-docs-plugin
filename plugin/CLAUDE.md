@@ -39,7 +39,7 @@ Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.
 
 End-of-branch orchestration workflow invoked via `/design-docs:finalize`. Dispatches the design-doc-agent, context-doc-agent, and user-docs agents to update each documentation layer, then creates a changeset, squashes all branch commits into a single clean commit, pushes, and opens a PR.
 
-Flags: `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
+Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
 
 ### review
 

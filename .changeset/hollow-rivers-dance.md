@@ -26,4 +26,4 @@ The `--docs-only` flag has been removed from `/design-docs:finalize`. Replace it
 | *(n/a)* | `--no-context-docs` — skips CLAUDE.md updates |
 | *(n/a)* | `--no-user-docs` — skips user-facing doc updates |
 
-`--no-pr`, `--no-squash`, and `--dry-run` are unchanged.
+`--no-push` and `--no-pr` are now separate flags with distinct semantics: `--no-push` keeps the work local (skip step 8 entirely), while `--no-pr` pushes the branch but skips PR creation (useful when CI or a separate tool opens the PR). `--no-squash` and `--dry-run` are unchanged.

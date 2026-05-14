@@ -32,7 +32,7 @@ Skills for creating and tracking implementation plans: breaking design docs into
 
 ### Branch finalization (3 skills)
 
-End-of-branch workflow orchestration. `/design-docs:finalize` dispatches the three documentation agents to update design docs, CLAUDE.md files and user docs in turn, then creates a changeset, squashes commits, pushes and opens a PR. Trigger phrases like "finalize this branch", "wrap up" or "ship it" route to it automatically. Flags: `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`. `/design-docs:review` runs an iterative PR review cycle. `/design-docs:merge-prep` squashes all branch commits into a single clean commit for final merge. The review and merge-prep workflows are user-invocable only. All three support `--dry-run`.
+End-of-branch workflow orchestration. `/design-docs:finalize` dispatches the three documentation agents to update design docs, CLAUDE.md files and user docs in turn, then creates a changeset, squashes commits, pushes and opens a PR. Trigger phrases like "finalize this branch", "wrap up" or "ship it" route to it automatically. Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`. `/design-docs:review` runs an iterative PR review cycle. `/design-docs:merge-prep` squashes all branch commits into a single clean commit for final merge. The review and merge-prep workflows are user-invocable only. All three support `--dry-run`.
 
 ## Agents
 
