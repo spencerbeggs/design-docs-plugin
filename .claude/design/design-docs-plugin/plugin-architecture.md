@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-05-11
-last-synced: 2026-05-11
+updated: 2026-05-14
+last-synced: 2026-05-14
 completeness: 95
 related: []
 dependencies: []
@@ -197,11 +197,11 @@ Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool
 permissions. Skills that need isolation use `context: fork` in frontmatter.
 Skills are invoked as `/design-docs:{skill-name}`.
 
-The three workflow skills form a branch lifecycle: `/finalize` squashes commits
-and opens a PR, `/review` addresses PR feedback in small fix commits (supports
-`--squash` to fold review commits into the previous commit), and `/merge-prep`
-does a final squash for merge. All three are user-invocable only
-(`disable-model-invocation: true`).
+The three workflow skills form a branch lifecycle: `/finalize` orchestrates the end-of-branch documentation update and squash-then-PR sequence, `/review` addresses PR feedback in small fix commits (supports `--squash` to fold review commits into the previous commit), and `/merge-prep` does a final squash for merge. `/review` and `/merge-prep` are user-invocable only (`disable-model-invocation: true`); `/finalize` is model-invokable so trigger phrases like "finalize this branch" or "wrap up" route to it via its `when_to_use` frontmatter hint.
+
+`/finalize` is a **plugin-with-agents orchestrator**: it does not call individual documentation skills directly. Instead, it dispatches each of the three documentation agents via the `Agent` tool — design-doc-agent for `.claude/design/`, context-doc-agent for `CLAUDE.md` files, user-docs for README/contributing/site docs — and lets each agent decide which of its own skills apply. Step 6 follows the same pattern by dispatching `changesets:changeset-manager` rather than invoking `/changesets:create` directly. The orchestrator passes the branch diff summary plus the running list of files modified by earlier agents so each subsequent agent has the full picture. See `plugin/skills/finalize/SKILL.md` for the per-step dispatch contract and prompt structure. The agent suite is what gives finalize its leverage: agents are first-class subagents with their own toolset and (via the matching `*-docs-style` or `changesets:style` skill) the right conventions in scope, so each layer is updated in isolation rather than in the orchestrator's shared context.
+
+Finalize uses negative-form skip flags rather than positive-form mode flags: each step runs by default, and `--no-context-docs`, `--no-user-docs`, `--no-squash`, `--no-push`, `--no-pr`, and `--dry-run` selectively suppress steps. `--no-push` and `--no-pr` are distinct: `--no-push` skips step 8 entirely (work stays local), while `--no-pr` pushes the branch but skips PR creation. The orchestrator builds a `TaskCreate`-tracked task list before Step 1 and flips each task to `in_progress`/`completed` via `TaskUpdate` as steps run, so the user sees live progress and any failure leaves the failed task visibly mid-flight rather than silently marked done.
 
 ### Agents
 
@@ -212,11 +212,9 @@ Three agents orchestrate multi-skill workflows:
 - `agents/user-docs.md` -- User-facing documentation generation (replaced
   `docs-gen-agent.md` in 0.3.x; covers user-docs-*and docs-* skills)
 
-Agent frontmatter declares skills and tools. All three agents include `hooks`
-frontmatter with a PreToolUse entry for `pre-tool-use/allow-design-writes.sh`
-to auto-approve Write/Edit/MultiEdit operations to design directories in
-subagent contexts. The agent markdown body describes purpose, available skills,
-common workflows, and best practices.
+Agent frontmatter declares skills and tools, includes a `color` field for the agent badge in transcripts (red for design-doc-agent, pink for context-doc-agent, blue for user-docs), and includes a `hooks` block with a PreToolUse entry for `pre-tool-use/allow-design-writes.sh` to auto-approve Write/Edit/MultiEdit operations to design directories in subagent contexts. Each agent also lists the matching `*-docs-style` skill (`design-docs-style`, `context-docs-style`, `user-docs-style`) so the path-based style rule auto-loads when the agent opens its respective doc type. The agent markdown body describes purpose, available skills, common workflows, and best practices.
+
+Agents are dispatched in two ways: directly by the user (`@design-doc-agent please audit the design docs`) for ad-hoc multi-skill work, or as orchestrated subagents from the `/finalize` skill, which calls each agent in turn with a shared branch summary so the three documentation layers stay coherent without leaking each domain's intermediate state into the orchestrator context.
 
 ---
 
@@ -356,18 +354,17 @@ delegated externally.
   `session-start/context-inject.sh` if missing, moved by finalize after squash,
   deleted by merge-prep after final squash.
 
-#### Pattern 5: Shared Hook Lib via Relative Source
+#### Pattern 5: Plugin-with-Agents Orchestration
 
-- **Where used:** Both hook scripts source `hooks/lib/hook-output.sh` and
-  `hooks/lib/hook-debug.sh`
-- **Why used:** Centralizes the response-envelope JSON shape and stderr
-  logging so hooks never hand-roll JSON and so a future schema change touches
-  one file. Keeps the hooks small enough to read end-to-end.
-- **Implementation:** Each hook resolves the lib directory relative to its
-  own location: `_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"`
-  then sources `hook-output.sh` and `hook-debug.sh`. Works regardless of
-  where the plugin is installed because the relative path is stable inside
-  the distributable.
+- **Where used:** `/finalize` skill -> design-doc-agent, context-doc-agent, user-docs agent
+- **Why used:** Long multi-domain workflows (update design docs, update CLAUDE.md, update user docs, then squash/PR) would either bloat one skill's context with three orthogonal skill suites or fragment into three separate user invocations that lose the shared branch summary between them. Dispatching domain agents from a thin orchestrator skill keeps each agent's context narrow (only its own skills and style rule in scope) while letting the orchestrator pass the branch summary and running file-modification list forward so each agent sees what the previous one did.
+- **Implementation:** The orchestrator skill declares `Agent` in its `allowed-tools` and dispatches each agent in turn with a prompt that includes (a) the Step 2 branch diff summary, (b) the cumulative list of files modified by earlier agents, (c) a directive to update what needs updating using whichever of the agent's skills apply, and (d) an instruction to report back which files were modified. The orchestrator does not enumerate specific skills for the agent to run -- the agent decides.
+
+#### Pattern 6: Shared Hook Lib via Relative Source
+
+- **Where used:** Both hook scripts source `hooks/lib/hook-output.sh` and `hooks/lib/hook-debug.sh`
+- **Why used:** Centralizes the response-envelope JSON shape and stderr logging so hooks never hand-roll JSON and so a future schema change touches one file. Keeps the hooks small enough to read end-to-end.
+- **Implementation:** Each hook resolves the lib directory relative to its own location: `_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"` then sources `hook-output.sh` and `hook-debug.sh`. Works regardless of where the plugin is installed because the relative path is stable inside the distributable.
 
 ### Constraints and Trade-offs
 
@@ -575,6 +572,23 @@ Claude Code           session-start/context-inject.sh
 6. All three share the same context (config loaded once, files read once)
 7. Agent produces a unified report with prioritized recommendations
 
+#### Interaction 4: Finalize Orchestrator -> Documentation Agents
+
+**Participants:** User, `/finalize` skill, design-doc-agent, context-doc-agent, user-docs agent, GitHub
+
+**Flow:**
+
+1. User invokes `/design-docs:finalize` (or a model-routed trigger like "wrap up this branch")
+2. Skill creates the 8-task `TaskCreate` checklist (omitting tasks for flags that disable a step)
+3. Skill runs preflight (Step 1) and builds the branch summary (Step 2): `git diff $BASE..HEAD --stat` plus the commit list
+4. Skill dispatches design-doc-agent (Step 3) via the `Agent` tool with the branch summary as prompt context; agent decides which design skills apply, returns a report of files modified
+5. Skill dispatches context-doc-agent (Step 4) with the branch summary plus the design-doc-agent's report so CLAUDE.md updates can track new or renamed design docs; agent returns its report
+6. Skill dispatches user-docs agent (Step 5) with the branch summary plus both previous agent reports so README/contributing/site updates have the full picture
+7. Skill runs the changeset (Step 6), squash (Step 7), push/PR (Step 8) sequence in the orchestrator context
+8. Between each step the skill flips the matching task to `completed` via `TaskUpdate` and reports a one-line status
+
+Each agent dispatch carries the running file-modification list forward but no other intermediate state, so each agent operates in an isolated context with only its own skill suite, tool permissions, and matching `*-docs-style` rule loaded. This is the **plugin-with-agents** orchestration pattern: the orchestrator skill stays small and steers the workflow while the agents own each documentation domain.
+
 ### Error Handling Strategy
 
 - **Hook errors:** Hooks exit with code 0 in all normal cases (including when
@@ -674,10 +688,12 @@ dependencies: string[]
 ```yaml
 name: string                    # kebab-case skill identifier
 description: string             # human-readable description
-allowed-tools: string           # comma-separated tool list (Read, Write, Glob, etc.)
+allowed-tools: string           # comma-separated tool list (Read, Write, Glob, Agent, TaskCreate, ...)
 context: fork                   # execution context mode (optional)
 agent: string                   # agent that orchestrates this skill (optional)
 disable-model-invocation: true  # prevent model from auto-invoking (optional)
+when_to_use: string             # multi-line block: trigger phrases for model-invokable skills (optional)
+model: string                   # routing hint, e.g. "sonnet" (optional)
 argument-hint: string           # usage hint shown to users (optional)
 ```
 
@@ -686,8 +702,11 @@ argument-hint: string           # usage hint shown to users (optional)
 ```yaml
 name: string           # agent identifier
 description: string    # when to use this agent
-skills: string         # comma-separated skill list
+skills: string         # comma-separated skill list (includes the matching *-docs-style skill)
 tools: string          # comma-separated tool list
+color: string          # transcript badge color: red | pink | blue | ...
+hooks:                 # PreToolUse entry that auto-approves design dir writes in subagent contexts
+  PreToolUse: [...]
 ```
 
 ### Data Flow Diagrams
@@ -756,6 +775,51 @@ tools: string          # comma-separated tool list
 [/design-docs:design-archive module doc]
   Set status=archived, add archival notice
 ```
+
+#### Flow 3: Finalize Orchestration
+
+```text
+[/design-docs:finalize  (or model-routed trigger)]
+        |
+        v
+[TaskCreate: build 8-task checklist (omit steps disabled by flags)]
+        |
+        v
+[Step 1: Preflight]
+  branch check, dirty tree, base branch, session/start tag, gh auth
+        |
+        v
+[Step 2: Branch summary]
+  git diff $BASE..HEAD --stat ; git log $BASE..HEAD --oneline
+        |
+        v
+[Step 3: Agent dispatch -> design-doc-agent]
+  prompt: branch summary
+  returns: list of design docs modified (or "no changes")
+        |
+        v
+[Step 4: Agent dispatch -> context-doc-agent]   (skipped by --no-context-docs)
+  prompt: branch summary + Step 3 report
+  returns: list of CLAUDE.md files modified
+        |
+        v
+[Step 5: Agent dispatch -> user-docs agent]     (skipped by --no-user-docs)
+  prompt: branch summary + Step 3 + Step 4 reports
+  returns: list of user-facing docs modified
+        |
+        v
+[Step 6: Changeset]   /changesets:create  OR  manual .changeset/*.md
+        |
+        v
+[Step 7: Squash]      (skipped by --no-squash)
+  git reset --soft $(git merge-base HEAD $BASE) ; git commit ; tag -f session/start HEAD
+        |
+        v
+[Step 8: Push and PR] (skipped entirely by --no-push; PR-only skipped by --no-pr)
+  git push -u origin HEAD ; gh pr create
+```
+
+Between steps, `TaskUpdate` flips each task to `completed`. On failure the in-progress task stays in its current state — it is not flipped to `completed` — so the user can see exactly where the workflow stopped.
 
 ### State Management
 
@@ -957,12 +1021,7 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ---
 
-**Document Status:** Current -- covers all major architectural components
-including the branch lifecycle workflow (session tag management, squash workflow
-skills), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and
-the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x).
-Missing coverage: detailed per-skill internal architecture, detailed command
-system design (no commands exist yet).
+**Document Status:** Current -- covers all major architectural components including the branch lifecycle workflow (session tag management, squash workflow skills), the plugin-with-agents finalize orchestration pattern (agent dispatch instead of sub-skill invocation, `TaskCreate`-based task tracking, negative-form skip flags, model-invokable routing via `when_to_use`), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x). Missing coverage: detailed per-skill internal architecture, detailed command system design (no commands exist yet).
 
 **Next Steps:** Add design docs for individual subsystems (skill framework
 internals, agent orchestration patterns) as complexity warrants separate

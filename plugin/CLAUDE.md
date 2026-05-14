@@ -37,22 +37,13 @@ Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.
 
 ### finalize
 
-End-of-branch orchestration workflow invoked via `/design-docs:finalize`.
-Updates design docs, CLAUDE.md files, and user docs by delegating to
-existing plugin skills (design-sync, context-update, docs-update), then
-creates a changeset, squashes all branch commits into a single clean
-commit, pushes, and opens a PR.
+End-of-branch orchestration workflow invoked via `/design-docs:finalize`. Dispatches the design-doc-agent, context-doc-agent, and user-docs agents to update each documentation layer, then creates a changeset, squashes all branch commits into a single clean commit, pushes, and opens a PR.
 
-Flags: `--no-pr`, `--no-squash`, `--docs-only`, `--dry-run`
-
-User-invocable only (`disable-model-invocation: true`).
+Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
 
 ### review
 
-PR review cycle workflow invoked via `/design-docs:review`. Fetches active
-(unresolved, not outdated) PR comments, triages by severity, addresses
-fixes, runs verification and lightweight doc check, then commits and pushes.
-Designed for iterative review cycles with small fix commits.
+PR review cycle workflow invoked via `/design-docs:review`. Fetches active (unresolved, not outdated) PR comments, triages by severity, addresses fixes, runs verification and lightweight doc check, then commits and pushes. Designed for iterative review cycles with small fix commits.
 
 Flags: `--force-docs`, `--no-push`, `--dry-run`, `--squash`
 
@@ -60,10 +51,7 @@ User-invocable only (`disable-model-invocation: true`).
 
 ### merge-prep
 
-Final merge preparation invoked via `/design-docs:merge-prep`. Squashes all
-branch commits from merge-base into a single clean commit and force pushes.
-No docs pipeline — docs were handled during finalize and review. Verifies
-PR approval before proceeding.
+Final merge preparation invoked via `/design-docs:merge-prep`. Squashes all branch commits from merge-base into a single clean commit and force pushes. No docs pipeline — docs were handled during finalize and review. Verifies PR approval before proceeding.
 
 Flags: `--no-push`, `--dry-run`
 
@@ -81,14 +69,15 @@ User-invocable only (`disable-model-invocation: true`).
 
 1. Create `skills/{name}/SKILL.md` with YAML frontmatter and instructions
 1. Add the skill directory path to `.claude-plugin/plugin.json` skills array
-1. Supported frontmatter: `name`, `description`, `allowed-tools`, `context`, `agent`, `model`, `effort`, `disable-model-invocation`, `user-invocable`, `argument-hint`, `hooks`, `paths`, `shell`
+1. Supported frontmatter: `name`, `description`, `when_to_use`, `allowed-tools`, `context`, `agent`, `model`, `effort`, `disable-model-invocation`, `user-invocable`, `argument-hint`, `hooks`, `paths`, `shell`. Use `when_to_use` to declare trigger phrases for model-invokable workflow skills (see `finalize` for the canonical example).
 
 ## Adding Agents
 
 1. Create `agents/{name}.md` with YAML frontmatter and system prompt
 1. Add the agent file path to `.claude-plugin/plugin.json` agents array
-1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `maxTurns`, `memory`, `effort`, `isolation`
-1. Note: plugin agents ignore `hooks`, `mcpServers`, and `permissionMode` fields
+1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `color`, `hooks`, `maxTurns`, `memory`, `effort`, `isolation`. Use `color` for the transcript badge (red/pink/blue used by the three doc agents); use `hooks` to declare per-agent PreToolUse approvals (all three doc agents auto-approve Write/Edit on design dirs)
+1. Note: plugin agents ignore `mcpServers` and `permissionMode` fields
+1. Each doc agent should also list its matching `*-docs-style` skill in `skills:` so the style rule auto-loads
 
 ## Adding Commands
 

@@ -1,8 +1,9 @@
 ---
 name: design-doc-agent
 description: Maintain internal design documentation and implementation plans. Use for creating, updating, validating, syncing, and managing design docs and plans.
-skills: design-validate, design-init, design-update, design-sync, design-prune, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
+skills: design-docs-style, design-validate, design-init, design-update, design-sync, design-prune, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
 tools: Read, Grep, Glob, Edit, Write, Bash
+color: red
 hooks:
   PreToolUse:
     - matcher: "Write|Edit"
@@ -15,11 +16,7 @@ hooks:
 
 ## Purpose
 
-The design-doc-agent is responsible for maintaining internal design
-documentation and implementation plans across the monorepo. It manages the
-full lifecycle of design documents and plans from creation to archival,
-ensuring docs and plans remain synchronized with the codebase and maintain
-high quality standards.
+The design-doc-agent is responsible for maintaining internal design documentation and implementation plans across the monorepo. It manages the full lifecycle of design documents and plans from creation to archival, ensuring docs and plans remain synchronized with the codebase and maintain high quality standards.
 
 **Use this agent when:**
 
@@ -192,8 +189,7 @@ high quality standards.
 
 ### Multi-Skill Workflows
 
-These workflows demonstrate how multiple skills work together in the same
-subagent context, sharing data efficiently.
+These workflows demonstrate how multiple skills work together in the same subagent context, sharing data efficiently.
 
 #### Comprehensive Documentation Quality Check
 
@@ -424,8 +420,7 @@ To locate past design decisions:
 
 The design-doc-agent works closely with:
 
-- **context-doc-agent**: Design docs are referenced from CLAUDE.md files using
-  `@` syntax
+- **context-doc-agent**: Design docs are referenced from CLAUDE.md files using `@` syntax
 - **user-docs**: Design docs inform user-facing documentation
 - **Main Claude agent**: Delegates design doc tasks to this specialized agent
 
