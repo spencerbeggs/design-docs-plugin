@@ -1,5 +1,18 @@
 # design-docs-plugin
 
+## 0.6.0
+
+### Features
+
+* [`b63177a`](https://github.com/spencerbeggs/design-docs-plugin/commit/b63177a3aaeb228084983f5a3b43760f81b57e4c) ### Session handoff skill
+
+Adds the `/design-docs:handoff` skill for transferring task state between Claude Code sessions.
+
+* In a failing or context-exhausted session, captures the current task state to `.claude/handoffs/HANDOFF.md`
+* In a fresh session, reads an existing handoff back into context and archives it
+* Flags: `--resume`, `--update`, `--archive`, `--list`, `--dry-run`
+* The skill is listed in the SessionStart hook's skill catalog; pickup is manual — run `/design-docs:handoff` in the fresh session to resume
+
 ## 0.5.0
 
 ### Breaking Changes
