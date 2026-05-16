@@ -3,12 +3,13 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-05-14
-last-synced: 2026-05-14
+updated: 2026-05-16
+last-synced: 2026-05-16
 completeness: 95
 related: []
 dependencies: []
 ---
+
 
 # Design Docs Plugin - Architecture
 
@@ -36,7 +37,7 @@ The design-docs plugin provides design documentation management, implementation
 plan tracking, CLAUDE.md context file maintenance, and user-facing documentation
 generation to Claude Code users. It ships as pure bash hooks and markdown
 skills/agents with no compiled binary, no TypeScript runtime, and no runtime
-dependencies. The plugin has 47 skills organized across 3 specialized agents,
+dependencies. The plugin has 48 skills organized across 3 specialized agents,
 activated through two hooks: a SessionStart hook that injects context and manages
 session tags, and a PreToolUse hook for auto-approving design directory writes.
 Hooks are organized by event name in subdirectories (`hooks/<event-kebab>/`)
@@ -95,7 +96,7 @@ design-docs-plugin/
 |   |   +-- session-start/        # SessionStart scripts
 |   |   +-- pre-tool-use/         # PreToolUse scripts
 |   |   +-- fixtures/             # Reserved for hook-payload fixtures
-|   +-- skills/                   # 47 skill directories
+|   +-- skills/                   # 48 skill directories
 |   +-- agents/                   # 3 agent definitions
 |   +-- commands/                 # (no commands yet)
 |   +-- CLAUDE.md
@@ -114,8 +115,8 @@ and bash.
 The plugin identity is declared in `plugin/.claude-plugin/plugin.json`:
 
 - **name**: `design-docs`
-- **version**: `0.3.1` (managed by changesets)
-- **skills**: 47 skill directory paths
+- **version**: `0.5.0` (managed by changesets)
+- **skills**: 48 skill directory paths
 - **agents**: 3 agent markdown files
 - **commands**: none currently
 
@@ -154,7 +155,9 @@ Reads the SessionStart envelope from stdin and falls back to the envelope's
 `.claude/design/` does not exist, creates the directory and emits initialization
 guidance instead of the full context. The context message explains what design
 docs are, why they matter, when to update them, and lists all available skills
-organized by category. On feature branches, manages the `session/start` local
+organized by category in `<skill_group>` blocks — `design_docs`, `plans`,
+`context`, `user_docs`, `finalization`, and `session` (the `handoff` skill). On
+feature branches, manages the `session/start` local
 git tag for session boundary tracking -- creates at merge-base if missing,
 reports existing tag without moving it. Outputs branch session context as XML
 within the design documentation system block. Writes `DESIGN_DOCS_GH_TOKEN`,
@@ -182,7 +185,7 @@ Their tests (`subagent-start.test.ts`, `stop-reminder.test.ts`,
 
 ### Skills
 
-47 skill directories organized in 6 categories:
+48 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
@@ -191,13 +194,17 @@ Their tests (`subagent-start.test.ts`, `stop-reminder.test.ts`,
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
 | user-docs-* | 10 | add-page, badges, build-badges, build-toc, create-docs, create-readme, detect-shape, humanize, review, style |
-| workflow | 3 | finalize (end-of-branch orchestration with squash), review (PR feedback cycles), merge-prep (final squash before merge) |
+| workflow | 4 | finalize (end-of-branch orchestration with squash), review (PR feedback cycles), merge-prep (final squash before merge), handoff (bidirectional session handoff) |
 
 Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool
 permissions. Skills that need isolation use `context: fork` in frontmatter.
 Skills are invoked as `/design-docs:{skill-name}`.
 
-The three workflow skills form a branch lifecycle: `/finalize` orchestrates the end-of-branch documentation update and squash-then-PR sequence, `/review` addresses PR feedback in small fix commits (supports `--squash` to fold review commits into the previous commit), and `/merge-prep` does a final squash for merge. `/review` and `/merge-prep` are user-invocable only (`disable-model-invocation: true`); `/finalize` is model-invokable so trigger phrases like "finalize this branch" or "wrap up" route to it via its `when_to_use` frontmatter hint.
+Three of the workflow skills form a branch lifecycle: `/finalize` orchestrates the end-of-branch documentation update and squash-then-PR sequence, `/review` addresses PR feedback in small fix commits (supports `--squash` to fold review commits into the previous commit), and `/merge-prep` does a final squash for merge. `/review` and `/merge-prep` are user-invocable only (`disable-model-invocation: true`); `/finalize` is model-invokable so trigger phrases like "finalize this branch" or "wrap up" route to it via its `when_to_use` frontmatter hint.
+
+The fourth workflow skill, `/handoff`, is a **bidirectional session-handoff** skill that sits outside the branch lifecycle. It is the escape hatch for when a session has gone wrong in a way that cannot be fixed in flight — context exhaustion or a wedged environment — and restoring context by hand would cost more than starting fresh. The skill has no flags-required happy path: its mode is inferred from on-disk state. With no flags and no active handoff it runs in **write mode**, capturing the current task state into a fixed-template document; with no flags and an active handoff present it runs in **read mode**, resuming that work and then archiving the handoff. Explicit flags override inference: `--resume`, `--update` (amend the pending handoff in place), `--archive` (clear without resuming), `--list` (list the archive), `--dry-run`. Write mode first assesses whether the session produced design-level changes and, if so, dispatches the `design-docs:design-doc-agent` via the `Agent` tool to persist them to `.claude/design/` before writing the handoff — durable design context must land in tracked design docs rather than the transient handoff file. Like `/review` and `/merge-prep`, `/handoff` is user-invocable only (`disable-model-invocation: true`).
+
+Handoffs live under `.claude/handoffs/`: the active handoff at `.claude/handoffs/HANDOFF.md`, consumed or cleared handoffs archived to `.claude/handoffs/archive/<timestamp>-handoff.md`. This directory is project-scoped session state but, unlike `.claude/design/` and `.claude/plans/` which are git-tracked, it is transient per-machine state — the skill ensures `.claude/handoffs/` is in the project `.gitignore` and handoffs are never committed. Handoff documents carry YAML frontmatter (`created_at`, `updated_at`, `branch`, `status`, `reason`, `consumed_at`, `archived_at`) and eight fixed sections, with `status` transitioning `pending` → `consumed` (resumed) or `pending` → `archived` (cleared).
 
 `/finalize` is a **plugin-with-agents orchestrator**: it does not call individual documentation skills directly. Instead, it dispatches each of the three documentation agents via the `Agent` tool — design-doc-agent for `.claude/design/`, context-doc-agent for `CLAUDE.md` files, user-docs for README/contributing/site docs — and lets each agent decide which of its own skills apply. Step 6 follows the same pattern by dispatching `changesets:changeset-manager` rather than invoking `/changesets:create` directly. The orchestrator passes the branch diff summary plus the running list of files modified by earlier agents so each subsequent agent has the full picture. See `plugin/skills/finalize/SKILL.md` for the per-step dispatch contract and prompt structure. The agent suite is what gives finalize its leverage: agents are first-class subagents with their own toolset and (via the matching `*-docs-style` or `changesets:style` skill) the right conventions in scope, so each layer is updated in isolation rather than in the orchestrator's shared context.
 
@@ -467,10 +474,11 @@ Exit code 0 indicates success.
 - CLAUDE.md context file maintenance (validate, audit, review, update, split)
 - User documentation generation (README, contributing, security, repo, site)
 - End-of-branch finalization (finalize)
+- Session handoff between Claude Code sessions (handoff)
 
 **Components:**
 
-47 skill directories organized in 6 categories:
+48 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
@@ -479,7 +487,7 @@ Exit code 0 indicates success.
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
 | user-docs-* | 10 | add-page, badges, build-badges, build-toc, create-docs, create-readme, detect-shape, humanize, review, style |
-| workflow | 3 | finalize, review, merge-prep |
+| workflow | 4 | finalize, review, merge-prep, handoff |
 
 **Communication:** Skills are invoked as `/design-docs:{skill-name}`. Each skill
 reads its SKILL.md frontmatter for tool permissions (`allowed-tools`) and agent
@@ -1021,7 +1029,7 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ---
 
-**Document Status:** Current -- covers all major architectural components including the branch lifecycle workflow (session tag management, squash workflow skills), the plugin-with-agents finalize orchestration pattern (agent dispatch instead of sub-skill invocation, `TaskCreate`-based task tracking, negative-form skip flags, model-invokable routing via `when_to_use`), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x). Missing coverage: detailed per-skill internal architecture, detailed command system design (no commands exist yet).
+**Document Status:** Current -- covers all major architectural components including the branch lifecycle workflow (session tag management, squash workflow skills), the bidirectional session-handoff skill (`.claude/handoffs/` transient state, mode inference, design-doc-agent dispatch in write mode), the plugin-with-agents finalize orchestration pattern (agent dispatch instead of sub-skill invocation, `TaskCreate`-based task tracking, negative-form skip flags, model-invokable routing via `when_to_use`), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x). Missing coverage: detailed per-skill internal architecture, detailed command system design (no commands exist yet).
 
 **Next Steps:** Add design docs for individual subsystems (skill framework
 internals, agent orchestration patterns) as complexity warrants separate

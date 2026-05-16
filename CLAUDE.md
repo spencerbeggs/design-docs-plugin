@@ -39,7 +39,7 @@ design-docs-plugin/
 │   │   ├── fixtures/                                   # Reserved for hook-payload fixtures
 │   │   ├── session-start/context-inject.sh             # SessionStart context injection
 │   │   └── pre-tool-use/allow-design-writes.sh         # PreToolUse auto-approve design dirs
-│   ├── skills/                      # 47 skills
+│   ├── skills/                      # 48 skills
 │   │   ├── design-init/             # 16 design-* skills
 │   │   ├── context-audit/           # 6 context-* skills
 │   │   ├── docs-generate-contributing/ # 7 docs-* skills
@@ -47,7 +47,8 @@ design-docs-plugin/
 │   │   ├── plan-create/             # 5 plan-* skills
 │   │   ├── finalize/                # squash workflow: finalize
 │   │   ├── review/                  # squash workflow: PR review
-│   │   └── merge-prep/             # squash workflow: final squash
+│   │   ├── merge-prep/             # squash workflow: final squash
+│   │   └── handoff/                 # session handoff workflow
 │   ├── agents/
 │   │   ├── design-doc-agent.md
 │   │   ├── context-doc-agent.md

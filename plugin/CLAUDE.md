@@ -13,7 +13,7 @@ This is the distributable plugin directory. Everything here ships to end users v
 * `hooks/session-start/context-inject.sh` -- SessionStart context injection
 * `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
 * `hooks/fixtures/` -- Reserved for hook-payload fixtures (empty)
-* `skills/` -- 47 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep groups
+* `skills/` -- 48 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep, handoff groups
 * `agents/` -- design-doc-agent, context-doc-agent, user-docs
 * `commands/` -- (no commands yet; create the directory when adding the first command)
 
@@ -56,6 +56,14 @@ Final merge preparation invoked via `/design-docs:merge-prep`. Squashes all bran
 Flags: `--no-push`, `--dry-run`
 
 User-invocable only (`disable-model-invocation: true`).
+
+### handoff
+
+Session handoff skill invoked via `/design-docs:handoff`. Bidirectional: writes the current task state to `.claude/handoffs/HANDOFF.md` when no handoff is pending, or resumes a pending handoff and archives it when one exists. Lets a fresh Claude Code session pick up work after a session goes wrong in flight.
+
+Flags: `--resume`, `--update`, `--archive`, `--list`, `--dry-run`. Accepts a positional `reason` string.
+
+User-invocable only (`disable-model-invocation: true`). The `.claude/handoffs/` directory is gitignored — handoffs are transient per-machine session state.
 
 ## Adding Hooks
 

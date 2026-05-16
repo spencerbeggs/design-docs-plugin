@@ -1,11 +1,11 @@
 # design-docs
 
-A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans and user-facing documentation. Injects structured context into every Claude session and provides 47 skills and 3 specialized agents for working with design docs end-to-end.
+A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans and user-facing documentation. Injects structured context into every Claude session and provides 48 skills and 3 specialized agents for working with design docs end-to-end.
 
 ## What's included
 
 * **2 lifecycle hooks** -- SessionStart injects philosophy-first design doc context into each session and sets up branch session tags; PreToolUse auto-approves writes to `.claude/design/` and `.claude/plans/` so agents never get blocked mid-update. Both configurable via `DESIGN_DOCS_CONTEXT_ENABLED`.
-* **47 skills across 6 categories** -- covering design doc creation, context file management, documentation generation, user-facing docs, implementation planning and branch finalization
+* **48 skills across 6 categories** -- covering design doc creation, context file management, documentation generation, user-facing docs, implementation planning and branch/session workflows
 * **3 specialized agents** -- for orchestrating complex multi-step documentation workflows
 
 ## Skill categories
@@ -30,9 +30,9 @@ Skills for writing and maintaining polished user-facing docs: creating READMEs a
 
 Skills for creating and tracking implementation plans: breaking design docs into tasks, estimating effort, tracking progress and generating status reports.
 
-### Branch finalization (3 skills)
+### Workflow orchestration (4 skills)
 
-End-of-branch workflow orchestration. `/design-docs:finalize` dispatches the three documentation agents to update design docs, CLAUDE.md files and user docs in turn, then creates a changeset, squashes commits, pushes and opens a PR. Trigger phrases like "finalize this branch", "wrap up" or "ship it" route to it automatically. Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`. `/design-docs:review` runs an iterative PR review cycle. `/design-docs:merge-prep` squashes all branch commits into a single clean commit for final merge. The review and merge-prep workflows are user-invocable only. All three support `--dry-run`.
+Session and branch workflow skills. `/design-docs:finalize` dispatches the three documentation agents to update design docs, CLAUDE.md files and user docs in turn, then creates a changeset, squashes commits, pushes and opens a PR. Trigger phrases like "finalize this branch", "wrap up" or "ship it" route to it automatically. Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`. `/design-docs:review` runs an iterative PR review cycle. `/design-docs:merge-prep` squashes all branch commits into a single clean commit for final merge. `/design-docs:handoff` captures the current task state into `.claude/handoffs/HANDOFF.md` so a fresh Claude Code session can resume — bidirectional, writing when no handoff is pending and resuming when one exists. Flags: `--resume`, `--update`, `--archive`, `--list`, `--dry-run`. The review, merge-prep and handoff workflows are user-invocable only. All four support `--dry-run`.
 
 ## Agents
 

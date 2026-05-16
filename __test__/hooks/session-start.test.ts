@@ -105,6 +105,8 @@ describe("session-start.sh", () => {
 		expect(context).toContain("<when_to_update>");
 		expect(context).toContain("<how_to_update>");
 		expect(context).toContain("<available_skills>");
+		expect(context).toContain('<skill_group name="session">');
+		expect(context).toContain("/design-docs:handoff");
 	});
 });
 
