@@ -40,6 +40,7 @@
 		"./skills/docs-review-package",
 		"./skills/docs-sync",
 		"./skills/docs-update",
+		"./skills/handoff",
 		"./skills/finalize",
 		"./skills/merge-prep",
 		"./skills/plan-complete",

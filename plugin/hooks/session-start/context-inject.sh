@@ -187,6 +187,9 @@ Delegate to specialized agents rather than editing directly:
     /design-docs:review — fetch and address PR review feedback, lightweight doc check, commit and push
     /design-docs:merge-prep — final squash of all branch commits, force push for merge
   </skill_group>
+  <skill_group name=\"session\">
+    /design-docs:handoff — capture current task state for pickup in a fresh session, or resume a pending handoff
+  </skill_group>
 </available_skills>
 ${BRANCH_SESSION_CONTEXT}
 </design_documentation_system>
