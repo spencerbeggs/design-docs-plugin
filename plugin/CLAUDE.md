@@ -13,7 +13,7 @@ This is the distributable plugin directory. Everything here ships to end users v
 * `hooks/session-start/context-inject.sh` -- SessionStart context injection
 * `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse auto-approve for design dirs
 * `hooks/fixtures/` -- Reserved for hook-payload fixtures (empty)
-* `skills/` -- 48 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep, handoff groups
+* `skills/` -- 50 SKILL.md files across design-*, context-*, docs-*, user-docs-*, plan-*, finalize, review, merge-prep, handoff groups
 * `agents/` -- design-doc-agent, context-doc-agent, user-docs
 * `commands/` -- (no commands yet; create the directory when adding the first command)
 
@@ -40,6 +40,14 @@ Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.
 End-of-branch orchestration workflow invoked via `/design-docs:finalize`. Dispatches the design-doc-agent, context-doc-agent, and user-docs agents to update each documentation layer, then creates a changeset, squashes all branch commits into a single clean commit, pushes, and opens a PR.
 
 Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
+
+### design-groom
+
+Autonomous design-doc overhaul invoked via `/design-docs:design-groom`. Dispatches the design-doc-agent per module to validate, restyle, resync, prune stale context, and split oversized docs (via the new `design-split` skill), then reconciles cross-references, dispatches the context-doc-agent to fix CLAUDE.md references, and commits (no push). Runs unattended.
+
+Flags: `[module]`, `--dry-run`, `--no-commit`
+
+User-invocable only (`disable-model-invocation: true`).
 
 ### review
 

@@ -1,7 +1,7 @@
 ---
 name: design-doc-agent
 description: Maintain internal design documentation and implementation plans. Use for creating, updating, validating, syncing, and managing design docs and plans.
-skills: design-docs-style, design-validate, design-init, design-update, design-sync, design-prune, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
+skills: design-docs-style, design-validate, design-init, design-update, design-sync, design-prune, design-split, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
 tools: Read, Grep, Glob, Edit, Write, Bash
 color: red
 hooks:
@@ -89,6 +89,13 @@ The design-doc-agent is responsible for maintaining internal design documentatio
 - Remove deprecated sections
 - Maintain focus on current architecture
 - Preserve essential historical context
+
+**design-split** - Split an oversized design doc into atomic pieces
+
+- Break a doc covering multiple subsystems into one doc per subsystem
+- Rewrite the parent into a linking overview
+- Wire bidirectional cross-references between parent and children
+- Report new files for CLAUDE.md reconciliation
 
 ### Discovery & Navigation
 

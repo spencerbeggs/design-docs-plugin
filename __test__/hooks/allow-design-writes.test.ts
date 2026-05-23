@@ -69,4 +69,27 @@ describe("allow-design-writes.sh", () => {
 		expect(result.exitCode).toBe(0);
 		expect(JSON.parse(result.stdout)).toEqual({});
 	});
+
+	test("auto-approves writes to a top-level CLAUDE.md", () => {
+		const result = runHook(makeInput("/Users/test/project/CLAUDE.md"));
+
+		expect(result.exitCode).toBe(0);
+		const json = JSON.parse(result.stdout);
+		expect(json.hookSpecificOutput.permissionDecision).toBe("allow");
+	});
+
+	test("auto-approves writes to a package-level CLAUDE.md", () => {
+		const result = runHook(makeInput("/Users/test/project/pkgs/foo/CLAUDE.md"));
+
+		expect(result.exitCode).toBe(0);
+		const json = JSON.parse(result.stdout);
+		expect(json.hookSpecificOutput.permissionDecision).toBe("allow");
+	});
+
+	test("does not auto-approve a file whose name merely ends in CLAUDE.md", () => {
+		const result = runHook(makeInput("/Users/test/project/src/MYCLAUDE.md"));
+
+		expect(result.exitCode).toBe(0);
+		expect(result.stdout).toBe("");
+	});
 });

@@ -39,8 +39,8 @@ design-docs-plugin/
 │   │   ├── fixtures/                                   # Reserved for hook-payload fixtures
 │   │   ├── session-start/context-inject.sh             # SessionStart context injection
 │   │   └── pre-tool-use/allow-design-writes.sh         # PreToolUse auto-approve design dirs
-│   ├── skills/                      # 48 skills
-│   │   ├── design-init/             # 16 design-* skills
+│   ├── skills/                      # 50 skills
+│   │   ├── design-init/             # 18 design-* skills
 │   │   ├── context-audit/           # 6 context-* skills
 │   │   ├── docs-generate-contributing/ # 7 docs-* skills
 │   │   ├── user-docs-add-page/      # 10 user-docs-* skills

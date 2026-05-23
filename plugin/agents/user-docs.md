@@ -9,7 +9,7 @@ hooks:
     - matcher: "Write|Edit"
       hooks:
         - type: command
-          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/allow-design-writes.sh"
+          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/allow-design-writes.sh"
 ---
 
 # User Documentation Agent
