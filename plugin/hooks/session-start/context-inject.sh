@@ -184,6 +184,7 @@ Delegate to specialized agents rather than editing directly:
   </skill_group>
   <skill_group name=\"finalization\">
     /design-docs:finalize — end-of-branch workflow (update all docs, create changeset, squash, push, open PR)
+    /design-docs:design-groom — autonomous top-to-bottom design-doc overhaul (groom, reconcile, update CLAUDE.md, commit; no push)
     /design-docs:review — fetch and address PR review feedback, lightweight doc check, commit and push
     /design-docs:merge-prep — final squash of all branch commits, force push for merge
   </skill_group>
