@@ -12,7 +12,6 @@ when_to_use: >
   comments (use /design-docs:review), or the final post-approval squash
   (use /design-docs:merge-prep).
 allowed-tools: Skill, Agent, Read, Glob, Grep, Bash(git *), Bash(gh *), Bash(bun *), Bash(ls *), Write, Edit, TaskCreate, TaskUpdate
-model: sonnet
 argument-hint: "[--no-push] [--no-pr] [--no-squash] [--no-context-docs] [--no-user-docs] [--dry-run]"
 ---
 
