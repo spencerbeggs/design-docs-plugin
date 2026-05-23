@@ -36,8 +36,8 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 # Auto-approve writes to design docs and plans directories
-if echo "$FILE_PATH" | grep -qE '(/|^)\.claude/(design|plans)/'; then
-  emit_permission_allow "Design docs plugin: auto-approved write to design docs directory"
+if echo "$FILE_PATH" | grep -qE '(/|^)\.claude/(design|plans)/|(/|^)CLAUDE\.md$'; then
+  emit_permission_allow "Design docs plugin: auto-approved write to design docs / CLAUDE.md"
   exit 0
 fi
 
