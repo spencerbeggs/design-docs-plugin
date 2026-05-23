@@ -93,12 +93,12 @@ Collect each module's report (including new files from splits) for Steps 4 and 5
 
 ## Step 4: Reconcile Cross-References
 
-Run this in the **orchestrator context — do NOT dispatch an agent.** Splits in Step 3 may have created files that docs in other modules link to, and only the orchestrator sees the whole post-groom tree. Invoke via the `Skill` tool across all groomed modules:
+Splits in Step 3 may have created files that docs in other modules link to, so reconciliation must consider the whole post-groom tree, not one module in isolation. Invoke via the `Skill` tool:
 
 - `design-validate` — confirm every doc's frontmatter and links are valid post-groom.
 - `design-link` — rebuild the cross-reference graph and surface any now-broken links.
 
-If validation surfaces broken links, fix them directly here, then re-validate. Report the reconciliation result.
+Both run in the design-doc-agent (they are `context: fork` skills); each reads the full design tree from disk, so a single invocation of each already covers every module — there is no need for a per-module pass here. If validation surfaces broken links, fix them yourself with `Edit`/`Write` in this orchestrator context, then re-invoke `design-validate` to confirm. Report the reconciliation result.
 
 ## Step 5: Update CLAUDE.md References
 
@@ -116,10 +116,10 @@ Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass the Step
 
 If every step reported "no changes needed" and `git status --porcelain` is empty, there is nothing to commit. Report the clean bill of health and stop — do NOT create an empty commit.
 
-Otherwise stage and commit (git-only — no `gh`, no push):
+Otherwise stage and commit (git-only — no `gh`, no push). Stage exactly the files reported modified or created in Steps 3–5 — the design docs the agents changed, any new files from splits, and the `CLAUDE.md` files the context-doc-agent updated — not the whole tree. This keeps the commit structurally limited to what the groom touched, beyond the preflight's starting-state guarantee:
 
 ```bash
-git add -A
+git add <files reported modified/created in Steps 3–5>
 ```
 
 Generate a conventional commit message satisfying `@savvy-web/commitlint`: a `docs` type, a subject summarizing what changed (modules groomed, docs split, CLAUDE.md updated), and a DCO `Signed-off-by` trailer from `git config user.name` and `git config user.email`. Shape:
