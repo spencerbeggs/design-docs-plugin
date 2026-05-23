@@ -1,5 +1,19 @@
 # design-docs-plugin
 
+## 0.7.0
+
+### Features
+
+* [`f3493ce`](https://github.com/spencerbeggs/design-docs-plugin/commit/f3493ce04641e528b777a93b7abe7248415fadb4) `/design-docs:design-groom` — autonomous top-to-bottom design-doc overhaul: validates, restyles, resyncs against code, prunes stale context, splits oversized docs, reconciles cross-references, updates CLAUDE.md references, then commits (no push). Runs unattended.
+* `/design-docs:design-split` — splits an oversized design doc into atomic, cross-referenced pieces; available to the design-doc-agent and on demand.
+
+### Bug Fixes
+
+* [`f3493ce`](https://github.com/spencerbeggs/design-docs-plugin/commit/f3493ce04641e528b777a93b7abe7248415fadb4) `allow-design-writes` hook now auto-approves `CLAUDE.md` writes, so the grooming pass can run unattended.
+* Corrected the `allow-design-writes` hook path referenced by the context-doc-agent and user-docs agents.
+
+- [`f3493ce`](https://github.com/spencerbeggs/design-docs-plugin/commit/f3493ce04641e528b777a93b7abe7248415fadb4) `finalize` no longer errors with "Usage credits required for 1M context". Removed the `model: sonnet` override so the user-invoked skill inherits the session model instead of forcing a model switch.
+
 ## 0.6.0
 
 ### Features
