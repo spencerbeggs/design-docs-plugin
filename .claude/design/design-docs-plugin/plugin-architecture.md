@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-05-16
-last-synced: 2026-05-16
+updated: 2026-06-05
+last-synced: 2026-06-05
 completeness: 95
 related: []
 dependencies: []
@@ -24,10 +24,11 @@ cloning.
 3. [Rationale](#rationale)
 4. [System Architecture](#system-architecture)
 5. [Data Flow](#data-flow)
-6. [Integration Points](#integration-points)
-7. [Testing Strategy](#testing-strategy)
-8. [Future Enhancements](#future-enhancements)
-9. [Related Documentation](#related-documentation)
+6. [Pointer Integrity (Content-Drift Detection)](#pointer-integrity-content-drift-detection)
+7. [Integration Points](#integration-points)
+8. [Testing Strategy](#testing-strategy)
+9. [Future Enhancements](#future-enhancements)
+10. [Related Documentation](#related-documentation)
 
 ---
 
@@ -37,7 +38,7 @@ The design-docs plugin provides design documentation management, implementation
 plan tracking, CLAUDE.md context file maintenance, and user-facing documentation
 generation to Claude Code users. It ships as pure bash hooks and markdown
 skills/agents with no compiled binary, no TypeScript runtime, and no runtime
-dependencies. The plugin has 48 skills organized across 3 specialized agents,
+dependencies. The plugin has 50 skills organized across 3 specialized agents,
 activated through two hooks: a SessionStart hook that injects context and manages
 session tags, and a PreToolUse hook for auto-approving design directory writes.
 Hooks are organized by event name in subdirectories (`hooks/<event-kebab>/`)
@@ -90,13 +91,15 @@ The monorepo has four top-level areas with distinct responsibilities:
 design-docs-plugin/
 +-- plugin/                       # DISTRIBUTABLE -- everything here ships to users
 |   +-- .claude-plugin/           # Plugin manifest (plugin.json)
+|   +-- lib/                      # Shared helper scripts for skills/agents (NOT hooks)
+|   |   +-- ref-hash.sh           # body-only sha256 of a design doc (pointer drift)
 |   +-- hooks/
 |   |   +-- hooks.json            # Hook configuration (event -> script paths)
 |   |   +-- lib/                  # Shared bash helpers sourced by hook scripts
 |   |   +-- session-start/        # SessionStart scripts
 |   |   +-- pre-tool-use/         # PreToolUse scripts
 |   |   +-- fixtures/             # Reserved for hook-payload fixtures
-|   +-- skills/                   # 48 skill directories
+|   +-- skills/                   # 50 skill directories
 |   +-- agents/                   # 3 agent definitions
 |   +-- commands/                 # (no commands yet)
 |   +-- CLAUDE.md
@@ -110,13 +113,15 @@ design-docs-plugin/
 `package.json`, no `tsconfig.json`, no build tooling -- it is purely markdown
 and bash.
 
+There are two distinct shared-script locations under `plugin/`, separated by who sources them. `hooks/lib/` holds helpers sourced by hook scripts (Claude Code's hook runtime). `plugin/lib/` holds helpers invoked by skills and agents at task time -- currently just `ref-hash.sh`, which powers pointer content-drift detection (see [Pointer Integrity](#pointer-integrity-content-drift-detection)). Keep them separate: hook helpers run in the constrained hook subprocess, skill/agent helpers run in the richer task context.
+
 ### Plugin Manifest
 
 The plugin identity is declared in `plugin/.claude-plugin/plugin.json`:
 
 - **name**: `design-docs`
-- **version**: `0.5.0` (managed by changesets)
-- **skills**: 48 skill directory paths
+- **version**: managed by changesets
+- **skills**: 50 skill directory paths
 - **agents**: 3 agent markdown files
 - **commands**: none currently
 
@@ -185,11 +190,11 @@ Their tests (`subagent-start.test.ts`, `stop-reminder.test.ts`,
 
 ### Skills
 
-48 skill directories organized in 6 categories:
+50 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
-| design-* | 16 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, docs-style |
+| design-* | 18 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, groom, split, docs-style |
 | context-* | 6 | validate, audit, review, update, split, docs-style |
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
@@ -209,6 +214,8 @@ Handoffs live under `.claude/handoffs/`: the active handoff at `.claude/handoffs
 `/finalize` is a **plugin-with-agents orchestrator**: it does not call individual documentation skills directly. Instead, it dispatches each of the three documentation agents via the `Agent` tool — design-doc-agent for `.claude/design/`, context-doc-agent for `CLAUDE.md` files, user-docs for README/contributing/site docs — and lets each agent decide which of its own skills apply. Step 6 follows the same pattern by dispatching `changesets:changeset-manager` rather than invoking `/changesets:create` directly. The orchestrator passes the branch diff summary plus the running list of files modified by earlier agents so each subsequent agent has the full picture. See `plugin/skills/finalize/SKILL.md` for the per-step dispatch contract and prompt structure. The agent suite is what gives finalize its leverage: agents are first-class subagents with their own toolset and (via the matching `*-docs-style` or `changesets:style` skill) the right conventions in scope, so each layer is updated in isolation rather than in the orchestrator's shared context.
 
 Finalize uses negative-form skip flags rather than positive-form mode flags: each step runs by default, and `--no-context-docs`, `--no-user-docs`, `--no-squash`, `--no-push`, `--no-pr`, and `--dry-run` selectively suppress steps. `--no-push` and `--no-pr` are distinct: `--no-push` skips step 8 entirely (work stays local), while `--no-pr` pushes the branch but skips PR creation. The orchestrator builds a `TaskCreate`-tracked task list before Step 1 and flips each task to `in_progress`/`completed` via `TaskUpdate` as steps run, so the user sees live progress and any failure leaves the failed task visibly mid-flight rather than silently marked done.
+
+Squash (Step 7) is the recommended default, not just an option: this project squash-merges into the default branch and uses agent reviewers, so per-commit history is discarded at merge anyway and granular history actively misleads a commit-walking reviewer (false positives from already-fixed issues, ambiguity about which revision is current). `--no-squash` is the escape hatch for the rare case where granular commits must survive. The opt-in `--split-docs` flag is the one positive-form mode flag: it squashes into **two** commits instead of one — functional changes carrying a `review-focus: primary` trailer and ancillary docs/changeset changes carrying `review-focus: ancillary`. The split is purely a **review-time focus signal** for agent reviewers; both commits collapse into one at squash-merge, so it changes nothing about the merged history. Finalize only emits the trailer — recognizing it is the reviewer's job, out of scope here. Path classification (which staged files are ancillary) reads the design-doc, plan, context and user-doc path roots from `design.config.json`; everything else is functional. `--split-docs` is ignored under `--no-squash` (nothing is squashed, so there is nothing to split).
 
 ### Agents
 
@@ -478,11 +485,11 @@ Exit code 0 indicates success.
 
 **Components:**
 
-48 skill directories organized in 6 categories:
+50 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
 | :------- | :---- | :----- |
-| design-* | 16 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, docs-style |
+| design-* | 18 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, groom, split, docs-style |
 | context-* | 6 | validate, audit, review, update, split, docs-style |
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
 | plan-* | 5 | create, validate, list, explore, complete |
@@ -668,7 +675,8 @@ Each agent dispatch carries the running file-modification list forward but no ot
   quality: {
     designDocs: { maxLineLength, requireFrontmatter, requireTOC, minSections };
     userDocs: { level1, level2, level3 };
-    context: { rootMaxLines, childMaxLines, requireDesignDocPointers };
+    context: { rootMaxWords, childMaxWords, requireDesignDocPointers,
+               requirePointerHashes };
     plans: { maxLineLength, requireFrontmatter, requiredFields, validStatuses,
              progressRange, stalenessThresholdDays, archiveAfterDays };
   };
@@ -819,7 +827,7 @@ hooks:                 # PreToolUse entry that auto-approves design dir writes i
 [Step 6: Changeset]   /changesets:create  OR  manual .changeset/*.md
         |
         v
-[Step 7: Squash]      (skipped by --no-squash)
+[Step 7: Squash]      (skipped by --no-squash; --split-docs -> 2 commits w/ review-focus trailers)
   git reset --soft $(git merge-base HEAD $BASE) ; git commit ; tag -f session/start HEAD
         |
         v
@@ -843,7 +851,44 @@ Between steps, `TaskUpdate` flips each task to `completed`. On failure the in-pr
   fields. Status-progress alignment is enforced: `ready`=0%, `completed`=100%.
 - **Configuration state** lives in `.claude/design/design.config.json`, validated
   against a JSON schema at
-  `plugin/skills/design-config/json-schemas/current.json`.
+  `plugin/skills/design-config/json-schemas/current.json`. Context size limits
+  are measured in words (`rootMaxWords` / `childMaxWords`), not lines.
+- **Pointer baseline state** lives in `.claude/design/refs.json`, a committed
+  manifest recording the body hash each CLAUDE.md `@` pointer was written
+  against (see [Pointer Integrity](#pointer-integrity-content-drift-detection)).
+
+---
+
+## Pointer Integrity (Content-Drift Detection)
+
+CLAUDE.md files point at design docs with `@` pointers (e.g. `@./.claude/design/design-docs-plugin/plugin-architecture.md`). A pointer can rot in two ways: the target file moves or is deleted (a broken link, already caught by context validation), or the target's *content* drifts so far from what the pointer's surrounding prose claims that the pointer is now misleading while still resolving. The second failure is invisible to a path-existence check. The pointer-integrity subsystem detects it.
+
+### Topology
+
+The subsystem has three parts. The hashing primitive `plugin/lib/ref-hash.sh` emits a deterministic body-only sha256 of a design doc — it strips a leading YAML frontmatter block before hashing, so routine `updated` / `last-synced` timestamp bumps do not move the hash and only real content edits do. The manifest `.claude/design/refs.json` (`{version, refs:[{source, target, hash, recordedAt}]}`) is committed and records, per pointer, the content hash the pointer was written against. The record side and the check side both shell out to `ref-hash.sh` so the two hashes are computed identically.
+
+- **Record side:** the `context-update` skill and the `context-doc-agent` write or refresh a `refs.json` entry when they confirm a pointer — capturing the target's current body hash as the baseline.
+- **Check side:** `context-validate` and `context-audit` recompute each pointer's target hash and compare it to the recorded baseline. A mismatch is a WARNING ("pointer may be stale (content drift)"); a pointer with no recorded entry is INFO by default, escalated to WARNING when `quality.context.requirePointerHashes` is `true`.
+
+```text
+[context-update / context-doc-agent]          [context-validate / context-audit]
+  confirm a @ pointer                            walk every @ pointer
+      |                                              |
+      v                                              v
+  ref-hash.sh <target>  ----record---->  refs.json  <----read----  recorded hash
+      |                                                                  |
+  write {source,target,hash,recordedAt}                          ref-hash.sh <target>
+                                                                         |
+                                                                  compare: drift? -> WARNING
+```
+
+### Load-bearing invariant
+
+Both sides MUST call `ref-hash.sh` — never reimplement the body-stripping or hashing inline. Any divergence in how the hash is computed produces a permanent false-positive drift warning that no edit can clear. This is the one constraint a contributor touching either side must preserve; see the header comment in `plugin/lib/ref-hash.sh`.
+
+### Lifecycle interaction with finalize
+
+The drift baseline is refreshed as a side effect of normal documentation flow, not as a separate chore. When `/finalize` Step 3 dispatches the design-doc-agent and design doc bodies change, their hashes change too — which is expected and would otherwise show as drift. Step 4 then dispatches the context-doc-agent, which re-records `refs.json` for every pointer it confirms, so a finalize run that edits design docs leaves their pointers drift-clean. The ordering matters: design docs are edited before pointers are re-recorded.
 
 ---
 
@@ -1029,7 +1074,7 @@ git-safety, git-safety-mcp) were deleted in 0.3.x alongside the hooks.
 
 ---
 
-**Document Status:** Current -- covers all major architectural components including the branch lifecycle workflow (session tag management, squash workflow skills), the bidirectional session-handoff skill (`.claude/handoffs/` transient state, mode inference, design-doc-agent dispatch in write mode), the plugin-with-agents finalize orchestration pattern (agent dispatch instead of sub-skill invocation, `TaskCreate`-based task tracking, negative-form skip flags, model-invokable routing via `when_to_use`), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x). Missing coverage: detailed per-skill internal architecture, detailed command system design (no commands exist yet).
+**Document Status:** Current -- covers all major architectural components including the branch lifecycle workflow (session tag management, squash workflow skills, the `--split-docs` review-focus signal), the pointer-integrity content-drift subsystem (`plugin/lib/ref-hash.sh`, committed `refs.json` baseline, record/check split, finalize re-record interaction), the bidirectional session-handoff skill (`.claude/handoffs/` transient state, mode inference, design-doc-agent dispatch in write mode), the plugin-with-agents finalize orchestration pattern (agent dispatch instead of sub-skill invocation, `TaskCreate`-based task tracking, negative-form skip flags, model-invokable routing via `when_to_use`), the user-docs skill suite, the reduced two-hook footprint (0.3.x), and the event-subdirectory hook layout with shared `hooks/lib/` helpers (0.4.x). Missing coverage: detailed per-skill internal architecture, the autonomous `design-groom` / `design-split` grooming workflow, detailed command system design (no commands exist yet).
 
 **Next Steps:** Add design docs for individual subsystems (skill framework
 internals, agent orchestration patterns) as complexity warrants separate

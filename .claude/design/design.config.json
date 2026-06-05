@@ -82,8 +82,8 @@
 			}
 		},
 		"context": {
-			"rootMaxLines": 500,
-			"childMaxLines": 300,
+			"rootMaxWords": 2000,
+			"childMaxWords": 1000,
 			"requireDesignDocPointers": true
 		},
 		"plans": {

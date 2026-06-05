@@ -5,6 +5,9 @@ This is the distributable plugin directory. Everything here ships to end users v
 ## Structure
 
 * `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
+* `lib/` -- Shared helper scripts used across skills/agents (not hooks)
+  * `ref-hash.sh` -- deterministic body-only sha256 of a design doc; powers pointer content-drift detection (`refs.json`). `--record <source> <target>` emits a dated `refs.json` entry
+  * `refs-record.sh` -- turnkey recorder: walks a CLAUDE.md's `@` pointers and upserts their `refs.json` entries in one shot (requires `jq`)
 * `hooks/hooks.json` -- Hook configuration consumed by Claude Code
 * `hooks/lib/` -- Shared bash helpers sourced by hook scripts
   * `hook-output.sh` -- canonical JSON emitters (`emit_session_start`, `emit_permission_allow`, `emit_noop`)
@@ -39,7 +42,9 @@ Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.
 
 End-of-branch orchestration workflow invoked via `/design-docs:finalize`. Dispatches the design-doc-agent, context-doc-agent, and user-docs agents to update each documentation layer, then creates a changeset, squashes all branch commits into a single clean commit, pushes, and opens a PR.
 
-Flags: `--no-push`, `--no-pr`, `--no-squash`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
+Flags: `--no-push`, `--no-pr`, `--no-squash`, `--split-docs`, `--no-context-docs`, `--no-user-docs`, `--dry-run`
+
+`--split-docs` squashes into two commits — functional (`review-focus: primary`) and ancillary docs/changeset (`review-focus: ancillary`) — as a review-time focus signal for agent reviewers. Opt-in; collapses to one commit at squash-merge.
 
 ### design-groom
 
