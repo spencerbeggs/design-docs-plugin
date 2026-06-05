@@ -12,7 +12,7 @@ when_to_use: >
   comments (use /design-docs:review), or the final post-approval squash
   (use /design-docs:merge-prep).
 allowed-tools: Skill, Agent, Read, Glob, Grep, Bash(git *), Bash(gh *), Bash(bun *), Bash(ls *), Write, Edit, TaskCreate, TaskUpdate
-argument-hint: "[--no-push] [--no-pr] [--no-squash] [--no-context-docs] [--no-user-docs] [--dry-run]"
+argument-hint: "[--no-push] [--no-pr] [--no-squash] [--split-docs] [--no-context-docs] [--no-user-docs] [--dry-run]"
 ---
 
 # Branch Finalization
@@ -26,6 +26,7 @@ Parse `$ARGUMENTS` for flags:
 - `--no-push` — skip pushing to the remote in step 8 (implies no PR, since a PR requires a pushed branch)
 - `--no-pr` — push the branch in step 8 but skip PR creation (useful when the PR will be opened separately, e.g. by CI)
 - `--no-squash` — skip the squash step (step 7), commit docs/changeset normally
+- `--split-docs` — in step 7, squash into **two** commits instead of one: functional code changes (`review-focus: primary`) and ancillary docs/changeset changes (`review-focus: ancillary`), as a review-time focus signal for agent reviewers. Opt-in; default is a single commit. Ignored when `--no-squash` is set (nothing is squashed, so there is nothing to split).
 - `--no-context-docs` — skip step 4 (Update CLAUDE.md Files / context-doc-agent dispatch)
 - `--no-user-docs` — skip step 5 (Update User Docs / user-docs agent dispatch)
 - `--dry-run` — preview what each step would do without modifying any files
@@ -113,11 +114,14 @@ Store the result as `BASE_BRANCH` for use in subsequent steps.
 
 ### Empty diff check
 
-Run `git log $BASE_BRANCH..HEAD --oneline`. If there are no commits ahead of the base branch, report:
+Run `git log $BASE_BRANCH..HEAD --oneline`. The branch is empty only when there are **no commits ahead of the base branch AND the working tree is clean** — an all-uncommitted branch still has work to finalize (the dirty-tree check above already staged it for the finalize commit). So:
 
-> "No changes detected on this branch compared to $BASE_BRANCH. Nothing to finalize."
+- Commits ahead, or a dirty working tree (per the dirty-tree check above): there is work — proceed.
+- Zero commits ahead AND `git status --porcelain` is empty: report and stop:
 
-And stop the workflow.
+  > "No changes detected on this branch compared to $BASE_BRANCH (no commits ahead, clean working tree). Nothing to finalize."
+
+When the only changes are uncommitted, Step 7's soft reset to the merge base is a no-op and the staged working tree becomes the finalize commit(s) directly.
 
 ### Session tag check
 
@@ -180,7 +184,7 @@ When the agent returns, capture its report (which files it modified, or "no chan
 
 **Skip if `--no-context-docs` flag is set.** Proceed to step 5.
 
-Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass a prompt containing the Step 2 branch summary plus whatever the design-doc-agent reported in Step 3 — the context agent needs to know which design docs were touched so it can update `@` pointers, references, and CLAUDE.md sections that index those docs.
+Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass a prompt containing the Step 2 branch summary plus whatever the design-doc-agent reported in Step 3 — the context agent needs to know which design docs were touched so it can update `@` pointers, references, and CLAUDE.md sections that index those docs. The agent also re-records pointer content hashes in `.claude/design/refs.json`, so any design doc edited in Step 3 leaves its pointers drift-clean.
 
 When the agent returns, capture its report for the Step 5 dispatch context.
 
@@ -223,7 +227,17 @@ Generate a random changeset filename (lowercase adjective-noun pattern).
 
 ## Step 7: Squash Commits
 
-**Skip if `--no-squash` flag is set.** Proceed directly to step 8 with a normal commit of just the docs/changeset changes.
+**Skip if `--no-squash` flag is set.** Proceed directly to step 8 with a normal commit of just the docs/changeset changes. (When `--no-squash` is set, `--split-docs` has no effect — there is no squash to split.)
+
+### Squash is the recommended default
+
+This project squash-merges into the default branch and uses agent reviewers. Squash cleanly into a single commit (or two, with `--split-docs` below) — **do not editorialize for keeping granular history.** The arguments for preserving per-commit history do not apply to this pipeline:
+
+- **The history is discarded at merge anyway.** Squash-merge collapses every branch commit into one on the default branch, so bisectability / archaeology arguments are about history this workflow throws away.
+- **Reviewers read the net diff, not the commit sequence.** One commit vs. N produces the same `base...head` "Files changed" view.
+- **Granular history is worse for agent reviewers.** A commit-walking reviewer flags issues that were already fixed in a later commit (false positives), reasons poorly about "true in commit 3, superseded in commit 5 — which is current?", and burns context reading superseded code.
+
+`--no-squash` is the escape hatch for the rare case where granular commits genuinely need to survive. Keep the confirmation gate below regardless.
 
 ### Stage all changes
 
@@ -241,7 +255,7 @@ Show the user what will be squashed:
 git log $(git merge-base HEAD $BASE_BRANCH)..HEAD --oneline
 ```
 
-> "The following N commits will be squashed into a single commit: [list commits]. Continue? (yes/no)"
+> "Squashing N commits into {one commit | two commits: functional + ancillary}. [list commits]. Continue? (yes/no)"
 
 Wait for confirmation. If the user says no, stop.
 
@@ -251,9 +265,11 @@ Wait for confirmation. If the user says no, stop.
 git reset --soft $(git merge-base HEAD $BASE_BRANCH)
 ```
 
-### Generate commit message
+All branch changes are now staged at the merge base. Commit them per the mode below.
 
-Generate a conventional commit message from:
+### Default mode (single commit)
+
+Generate one conventional commit message from:
 
 - The changeset content (for the description)
 - The branch name (for inferring type and scope)
@@ -271,15 +287,47 @@ type(scope): subject
 Signed-off-by: [from git config]
 ```
 
-### Create squashed commit
-
 ```bash
 git commit -m "<generated message>"
 ```
 
+### Split mode (`--split-docs`: two commits)
+
+When `--split-docs` is set, produce two commits so agent reviewers can focus on the functional surface and treat doc churn as ancillary. Both are collapsed into one at squash-merge — this is purely a **review-time signal.** Recognizing the `review-focus:` trailer is the reviewer's job and is out of scope here; finalize only emits it.
+
+1. **Classify the staged paths.** Read path roots from `.claude/design/design.config.json` (`paths.designDocs`, `paths.plans`, `paths.context`, `paths.localContext`, `userDocs.readme`, `userDocs.repoDocs`). A file is **ancillary** if it matches any of those, any package-level `CLAUDE.md` / `CLAUDE.local.md`, any `README.md`, or lives under `.changeset/`. Everything else is **functional.**
+
+   ```bash
+   git diff --cached --name-only
+   ```
+
+2. **Commit the functional changes first** (`git reset HEAD <ancillary-paths>` to unstage ancillary, then commit what remains). Use the conventional message from the default mode, with a `review-focus: primary` trailer:
+
+   ```text
+   type(scope): subject
+
+   [Description of the functional changes]
+
+   review-focus: primary
+   Signed-off-by: [from git config]
+   ```
+
+3. **Commit the ancillary changes second** (`git add <ancillary-paths>`) with a `docs`-type message and a `review-focus: ancillary` trailer:
+
+   ```text
+   docs(scope): update design docs, context, and changeset
+
+   review-focus: ancillary
+   Signed-off-by: [from git config]
+   ```
+
+**One bucket empty:** if the branch has no functional changes (docs-only) or no ancillary changes, produce a single commit for the non-empty bucket with its matching `review-focus:` trailer. Never create an empty commit.
+
+The `review-focus:` value is always the canonical lowercase form (`primary` / `ancillary`). Place it in the commit footer alongside `Signed-off-by`.
+
 ### Move session tag
 
-Move the session tag to the new squashed commit:
+Move the session tag to the new squashed commit (the last commit created above):
 
 ```bash
 git tag -f session/start HEAD
@@ -331,7 +379,7 @@ Between each step, mark the matching task `completed` via `TaskUpdate` and repor
 - "Step 4: CLAUDE.md files are current (no changes needed)"
 - "Step 5: README.md updated with new API documentation"
 - "Step 6: Changeset created (.changeset/fuzzy-cats.md)"
-- "Step 7: Squashed 8 commits into 1 (feat: add merge commit support)"
+- "Step 7: Squashed 8 commits into 1 (feat: add merge commit support)" — or, with `--split-docs`: "Squashed 8 commits into 2 (functional + ancillary)"
 - "Step 8: PR opened: <https://github.com/>..."
 
 ## Error Recovery

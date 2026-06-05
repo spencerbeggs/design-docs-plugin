@@ -32,7 +32,7 @@ This skill implements improvements to CLAUDE.md files:
 
 Load `.claude/design/design.config.json` to understand:
 
-- Line limits for root and child files
+- Word limits for root and child files
 - Module structure
 - Design doc locations
 - Quality standards
@@ -171,14 +171,42 @@ In root CLAUDE.md, replace module details with:
 See `{module}/CLAUDE.md` for module-specific guidance.
 ```
 
+#### Step 5: Record pointer hashes
+
+Whenever you write, move, or confirm an `@./.claude/design/...` pointer in a context file, record the target doc's current content hash so `check-refs` can later detect content drift (a doc edited in place keeps the same path but its body changes). Run the turnkey recorder once per context file you touched, from the repository root:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>
+```
+
+It walks every `@` design-doc pointer in that file, hashes each target's body via `ref-hash.sh`, and upserts the `(source, target)` entries into `.claude/design/refs.json` — replacing that file's previous entries (dropping any whose pointer you removed) and leaving other sources untouched, with `recordedAt` stamped today. No hand-editing of JSON or dates.
+
+Each entry has this shape; the hash captures the content the pointer's "Load when" guidance was written against, and `refs.json` is committed (review-visible integrity state, like a lockfile):
+
+```json
+{
+  "version": 1,
+  "refs": [
+    {
+      "source": "CLAUDE.md",
+      "target": ".claude/design/{module}/{doc}.md",
+      "hash": "<sha256 of the target body>",
+      "recordedAt": "YYYY-MM-DD"
+    }
+  ]
+}
+```
+
+To record a single entry by hand instead (e.g. scripting one pointer), `ref-hash.sh --record <source> <target>` prints exactly one dated entry object.
+
 ### 4. Validate Changes
 
 After modifications:
 
-**Line count check:**
+**Word count check:**
 
-- Count lines in modified files
-- Ensure within limits (root: 500, child: 300)
+- Count words in modified files
+- Ensure within limits (root: 2000, child: 1000)
 - If still over, identify additional sections to refactor
 
 **Link validation:**
@@ -208,8 +236,8 @@ Provide summary of modifications:
 ## Files Modified
 
 ### {file-path}
-**Before:** {line-count} lines
-**After:** {line-count} lines
+**Before:** {word-count} words
+**After:** {word-count} words
 **Change:** {percentage}% reduction
 
 **Changes made:**
@@ -224,24 +252,24 @@ Provide summary of modifications:
 
 ### {file-path}
 **Type:** Design document
-**Lines:** {line-count}
+**Words:** {word-count}
 **Purpose:** Detailed {topic} documentation
 
 ### {file-path}
 **Type:** Child CLAUDE.md
-**Lines:** {line-count}
+**Words:** {word-count}
 **Purpose:** {Module} specific guidance
 
 ## Quality Improvements
 
-- Total line reduction: {number} lines
+- Total word reduction: {number} words
 - New design docs: {count}
 - New child CLAUDE.md files: {count}
 - Design doc pointers added: {count}
 
 ## Validation Results
 
-✓ All files within line limits
+✓ All files within word limits
 ✓ All pointers reference existing files
 ✓ No content duplication
 ✓ Clear instruction hierarchy
@@ -263,13 +291,13 @@ Provide summary of modifications:
 We use Vitest with multiple test types:
 
 1. Unit tests run with mocked services...
-   [50 lines of detailed testing instructions]
+   [200 words of detailed testing instructions]
 
 2. Integration tests make real API calls...
-   [40 lines of integration test details]
+   [160 words of integration test details]
 
 3. Coverage is tracked using v8 provider...
-   [30 lines of coverage configuration]
+   [120 words of coverage configuration]
 ```
 
 **After (CLAUDE.md):**
@@ -288,7 +316,7 @@ configuring test infrastructure.
 
 **New design doc (`.claude/design/project/testing-strategy.md`):**
 
-Contains the detailed 120 lines of testing documentation with proper
+Contains the detailed 480 words of testing documentation with proper
 frontmatter.
 
 ### Pattern: Adding @ syntax pointers
@@ -317,7 +345,7 @@ Load when making architectural changes or adding new systems.
 
 ### Pattern: Creating child CLAUDE.md
 
-**Before (root CLAUDE.md has 200-line section for `my-package`):**
+**Before (root CLAUDE.md has 800-word section for `my-package`):**
 
 **After (root CLAUDE.md):**
 
@@ -377,7 +405,7 @@ Don't try to fix everything at once. Prioritize high-impact changes.
 
 A successful update:
 
-- Reduces line counts to within limits
+- Reduces word counts to within limits
 - Adds clear @ syntax pointers where appropriate
 - Maintains all critical information
 - Improves context efficiency without losing clarity

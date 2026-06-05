@@ -11,7 +11,7 @@ Extract parameters from the user's request:
 
 - `target`: Path to specific CLAUDE.md file or "all" (default: all)
 - `strict`: Enable strict mode (default: true)
-- `check-refs`: Validate design doc references (default: true)
+- `check-refs`: Validate design doc references and check pointer content drift (default: true)
 - `output`: Output file path for report
 
 **Examples:**
@@ -164,12 +164,22 @@ If `requireDesignDocPointers` is true:
 - Extract file path
 - Verify file exists using Read tool
 - Check file has valid frontmatter
+- Check for content drift (see below)
+
+**Pointer content drift:**
+
+A pointer that resolves can still be stale: the target doc may have been edited in place since the pointer's "Load when" guidance was written. Detect with the recorded hash in `.claude/design/refs.json`:
+
+1. If `refs.json` is absent, skip drift checks (one LOW note that hashes are not tracked yet).
+2. Compute the target's current body hash — `bash "${CLAUDE_PLUGIN_ROOT}/lib/ref-hash.sh" <target>` (body only, frontmatter ignored, so timestamp bumps don't count).
+3. Compare to the recorded `(source, target)` hash. Mismatch → stale pointer. Missing entry → LOW (or MEDIUM when `quality.context.requirePointerHashes` is `true`).
 
 **Severity:**
 
 - Missing required pointers: HIGH
 - Broken pointer (file doesn't exist): CRITICAL
 - Invalid pointer (bad frontmatter): MEDIUM
+- Stale pointer (content drift, hash mismatch): MEDIUM
 
 ### 4.5 Formatting Validation
 
@@ -323,7 +333,7 @@ For each issue found, provide:
 **Example recommendations:**
 
 ```markdown
-1. [CRITICAL] Root CLAUDE.md exceeds limit (650/500 lines)
+1. [CRITICAL] Root CLAUDE.md exceeds limit (2600/2000 words)
    - File: CLAUDE.md
    - Fix: Use /context-split to split into child files
    - Impact: Reduces token usage, improves efficiency
@@ -364,7 +374,7 @@ Generate comprehensive report in markdown format:
 
 ### CLAUDE.md (Root)
 
-- **Line Count:** N/500 {status}
+- **Word Count:** N/2000 {status}
 - **Health Score:** X/100 {category}
 - **Efficiency Score:** X/100
 - **Issues:** N critical, N high, N medium, N low
@@ -400,7 +410,7 @@ Generate comprehensive report in markdown format:
 
 ## Quality Metrics
 
-- **Average Line Count:** N
+- **Average Word Count:** N
 - **Design Doc Pointer Coverage:** N%
 - **Content Efficiency Score:** X/100
 - **Token Optimization Score:** X/100
@@ -462,7 +472,7 @@ After outputting the report, provide actionable next steps:
 
 If `.claude/design/design.config.json` doesn't exist:
 
-- Use default values (root: 500, child: 300)
+- Use default values (root: 2000 words, child: 1000 words)
 - Note in report that defaults were used
 - Suggest creating config file
 

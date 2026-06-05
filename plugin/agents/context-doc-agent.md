@@ -39,7 +39,7 @@ effectiveness.
 - Check markdown syntax and formatting
 - Verify required sections are present
 - Validate design doc pointers (`@` syntax)
-- Check line counts against limits (root: 500, child: 300)
+- Check word counts against limits (root: 2000, child: 1000)
 - Ensure proper structure (frontmatter if needed, clear sections)
 
 ### Quality Assurance
@@ -67,23 +67,24 @@ effectiveness.
 
 - Implement audit/review recommendations
 - Add design doc pointers
+- Record pointer content hashes in `.claude/design/refs.json`
 - Update sections based on code changes
 - Improve content efficiency
 - Maintain imperative instruction style
 
 **context-split** - Split large CLAUDE.md files into child files
 
-- Split root CLAUDE.md when exceeding 500 lines
-- Split package CLAUDE.md when exceeding 300 lines
+- Split root CLAUDE.md when exceeding 2000 words
+- Split package CLAUDE.md when exceeding 1000 words
 - Create child files by topic or section
 - Update parent with `@` pointers to children
 - Maintain navigation and coherence
 
-## Line Limits and Structure
+## Word Limits and Structure
 
 ### Root CLAUDE.md
 
-- **Maximum lines**: 500 (non-blank)
+- **Maximum words**: 2000
 - **Purpose**: Project-wide context and high-level instructions
 - **Should contain**: Project overview, tooling, common commands, design doc
   system intro
@@ -91,7 +92,7 @@ effectiveness.
 
 ### Package CLAUDE.md
 
-- **Maximum lines**: 300 (non-blank)
+- **Maximum words**: 1000
 - **Purpose**: Package-specific context and instructions
 - **Should contain**: Package purpose, key patterns, design doc pointers,
   special considerations
@@ -100,7 +101,7 @@ effectiveness.
 
 ### Child CLAUDE.md Files
 
-- **Maximum lines**: 300 (non-blank)
+- **Maximum words**: 1000
 - **Created via**: `/context-split` when parent exceeds limits
 - **Loaded via**: `@` syntax from parent file
 - **Purpose**: Deep-dive into specific topics
@@ -123,6 +124,10 @@ This enables:
 - **Separation of concerns**: High-level instructions in CLAUDE.md, details in
   design docs
 - **Maintainability**: Update details in design docs without cluttering context
+
+### Pointer Integrity (`refs.json`)
+
+A pointer's path resolving does not mean its "Load when" guidance still matches the target. After writing or confirming the `@` pointers in a context file, record their target hashes in one shot with `bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>` (run from the repo root) — it walks every pointer, hashes each target body via `ref-hash.sh` (frontmatter excluded, so timestamp bumps never count as drift), and upserts `.claude/design/refs.json`. `context-validate` and `context-audit` then compare the recorded hash against the current one to flag pointers whose target drifted after an in-place edit. See the context-update skill for the record format. Keep `refs.json` committed.
 
 ## Common Workflows
 
@@ -175,7 +180,7 @@ Identify and fix context file issues:
 Before committing CLAUDE.md changes:
 
 1. **Validate structure**: `/context-validate [file]`
-2. **Check line count**: Ensure under limit
+2. **Check word count**: Ensure under limit
 3. **Fix any errors**: Address validation failures
 4. **Commit changes**: Once validation passes
 
@@ -184,13 +189,13 @@ Before committing CLAUDE.md changes:
 Periodic context file maintenance:
 
 1. **Audit all files**: `/context-audit`
-2. **Review critical issues**: Address line limits, broken pointers
+2. **Review critical issues**: Address word limits, broken pointers
 3. **Update as needed**: `/context-update [file]`
 4. **Re-validate**: `/context-audit` to verify improvements
 
 ### Optimize Oversized File
 
-When a CLAUDE.md file exceeds line limits:
+When a CLAUDE.md file exceeds word limits:
 
 1. **Audit the file**: `/context-audit [file]`
 2. **Review for extraction opportunities**: `/context-review [file]`
@@ -212,7 +217,7 @@ After significant code changes:
 Before a release:
 
 1. **Audit all context files**: `/context-audit --strict`
-2. **Fix critical issues**: Line limits, broken pointers
+2. **Fix critical issues**: Word limits, broken pointers
 3. **Update stale content**: Reflect current codebase state
 4. **Validate everything**: `/context-validate` all files
 
@@ -262,13 +267,13 @@ Not just:
 See: `.claude/design/my-package/error-handling.md`
 ```
 
-### Line Limit Management
+### Word Limit Management
 
-- **Root CLAUDE.md**: 500 lines maximum
+- **Root CLAUDE.md**: 2000 words maximum
   - If approaching limit: Extract package-specific details to package
     CLAUDE.md files
   - If exceeding: Use `/context-split --strategy=package`
-- **Package CLAUDE.md**: 300 lines maximum
+- **Package CLAUDE.md**: 1000 words maximum
   - If approaching limit: Add more design doc pointers
   - If exceeding: Use `/context-split --strategy=topic`
 
@@ -289,7 +294,7 @@ See: `.claude/design/my-package/error-handling.md`
 
 # Expected output if passing:
 # ✅ CLAUDE.md passes validation
-# - Line count: 485/500
+# - Word count: 1940/2000
 # - Structure: Valid
 # - Design doc pointers: 5 found, all valid
 ```
@@ -307,9 +312,9 @@ See: `.claude/design/my-package/error-handling.md`
 /context-split pkgs/my-package/CLAUDE.md --strategy=topic
 
 # Result:
-# - pkgs/my-package/CLAUDE.md (now 280 lines)
-# - pkgs/my-package/CLAUDE.architecture.md (150 lines)
-# - pkgs/my-package/CLAUDE.testing.md (120 lines)
+# - pkgs/my-package/CLAUDE.md (now 920 words)
+# - pkgs/my-package/CLAUDE.architecture.md (600 words)
+# - pkgs/my-package/CLAUDE.testing.md (480 words)
 
 # Validate results
 /context-validate pkgs/my-package/CLAUDE.md
@@ -359,13 +364,13 @@ This agent has pre-approved access to:
 - **Glob**: Find CLAUDE.md files across the monorepo
 - **Edit**: Modify existing context files
 - **Write**: Create child context files when splitting
-- **Bash**: Run line count checks, markdown linters
+- **Bash**: Run word count checks, markdown linters
 
 ## Quality Standards
 
 Context files pass quality standards when:
 
-- ✅ Line count under limit (root: 500, child: 300)
+- ✅ Word count under limit (root: 2000, child: 1000)
 - ✅ All design doc pointers are valid and exist
 - ✅ Content is lean imperative instructions
 - ✅ Proper use of `@` syntax for progressive loading
@@ -378,7 +383,7 @@ Context files pass quality standards when:
 
 CLAUDE.md maintenance is successful when:
 
-- ✅ All files under line limits
+- ✅ All files under word limits
 - ✅ No broken design doc pointers
 - ✅ Content efficiency score >75/100 (from audit)
 - ✅ Proper separation: instructions in CLAUDE.md, details in design docs

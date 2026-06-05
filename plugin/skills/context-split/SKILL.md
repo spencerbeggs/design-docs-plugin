@@ -1,6 +1,6 @@
 ---
 name: context-split
-description: Split large CLAUDE.md into child files. Use when context files exceed line limits, are too verbose, or cover multiple distinct topics that should be separate.
+description: Split large CLAUDE.md into child files. Use when context files exceed word limits, are too verbose, or cover multiple distinct topics that should be separate.
 allowed-tools: Read, Write, Edit, Bash
 context: fork
 agent: context-doc-agent
@@ -9,7 +9,7 @@ agent: context-doc-agent
 # CLAUDE.md Context File Splitting
 
 Splits large CLAUDE.md files into smaller, focused child files when they
-exceed recommended line limits or cover too many topics.
+exceed recommended word limits or cover too many topics.
 
 ## Overview
 
@@ -58,11 +58,11 @@ Read and analyze the CLAUDE.md file:
 
 **Metrics:**
 
-- Total line count
-- Line limit (from config: root=500, package=300)
-- Overage: lines over limit
+- Total word count
+- Word limit (from config: root=2000, package=1000)
+- Overage: words over limit
 - Number of top-level sections (H2)
-- Average lines per section
+- Average words per section
 
 **Structure analysis:**
 
@@ -70,8 +70,8 @@ Read and analyze the CLAUDE.md file:
 # Count sections
 grep "^## " CLAUDE.md | wc -l
 
-# Count total lines
-wc -l CLAUDE.md
+# Count total words
+wc -w CLAUDE.md
 ```
 
 **Example output:**
@@ -79,11 +79,11 @@ wc -l CLAUDE.md
 ```text
 Current CLAUDE.md Analysis:
 
-- Total lines: 587
-- Limit: 500
-- Overage: 87 lines (17% over)
+- Total words: 2348
+- Limit: 2000
+- Overage: 348 words (17% over)
 - Sections: 8
-- Average lines/section: 73
+- Average words/section: 293
 - Recommendation: Split needed
 ```
 
@@ -99,7 +99,7 @@ Split by major sections (H2 headings):
 
 - File has clear major sections
 - Sections are relatively independent
-- Each section is substantial (>50 lines)
+- Each section is substantial (>200 words)
 
 **How it works:**
 
@@ -163,13 +163,13 @@ Generate split plan for review:
 ## Current State
 
 - File: CLAUDE.md
-- Lines: 587 / 500 (87 over)
+- Words: 2348 / 2000 (348 over)
 - Sections: 8
 - Strategy: section
 
 ## Proposed Split
 
-### Parent: CLAUDE.md (120 lines)
+### Parent: CLAUDE.md (480 words)
 
 **Contents:**
 
@@ -182,7 +182,7 @@ Generate split plan for review:
 - Project Overview
 - File Organization (new section listing children)
 
-### Child 1: CLAUDE.commands.md (95 lines)
+### Child 1: CLAUDE.commands.md (380 words)
 
 **Contents:**
 
@@ -196,7 +196,7 @@ Generate split plan for review:
 - Commands
 - Scripts Reference
 
-### Child 2: CLAUDE.architecture.md (180 lines)
+### Child 2: CLAUDE.architecture.md (720 words)
 
 **Contents:**
 
@@ -210,7 +210,7 @@ Generate split plan for review:
 - Architecture
 - Development Notes
 
-### Child 3: CLAUDE.tooling.md (110 lines)
+### Child 3: CLAUDE.tooling.md (440 words)
 
 **Contents:**
 
@@ -223,7 +223,7 @@ Generate split plan for review:
 
 - Tooling
 
-### Child 4: CLAUDE.testing.md (82 lines)
+### Child 4: CLAUDE.testing.md (330 words)
 
 **Contents:**
 
@@ -238,8 +238,8 @@ Generate split plan for review:
 
 ## After Split
 
-- Parent: 120 lines (76% reduction)
-- Children: 4 files, avg 117 lines each
+- Parent: 480 words (~80% reduction)
+- Children: 4 files, avg 468 words each
 - Total: 5 files instead of 1
 - All files under limit ✅
 
@@ -263,7 +263,7 @@ Load specific files when working on related tasks.
 **User confirmation:**
 
 ```text
-This split will create 4 new files and reduce parent by 76%.
+This split will create 4 new files and reduce parent by ~80%.
 
 Proceed with split? (y/n)
 ```
@@ -353,19 +353,19 @@ loading:
 
 - **[Commands](./CLAUDE.commands.md)** - All commands and scripts
   - Load when: Running builds, tests, or development tasks
-  - Size: 95 lines
+  - Size: 380 words
 
 - **[Architecture](./CLAUDE.architecture.md)** - System architecture
   - Load when: Understanding structure, making architectural changes
-  - Size: 180 lines
+  - Size: 720 words
 
 - **[Tooling](./CLAUDE.tooling.md)** - Development tooling
   - Load when: Setting up environment, debugging tool issues
-  - Size: 110 lines
+  - Size: 440 words
 
 - **[Testing](./CLAUDE.testing.md)** - Testing strategy and execution
   - Load when: Writing tests, debugging test failures
-  - Size: 82 lines
+  - Size: 330 words
 
 **Usage:**
 
@@ -399,11 +399,11 @@ pnpm build
 
 After creating all files, validate:
 
-**Line count checks:**
+**Word count checks:**
 
 ```bash
 # Check all files are under limit
-wc -l CLAUDE*.md
+wc -w CLAUDE*.md
 ```
 
 **Parent:**
@@ -415,7 +415,7 @@ wc -l CLAUDE*.md
 
 **Children:**
 
-- Under limit (ideally <250 lines each)
+- Under limit (ideally <1000 words each)
 - Focused on single topic
 - Has header with parent reference
 - Has footer with related links
@@ -441,31 +441,31 @@ Provide summary of split:
 
 ### Parent: CLAUDE.md
 
-- **Lines:** 587 → 120 (76% reduction)
+- **Words:** 2348 → 480 (~80% reduction)
 - **Contents:** Overview, navigation, quick reference
-- **Status:** ✅ Under limit (500)
+- **Status:** ✅ Under limit (2000)
 
 ### Children:
 
-1. **CLAUDE.commands.md** (95 lines)
+1. **CLAUDE.commands.md** (380 words)
    - Commands, scripts reference
    - Status: ✅ Under limit
 
-2. **CLAUDE.architecture.md** (180 lines)
+2. **CLAUDE.architecture.md** (720 words)
    - Architecture, development notes
    - Status: ✅ Under limit
 
-3. **CLAUDE.tooling.md** (110 lines)
+3. **CLAUDE.tooling.md** (440 words)
    - Tooling configuration
    - Status: ✅ Under limit
 
-4. **CLAUDE.testing.md** (82 lines)
+4. **CLAUDE.testing.md** (330 words)
    - Testing strategy and execution
    - Status: ✅ Under limit
 
 ## Validation
 
-- ✅ All files under line limits
+- ✅ All files under word limits
 - ✅ Navigation section added to parent
 - ✅ Cross-references valid
 - ✅ Markdown linting passed
@@ -501,9 +501,9 @@ Load context files based on task:
 
 ### Optimal Child File Size
 
-- Target: 100-250 lines per child
-- Maximum: 300 lines (package limit)
-- Minimum: 50 lines (too small not worth splitting)
+- Target: 400-1000 words per child
+- Maximum: 1000 words (package limit)
+- Minimum: 200 words (too small not worth splitting)
 
 ### Content Organization
 
@@ -545,41 +545,41 @@ Don't split if:
 
 **Before:**
 
-- CLAUDE.md: 587 lines (8 sections)
+- CLAUDE.md: 2348 words (8 sections)
 
 **After:**
 
-- CLAUDE.md: 120 lines (overview + navigation)
-- CLAUDE.commands.md: 95 lines
-- CLAUDE.architecture.md: 180 lines
-- CLAUDE.tooling.md: 110 lines
-- CLAUDE.testing.md: 82 lines
+- CLAUDE.md: 480 words (overview + navigation)
+- CLAUDE.commands.md: 380 words
+- CLAUDE.architecture.md: 720 words
+- CLAUDE.tooling.md: 440 words
+- CLAUDE.testing.md: 330 words
 
 ### Example 2: Topic-based split
 
 **Before:**
 
-- pkgs/plugin/CLAUDE.md: 456 lines
+- pkgs/plugin/CLAUDE.md: 1824 words
 
 **After:**
 
-- CLAUDE.md: 95 lines (overview)
-- CLAUDE.transformers.md: 145 lines (transformer system)
-- CLAUDE.generators.md: 128 lines (generation logic)
-- CLAUDE.config.md: 88 lines (configuration)
+- CLAUDE.md: 380 words (overview)
+- CLAUDE.transformers.md: 580 words (transformer system)
+- CLAUDE.generators.md: 512 words (generation logic)
+- CLAUDE.config.md: 352 words (configuration)
 
 ### Example 3: Custom split (partial)
 
 **Before:**
 
-- CLAUDE.md: 523 lines
+- CLAUDE.md: 2092 words
 
 **User request:** "Just extract the Testing section, it's huge"
 
 **After:**
 
-- CLAUDE.md: 401 lines (removed testing section)
-- CLAUDE.testing.md: 122 lines (testing only)
+- CLAUDE.md: 1604 words (removed testing section)
+- CLAUDE.testing.md: 488 words (testing only)
 
 ## Error Handling
 
@@ -604,9 +604,9 @@ INFO: CLAUDE.md appears to already be split
 ### Under Limit
 
 ```text
-INFO: CLAUDE.md is under line limit
-- Lines: 387 / 500
-- Overage: 0 lines
+INFO: CLAUDE.md is under word limit
+- Words: 1548 / 2000
+- Overage: 0 words
 - Recommendation: Split not necessary, consider other optimizations
 ```
 
@@ -614,8 +614,8 @@ INFO: CLAUDE.md is under line limit
 
 ```text
 WARNING: File too small for meaningful split
-- Lines: 156
-- Minimum for split: 400
+- Words: 624
+- Minimum for split: 1600
 - Recommendation: File is fine as-is
 ```
 
@@ -632,7 +632,7 @@ Works well with:
 
 A successful split:
 
-- ✅ All files under line limits
+- ✅ All files under word limits
 - ✅ Parent provides clear navigation
 - ✅ Children are focused and coherent
 - ✅ No content duplication
