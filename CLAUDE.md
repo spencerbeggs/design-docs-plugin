@@ -95,7 +95,7 @@ All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `fa
 
 ## Linting and Formatting
 
-* **Code**: Biome (config: `biome.jsonc`, extends `@savvy-web/lint-staged/biome/silk.jsonc`)
+* **Code**: Biome (config: `biome.jsonc`, extends `@savvy-web/silk/biome`)
 * **Markdown**: markdownlint-cli2 (config: `lib/configs/.markdownlint-cli2.jsonc`)
 * **Commits**: Conventional commits enforced by `@savvy-web/commitlint`
 * **Pre-commit**: Husky + lint-staged runs Biome on staged files

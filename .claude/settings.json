@@ -13,9 +13,7 @@
 	},
 	"enableAllProjectMcpServers": true,
 	"enabledPlugins": {
-		"changesets@savvy-web-systems": true,
-		"commitlint@savvy-web-systems": true,
-		"lint-staged@savvy-web-systems": true
+		"silk@savvy-web-systems": true
 	},
 	"plansDirectory": ".claude/plans"
 }
