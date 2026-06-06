@@ -42,14 +42,14 @@ src_rel="${base_dir#"$repo_root"/}/$(basename "$source_file")"
 # When the source IS at repo root, the prefix strip leaves base_dir unchanged.
 [[ "$base_dir" == "$repo_root" ]] && src_rel="$(basename "$source_file")"
 
-# Collect @-pointers to design docs (strip leading @, dedupe). Tolerate "no match".
+# Collect @-pointers to design docs (strip leading @). Tolerate "no match".
 rel_targets=()
 while IFS= read -r line; do
 	[[ -n "$line" ]] && rel_targets+=("$line")
-done < <(grep -oE '@[^ )`"]+\.claude/design/[^ )`"]+\.md' "$source_file" | sed 's/^@//' | sort -u || true)
+done < <(grep -oE '@[^ )`"]+\.claude/design/[^ )`"]+\.md' "$source_file" | sed 's/^@//' || true)
 
 # Resolve each pointer (relative to the source file's dir) to a repo-root-relative path.
-targets=()
+resolved=()
 if [[ ${#rel_targets[@]} -gt 0 ]]; then
 	for rel in "${rel_targets[@]}"; do
 		abs="$base_dir/$rel"
@@ -58,8 +58,18 @@ if [[ ${#rel_targets[@]} -gt 0 ]]; then
 			exit 1
 		}
 		full="$d/$(basename "$abs")"
-		targets+=("${full#"$repo_root"/}")
+		resolved+=("${full#"$repo_root"/}")
 	done
+fi
+
+# Dedupe on the RESOLVED target paths, not the raw pointer strings: two
+# differently-written pointers (e.g. with `./` or `../` segments) can resolve
+# to the same file and must produce a single refs.json entry.
+targets=()
+if [[ ${#resolved[@]} -gt 0 ]]; then
+	while IFS= read -r t; do
+		[[ -n "$t" ]] && targets+=("$t")
+	done < <(printf '%s\n' "${resolved[@]}" | sort -u)
 fi
 
 # Seed refs.json if absent.

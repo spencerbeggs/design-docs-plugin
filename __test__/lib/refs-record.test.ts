@@ -137,6 +137,16 @@ describe("refs-record.sh", () => {
 		expect(readRefs().refs).toHaveLength(0);
 	});
 
+	test("dedupes pointers that resolve to the same target", () => {
+		writeFileAt(".claude/design/mod/a.md", doc("A", "Alpha."));
+		// Two distinct raw pointer forms that resolve to the same file.
+		writeFileAt("CLAUDE.md", "@./.claude/design/mod/a.md and @./.claude/design/mod/./a.md\n");
+
+		run(repo, ["CLAUDE.md"]);
+		const entry = only(readRefs());
+		expect(entry.target).toBe(".claude/design/mod/a.md");
+	});
+
 	test("is idempotent across repeated runs", () => {
 		writeFileAt(".claude/design/mod/a.md", doc("A", "Alpha."));
 		writeFileAt("CLAUDE.md", "@./.claude/design/mod/a.md\n");

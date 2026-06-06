@@ -63,6 +63,14 @@ describe("ref-hash.sh", () => {
 		expect(stderr).toContain("file not found");
 	});
 
+	test("exits 1 on unterminated frontmatter instead of hashing the empty string", () => {
+		// Opening `---` with no closing fence would otherwise swallow the body.
+		const path = write("bad.md", "---\nstatus: current\nno closing fence here\n");
+		const { exitCode, stderr } = runHash([path]);
+		expect(exitCode).toBe(1);
+		expect(stderr).toContain("unterminated");
+	});
+
 	test("exits 2 when no argument is given", () => {
 		const { exitCode, stderr } = runHash([]);
 		expect(exitCode).toBe(2);

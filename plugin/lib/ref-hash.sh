@@ -31,14 +31,21 @@ hash_body() {
 		exit 1
 	fi
 	# Strip a leading YAML frontmatter block. If the first line is not `---`,
-	# the whole file is treated as body.
+	# the whole file is treated as body. An opening `---` with no closing `---`
+	# (malformed frontmatter) would otherwise swallow the whole file and hash
+	# the empty string — fail loudly instead so a meaningless hash never lands
+	# in refs.json.
 	local body
-	body="$(awk '
+	if ! body="$(awk '
 		NR==1 && $0=="---" { in_fm=1; next }
 		in_fm && $0=="---" { in_fm=0; next }
 		in_fm { next }
 		{ print }
-	' "$file")"
+		END { if (in_fm) exit 3 }
+	' "$file")"; then
+		echo "ref-hash: unterminated YAML frontmatter in $file" >&2
+		exit 1
+	fi
 	if command -v shasum >/dev/null 2>&1; then
 		printf '%s' "$body" | shasum -a 256 | cut -d' ' -f1 | tr -d '\n'
 	elif command -v sha256sum >/dev/null 2>&1; then
