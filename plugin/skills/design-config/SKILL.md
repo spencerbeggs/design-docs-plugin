@@ -162,10 +162,13 @@ and follows the JSON schema at:
   "context": {
     "rootMaxWords": 2000,
     "childMaxWords": 1000,
-    "requireDesignDocPointers": true
+    "requireDesignDocPointers": true,
+    "requirePointerHashes": false
   }
 }
 ```
+
+`requirePointerHashes` (default `false`): when `true`, `context-validate` / `context-audit` treat a design-doc pointer that has no recorded content hash in `.claude/design/refs.json` as a WARNING rather than INFO, pushing pointers to become drift-tracked.
 
 **Quality Sections:**
 

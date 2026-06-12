@@ -51,7 +51,7 @@ reports with prioritized recommendations.
 
 - `target`: Path to CLAUDE.md file or "all" (default: all)
 - `strict`: Enable strict mode with additional checks (default: true)
-- `check-refs`: Validate design doc references exist (default: true)
+- `check-refs`: Validate design doc references exist and check pointer content drift (default: true)
 - `output`: Output file path for audit report
 
 ## Workflow

@@ -59,7 +59,14 @@ High-level synchronization process:
 2. **Load design.config.json** to get module and package paths
 3. **Read design document** and extract file references, exports,
    implementation claims, architecture descriptions, metrics, and dependencies
-4. **Analyze source code** to verify each claim against actual code
+4. **Analyze source code** to verify each claim against actual code. Also
+   detect **embedded config snippets**: any fenced block or prose that
+   reproduces `design.config.json` keys/values (e.g. `rootMaxWords`,
+   `requireDesignDocPointers`). Compare each against the live
+   `design.config.json` — flag mismatches as drift, and recommend replacing
+   the snippet with a pointer to the config file (per the design-docs-style
+   rule against transcribing config). A config snippet that matches today is
+   still a second source of truth that will rot.
 5. **Generate sync report** with summary, critical issues, warnings, safe
    updates, and items requiring manual review
 6. **Apply updates** (safe updates automatically if --auto-update, unsafe

@@ -33,6 +33,8 @@ design-docs-plugin/
 ├── plugin/                      # DISTRIBUTABLE — everything here ships
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Plugin manifest (name, version, author)
+│   ├── lib/
+│   │   └── ref-hash.sh          # Body-only sha256 of a design doc (pointer drift)
 │   ├── hooks/
 │   │   ├── hooks.json                                  # Hook configuration
 │   │   ├── lib/                                        # Shared bash helpers (hook-output.sh, hook-debug.sh, source-session-env.sh)

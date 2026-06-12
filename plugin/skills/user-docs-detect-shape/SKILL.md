@@ -16,7 +16,8 @@ Detect the shape and metadata of the current repo so other user-docs skills and 
 Resolve the target directory (the argument or `.`). From there:
 
 1. **Repo kind:**
-   - If `<dir>/package.json` has a `workspaces` field, OR `<dir>/pnpm-workspace.yaml` exists, OR `<dir>/packages/` contains sub-`package.json` files: `monorepo-root`.
+   - `monorepo-root` requires **at least one real sub-package**, not merely a `workspaces` field. It is `monorepo-root` if any of these resolve to a `package.json` outside `<dir>` itself: `<dir>/pnpm-workspace.yaml` `packages:` globs, `<dir>/package.json` `workspaces` globs, or `<dir>/packages/` containing sub-`package.json` files.
+   - **A self-referential or empty workspace is not a monorepo.** A `workspaces` value of `["."]` (the root listing itself), or globs that match no `package.json` outside the root, does NOT make this a monorepo — it is a single-package repo using a one-element workspace for tooling reasons. Combined with `private: true` and no `packages/` sub-packages, classify as `single` (example: a Claude Code plugin repo whose only artifact ships elsewhere).
    - If the path's parent chain contains a directory that satisfies the monorepo-root condition AND the current `package.json` is a sub-package, return `monorepo-package`. **Sub-package** means the current `package.json` exists under any path matched by the parent's `workspaces` glob (e.g. `packages/*`, `apps/*`) OR by the parent's `pnpm-workspace.yaml` `packages:` glob.
    - Otherwise: `single`.
 2. **Package name:** from `package.json` `name` field.

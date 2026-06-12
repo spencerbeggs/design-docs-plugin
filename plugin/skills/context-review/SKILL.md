@@ -15,7 +15,7 @@ efficient, focused context for AI assistants without token waste.
 
 This skill analyzes CLAUDE.md files against quality standards defined in
 `.claude/design/design.config.json` and the LLM Context Agent design document.
-It checks line counts, content structure, design doc pointers, and
+It checks word counts, content structure, design doc pointers, and
 identifies opportunities for improvement.
 
 ## Instructions
@@ -24,8 +24,8 @@ identifies opportunities for improvement.
 
 Read `.claude/design/design.config.json` to understand quality standards:
 
-- Root CLAUDE.md max lines (default: 500)
-- Child CLAUDE.md max lines (default: 300)
+- Root CLAUDE.md max words (default: 2000)
+- Child CLAUDE.md max words (default: 1000)
 - Required design doc pointers setting
 - Module structure for monorepos
 
@@ -41,10 +41,10 @@ Search for CLAUDE.md files in the repository:
 
 For each CLAUDE.md file found:
 
-**Line Count Check:**
+**Word Count Check:**
 
-- Count total lines (excluding blank lines)
-- Compare against limits (root: 500, child: 300)
+- Count total words
+- Compare against limits (root: 2000, child: 1000)
 - Flag files exceeding limits
 
 **Content Structure Check:**
@@ -74,7 +74,7 @@ Create a comprehensive review report with:
 **Summary:**
 
 - Total CLAUDE.md files found
-- Average line count
+- Average word count
 - Files over limit count
 - Missing design doc pointers count
 
@@ -82,10 +82,10 @@ Create a comprehensive review report with:
 
 Group by severity (high, medium, low):
 
-- **High:** Files exceeding line limits by >20%
+- **High:** Files exceeding word limits by >20%
 - **High:** Missing design doc pointers when design docs exist
 - **High:** Overly detailed sections that should be design docs
-- **Medium:** Files approaching line limits (>80%)
+- **Medium:** Files approaching word limits (>80%)
 - **Medium:** No child CLAUDE.md for complex modules
 - **Low:** Minor structure improvements
 
@@ -103,8 +103,8 @@ Actionable suggestions:
 ```text
 ### High Priority
 
-CLAUDE.md: 687 lines (limit: 500, 37% over)
-- "Testing" section is very detailed (120 lines) → move to design doc
+CLAUDE.md: 2740 words (limit: 2000, 37% over)
+- "Testing" section is very detailed (~480 words) → move to design doc
 - "Architecture" duplicates content in pkgs/my-package/CLAUDE.md
 - Missing pointer to `.claude/design/my-package/architecture.md`
 
@@ -137,7 +137,7 @@ Generate markdown report with structure:
 ## Summary
 
 - CLAUDE.md files: X
-- Average line count: Y
+- Average word count: Y
 - Files over limit: Z
 - Overall efficiency: N%
 

@@ -36,7 +36,7 @@ Extract parameters from the user's request:
 **Optional:**
 
 - `strict`: Enable strict mode with additional quality checks (default: false)
-- `check-refs`: Validate design doc references exist (default: true)
+- `check-refs`: Validate design doc references exist and check pointer content drift (default: true)
 
 **Examples:**
 
@@ -72,11 +72,16 @@ Read `.claude/design/design.config.json` to understand:
     "context": {
       "rootMaxWords": 2000,
       "childMaxWords": 1000,
-      "requireDesignDocPointers": true
+      "requireDesignDocPointers": true,
+      "requirePointerHashes": false
     }
   }
 }
 ```
+
+`requirePointerHashes` (default `false`) controls drift-check strictness: when `true`, a pointer with no recorded hash in `refs.json` is a WARNING rather than INFO.
+
+If `.claude/design/design.config.json` does not exist, fall back to the defaults above (root 2000 words / child 1000 words) and add one INFO line to the report noting that default limits are in effect — so a passing word-count check is not mistaken for a configured one.
 
 ### 3. Find Context Files
 
@@ -227,6 +232,23 @@ If `check-refs: true`, validate:
 - Check for broken paths
 - Warn if design doc not in module's config
 
+**Pointer Content Drift:**
+
+Existence is necessary but not sufficient. A pointer can resolve to the right path while the target doc's *content* has drifted from what the pointer's "Load when" guidance was written against (e.g. the doc was edited in place, same path). Detect this with the recorded content hash:
+
+1. Load `.claude/design/refs.json` (the pointer↔doc integrity manifest). If it does not exist, skip drift checks and emit one INFO that pointer hashes are not yet tracked.
+2. For each `@` pointer, compute the target's current body hash:
+
+   ```bash
+   bash "${CLAUDE_PLUGIN_ROOT}/lib/ref-hash.sh" <target-doc>
+   ```
+
+   The script hashes the doc body only (frontmatter stripped), so routine `updated` / `last-synced` bumps never count as drift.
+3. Look up the recorded entry for `(source, target)` in `refs.json`:
+   - **Recorded hash == current hash** → in sync, pass.
+   - **Recorded hash != current hash** → WARNING "pointer may be stale" (see error messages). The link resolves but the target changed since the guidance was recorded.
+   - **No recorded entry** → INFO by default; WARNING if `quality.context.requirePointerHashes` is `true`.
+
 **File Path References:**
 
 - Extract references to source files (e.g., `src/foo.ts`)
@@ -355,6 +377,20 @@ WARNING: File exceeds word limit
 ERROR: Referenced design doc does not exist
 - Reference: @./.claude/design/{path}
 - Fix: Create the design doc or fix the reference path
+```
+
+### Pointer May Be Stale
+
+```text
+WARNING: Pointer may be stale (content drift)
+- Reference: @./.claude/design/{path}
+- Recorded hash: {short-recorded} (when the pointer's guidance was written)
+- Current hash:  {short-current} (target doc body now)
+- Meaning: the link resolves, but the doc's content changed since the
+  pointer was recorded — the "Load when" guidance may no longer match.
+- Fix: re-verify the pointer's "Load when" line against the current doc,
+  then re-record the hash in .claude/design/refs.json (the context-doc-agent
+  does this when it confirms the pointer).
 ```
 
 ### Missing Design Doc Pointer

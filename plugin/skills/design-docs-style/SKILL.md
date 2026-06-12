@@ -38,6 +38,8 @@ Use file paths to direct agents to source locations rather than restating what c
 
 Over rewriting the module's behavior in prose. The second form creates a second source of truth that drifts with every code change.
 
+The same applies to **config**: do not transcribe `design.config.json` (or any live config file) shape into a design doc. A pasted snippet of keys and values is a second source of truth that silently rots when the config changes — and nothing validates prose against the live file. Point to it instead: write "see `quality.context` in `design.config.json`" rather than pasting `rootMaxWords`/`childMaxWords`. Name a key only when its meaning is the point; never reproduce the file's current values.
+
 ## Skip counts and enumerations
 
 "There are 7 error types" is stale before the next commit. Write "see the `DataError` tagged union in `src/errors.ts`" instead. Exact method counts, parameter lists and error enumerations belong in code, not design docs.

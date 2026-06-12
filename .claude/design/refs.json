@@ -1,0 +1,11 @@
+{
+	"version": 1,
+	"refs": [
+		{
+			"source": "CLAUDE.md",
+			"target": ".claude/design/design-docs-plugin/plugin-architecture.md",
+			"hash": "42e2a7214e38f293558610d146688cb1b09c59dd9e6477408b03bed8931433ac",
+			"recordedAt": "2026-06-05"
+		}
+	]
+}
