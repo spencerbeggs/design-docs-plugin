@@ -4,9 +4,11 @@
 		"@savvy-web/silk/changesets/changelog",
 		{
 			"repo": "spencerbeggs/design-docs-plugin",
-			"versionFiles": [
-				{ "glob": "plugin/.claude-plugin/plugin.json", "paths": ["$.version"], "package": "design-docs" }
-			]
+			"packages": {
+				"design-docs": {
+					"versionFiles": [{ "glob": "plugin/.claude-plugin/plugin.json", "paths": ["$.version"] }]
+				}
+			}
 		}
 	],
 	"commit": false,
