@@ -160,15 +160,8 @@
 				"designDocs": {
 					"type": "object",
 					"description": "Design documentation quality standards",
-					"required": ["maxLineLength", "requireFrontmatter", "requireTOC", "minSections"],
+					"required": ["requireFrontmatter", "requireTOC", "minSections"],
 					"properties": {
-						"maxLineLength": {
-							"type": "integer",
-							"description": "Maximum line length for design docs",
-							"minimum": 80,
-							"maximum": 200,
-							"default": 120
-						},
 						"requireFrontmatter": {
 							"type": "boolean",
 							"description": "Whether frontmatter is required",

@@ -157,6 +157,53 @@ describe("refs-record.sh", () => {
 		expect(second).toBe(first);
 	});
 
+	test("preserves recordedAt when the target body is unchanged", () => {
+		writeFileAt(".claude/design/mod/a.md", doc("A", "Alpha body."));
+		writeFileAt("CLAUDE.md", "@./.claude/design/mod/a.md\n");
+
+		// First run stamps today's date; capture the real hash it computes.
+		run(repo, ["CLAUDE.md"]);
+		const first = only(readRefs());
+
+		// Backdate the recorded entry to simulate a manifest written long ago.
+		writeFileAt(
+			".claude/design/refs.json",
+			JSON.stringify({
+				version: 1,
+				refs: [{ source: first.source, target: first.target, hash: first.hash, recordedAt: "2020-01-01" }],
+			}),
+		);
+
+		// A no-op re-run (body unchanged) must keep the old date, not restamp it.
+		run(repo, ["CLAUDE.md"]);
+		const entry = only(readRefs());
+		expect(entry.hash).toBe(first.hash);
+		expect(entry.recordedAt).toBe("2020-01-01");
+	});
+
+	test("restamps recordedAt when the target body changes", () => {
+		writeFileAt(".claude/design/mod/a.md", doc("A", "Alpha body."));
+		writeFileAt("CLAUDE.md", "@./.claude/design/mod/a.md\n");
+		run(repo, ["CLAUDE.md"]);
+		const first = only(readRefs());
+
+		// Backdate, then change the body so the hash differs.
+		writeFileAt(
+			".claude/design/refs.json",
+			JSON.stringify({
+				version: 1,
+				refs: [{ source: first.source, target: first.target, hash: first.hash, recordedAt: "2020-01-01" }],
+			}),
+		);
+		writeFileAt(".claude/design/mod/a.md", doc("A", "Alpha body, revised."));
+
+		run(repo, ["CLAUDE.md"]);
+		const entry = only(readRefs());
+		expect(entry.hash).not.toBe(first.hash);
+		expect(entry.recordedAt).not.toBe("2020-01-01");
+		expect(entry.recordedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+	});
+
 	test("exits 1 when the source file is missing", () => {
 		const { exitCode, stderr } = run(repo, ["nope/CLAUDE.md"]);
 		expect(exitCode).toBe(1);

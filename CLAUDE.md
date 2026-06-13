@@ -34,7 +34,8 @@ design-docs-plugin/
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # Plugin manifest (name, version, author)
 │   ├── lib/
-│   │   └── ref-hash.sh          # Body-only sha256 of a design doc (pointer drift)
+│   │   ├── ref-hash.sh          # Body-only sha256 of a design doc (pointer drift)
+│   │   └── refs-record.sh       # Turnkey recorder: upserts a CLAUDE.md's pointer hashes into refs.json
 │   ├── hooks/
 │   │   ├── hooks.json                                  # Hook configuration
 │   │   ├── lib/                                        # Shared bash helpers (hook-output.sh, hook-debug.sh, source-session-env.sh)
