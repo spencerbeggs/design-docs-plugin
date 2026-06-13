@@ -8,40 +8,57 @@ agent: design-doc-agent
 
 # Design Documentation Cross-Reference Graph
 
-Generates visual graphs and reports showing relationships between design
-documents based on their frontmatter references and content links.
+Generates graphs and reports showing relationships between design documents
+based on their frontmatter references and content links.
+
+## Run the Script First
+
+This skill is backed by a deterministic bash script. **Run it and present its
+output** — do not hand-build the graph by reading files, and never inspect git
+history or review commits. This skill's only job is the design-doc
+cross-reference graph; the script guarantees that.
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" [module|all] [--format=text|json|mermaid]
+```
+
+The script discovers docs, parses each doc's `related`/`dependencies`
+frontmatter and in-content `.md` links, then reports the reference list, broken
+links, orphaned docs, and bidirectional vs one-way pairs. Default scope is
+`all`; default format is `text`. Present the script output, then add the
+recommendations described below if the user wants them.
 
 ## Overview
 
-This skill analyzes design documentation to discover and visualize
-relationships between documents. It identifies orphaned docs, circular
-dependencies, cross-module references, and provides recommendations for
-improving documentation connectivity.
+This skill analyzes design documentation to discover relationships between
+documents. It identifies orphaned docs, broken references, cross-module
+references, and provides recommendations for improving documentation
+connectivity.
 
 ## Quick Start
 
 **Full graph:**
 
 ```bash
-/design-link
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" all
 ```
 
 **Module-specific:**
 
 ```bash
-/design-link effect-type-registry
-```
-
-**Find orphans:**
-
-```bash
-/design-link --orphans
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" effect-type-registry
 ```
 
 **JSON output:**
 
 ```bash
-/design-link --format=json
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" all --format=json
+```
+
+**Mermaid diagram:**
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" all --format=mermaid
 ```
 
 ## Parameters
@@ -49,25 +66,30 @@ improving documentation connectivity.
 ### Optional
 
 - `module`: Limit to specific module (default: all)
-- `format`: Output format (mermaid, text, json) (default: mermaid)
-- `filter`: Filter by relationship type (related, dependencies, content-links)
-- `orphans`: Show only orphaned docs (default: false)
+- `format`: Output format (text, json, mermaid) (default: text)
 
 ## Workflow
 
-High-level graph generation process:
+The script performs the graph generation deterministically:
 
-1. **Parse parameters** to determine scope and output format
-2. **Load design.config.json** to identify target modules
-3. **Find all design documents** using Glob
-4. **Parse references** from frontmatter (related, dependencies) and content
-   links
-5. **Build graph** with nodes (documents) and edges (references)
-6. **Analyze graph** for orphans, circular dependencies, isolated clusters
-7. **Generate output** in requested format (Mermaid, text, or JSON)
-8. **Provide recommendations** for improving documentation connectivity
+1. **Resolve scope and format** from the positional module argument and
+   `--format` flag
+2. **Load design.config.json** to identify target modules (falls back to
+   listing subdirectories of `.claude/design/`)
+3. **Find all design documents** across modules
+4. **Parse references** from frontmatter (`related`, `dependencies`) and
+   in-content `.md` links
+5. **Build the graph** with nodes (documents) and edges (references)
+6. **Analyze** for orphans, broken references, and bidirectional vs one-way
+   pairs
+7. **Emit output** in the requested format (text, JSON, or Mermaid)
 
-For detailed implementation steps, see supporting documentation below.
+After running it, **provide recommendations** for improving documentation
+connectivity based on the reported orphans and broken links.
+
+The supporting docs below describe the underlying algorithms and output shapes;
+they are reference material, not a manual procedure to follow in place of the
+script.
 
 ## Supporting Documentation
 

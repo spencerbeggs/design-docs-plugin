@@ -39,7 +39,7 @@ This skill manages configuration by:
 **Update quality standards:**
 
 ```bash
-/design-config update-quality --maxLineLength=120
+/design-config update-quality --context.rootMaxWords=2500
 ```
 
 ## Configuration File
@@ -147,7 +147,6 @@ and follows the JSON schema at:
 ```json
 "quality": {
   "designDocs": {
-    "maxLineLength": 120,
     "requireFrontmatter": true,
     "requireTOC": true,
     "minSections": ["Overview", "Current State", "Rationale"]
@@ -276,7 +275,6 @@ Creates a new design.config.json file with sensible defaults.
   "modules": {},
   "quality": {
     "designDocs": {
-      "maxLineLength": 120,
       "requireFrontmatter": true,
       "requireTOC": true,
       "minSections": ["Overview", "Current State", "Rationale"]
@@ -329,7 +327,7 @@ Updates quality standards for design docs, user docs, or context files.
 
 ```bash
 /design-config update-quality \
-  --designDocs.maxLineLength=120 \
+  --designDocs.requireTOC=false \
   --context.rootMaxWords=2000
 ```
 
@@ -422,7 +420,6 @@ The complete JSON schema is located at:
 
 **Quality.designDocs:**
 
-- `maxLineLength` - Max line length (80-200)
 - `requireFrontmatter` - Frontmatter required (boolean)
 - `requireTOC` - TOC required (boolean)
 - `minSections` - Minimum sections (array)
@@ -437,7 +434,6 @@ The complete JSON schema is located at:
 
 **Line lengths:**
 
-- `designDocs.maxLineLength`: 80-200
 - `userDocs.level1.maxLineLength`: 80-120
 - `userDocs.level2.maxLineLength`: 80-150
 
@@ -469,7 +465,7 @@ The complete JSON schema is located at:
 
 ```bash
 /design-config update-quality \
-  --designDocs.maxLineLength=100 \
+  --designDocs.requireTOC=false \
   --context.rootMaxWords=2500
 ```
 
@@ -499,7 +495,7 @@ Errors:
 - .version: Must match pattern ^[0-9]+\.[0-9]+\.[0-9]+$
 - .modules.my-package.categories[0]: Must be one of:
   architecture, performance, ...
-- .quality.designDocs.maxLineLength: Must be <= 200
+- .context.rootMaxWords: Must be <= 5000
 
 Fix these errors and run validate again.
 ```

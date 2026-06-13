@@ -174,15 +174,18 @@ validate_file() {
 		esac
 	fi
 
-	# Check for required sections
-	local required_sections=("Overview" "Current State" "Rationale")
-	for section in "${required_sections[@]}"; do
-		if ! grep -q "^## ${section}" "$file"; then
-			echo "  - ⚠️  WARNING: Missing recommended section '${section}'"
-			WARNINGS=$((WARNINGS + 1))
-			file_warnings=$((file_warnings + 1))
-		fi
-	done
+	# Check for recommended sections. The list comes from
+	# quality.designDocs.minSections in design.config.json so the warning honors
+	# the project's configured standard instead of a hardcoded default.
+	if [ ${#MIN_SECTIONS[@]} -gt 0 ]; then
+		for section in "${MIN_SECTIONS[@]}"; do
+			if ! grep -q "^## ${section}" "$file"; then
+				echo "  - ⚠️  WARNING: Missing recommended section '${section}'"
+				WARNINGS=$((WARNINGS + 1))
+				file_warnings=$((file_warnings + 1))
+			fi
+		done
+	fi
 
 	if [ $file_errors -eq 0 ] && [ $file_warnings -eq 0 ]; then
 		echo "  ✅ PASS"
@@ -195,6 +198,20 @@ validate_file() {
 # to directory listing.
 CONFIG_FILE="$PROJECT_DIR/.claude/design/design.config.json"
 DESIGN_ROOT="$PROJECT_DIR/.claude/design"
+
+# Recommended sections come from quality.designDocs.minSections when the config
+# declares them; otherwise fall back to the historical default. Reading the
+# config here keeps validate_file's section warnings aligned with the project's
+# configured standard rather than fighting it.
+MIN_SECTIONS=()
+if [ -f "$CONFIG_FILE" ] && command -v jq &>/dev/null &&
+	jq -e '.quality.designDocs.minSections | type == "array"' "$CONFIG_FILE" >/dev/null 2>&1; then
+	while IFS= read -r section; do
+		[ -n "$section" ] && MIN_SECTIONS+=("$section")
+	done < <(jq -r '.quality.designDocs.minSections[]' "$CONFIG_FILE" 2>/dev/null)
+else
+	MIN_SECTIONS=("Overview" "Current State" "Rationale")
+fi
 
 discover_modules_from_config() {
 	[ -f "$CONFIG_FILE" ] || return 1

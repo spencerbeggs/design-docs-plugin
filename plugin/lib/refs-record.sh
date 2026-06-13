@@ -80,11 +80,21 @@ else
 fi
 
 # Drop this source's existing entries, then add a fresh one per resolved target.
+# Keep the pre-drop document so we can carry forward the prior recordedAt for any
+# entry whose content hash is unchanged — restamping only when the body drifted
+# makes the recorder safe to run idempotently as a verification step.
+orig="$doc"
 doc="$(jq --arg src "$src_rel" '.refs |= map(select(.source != $src))' <<<"$doc")"
 if [[ ${#targets[@]} -gt 0 ]]; then
 	for t in "${targets[@]}"; do
 		h="$(bash "$REF_HASH" "$t")"
-		doc="$(jq --arg src "$src_rel" --arg tgt "$t" --arg h "$h" --arg d "$today" \
+		# Reuse the recorded date when an entry with the same source, target, and
+		# hash already existed; only an actual content change earns today's date.
+		prev="$(jq -r --arg src "$src_rel" --arg tgt "$t" --arg h "$h" \
+			'first(.refs[] | select(.source == $src and .target == $tgt and .hash == $h) | .recordedAt) // empty' \
+			<<<"$orig")"
+		d="${prev:-$today}"
+		doc="$(jq --arg src "$src_rel" --arg tgt "$t" --arg h "$h" --arg d "$d" \
 			'.refs += [{source:$src,target:$tgt,hash:$h,recordedAt:$d}]' <<<"$doc")"
 	done
 fi

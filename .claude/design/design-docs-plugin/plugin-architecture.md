@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-06-05
-last-synced: 2026-06-05
+updated: 2026-06-13
+last-synced: 2026-06-13
 completeness: 95
 related: []
 dependencies: []
@@ -93,6 +93,7 @@ design-docs-plugin/
 |   +-- .claude-plugin/           # Plugin manifest (plugin.json)
 |   +-- lib/                      # Shared helper scripts for skills/agents (NOT hooks)
 |   |   +-- ref-hash.sh           # body-only sha256 of a design doc (pointer drift)
+|   |   +-- refs-record.sh        # turnkey recorder: upserts a CLAUDE.md's pointer hashes
 |   +-- hooks/
 |   |   +-- hooks.json            # Hook configuration (event -> script paths)
 |   |   +-- lib/                  # Shared bash helpers sourced by hook scripts
@@ -113,7 +114,7 @@ design-docs-plugin/
 `package.json`, no `tsconfig.json`, no build tooling -- it is purely markdown
 and bash.
 
-There are two distinct shared-script locations under `plugin/`, separated by who sources them. `hooks/lib/` holds helpers sourced by hook scripts (Claude Code's hook runtime). `plugin/lib/` holds helpers invoked by skills and agents at task time -- currently just `ref-hash.sh`, which powers pointer content-drift detection (see [Pointer Integrity](#pointer-integrity-content-drift-detection)). Keep them separate: hook helpers run in the constrained hook subprocess, skill/agent helpers run in the richer task context.
+There are two distinct shared-script locations under `plugin/`, separated by who sources them. `hooks/lib/` holds helpers sourced by hook scripts (Claude Code's hook runtime). `plugin/lib/` holds helpers invoked by skills and agents at task time -- `ref-hash.sh` and its turnkey recorder `refs-record.sh`, which together power pointer content-drift detection (see [Pointer Integrity](#pointer-integrity-content-drift-detection)). Keep them separate: hook helpers run in the constrained hook subprocess, skill/agent helpers run in the richer task context.
 
 ### Plugin Manifest
 
@@ -673,7 +674,7 @@ Each agent dispatch carries the running file-modification list forward but no ot
   }>;
   skills: { baseNamespace, enabled: string[] };
   quality: {
-    designDocs: { maxLineLength, requireFrontmatter, requireTOC, minSections };
+    designDocs: { requireFrontmatter, requireTOC, minSections };
     userDocs: { level1, level2, level3 };
     context: { rootMaxWords, childMaxWords, requireDesignDocPointers,
                requirePointerHashes };
@@ -684,6 +685,8 @@ Each agent dispatch carries the running file-modification list forward but no ot
   subagents: Record<string, { enabled, description, skills, tools, file }>;
 }
 ```
+
+`design-validate` reads `quality.designDocs.minSections` to drive its recommended-section warnings, falling back to a built-in `Overview` / `Current State` / `Rationale` trio only when the config omits the array; an explicit empty array means no sections are required.
 
 **Design Doc Frontmatter:**
 
@@ -867,7 +870,7 @@ CLAUDE.md files point at design docs with `@` pointers (e.g. `@./.claude/design/
 
 The subsystem has three parts. The hashing primitive `plugin/lib/ref-hash.sh` emits a deterministic body-only sha256 of a design doc — it strips a leading YAML frontmatter block before hashing, so routine `updated` / `last-synced` timestamp bumps do not move the hash and only real content edits do. The manifest `.claude/design/refs.json` (`{version, refs:[{source, target, hash, recordedAt}]}`) is committed and records, per pointer, the content hash the pointer was written against. The record side and the check side both shell out to `ref-hash.sh` so the two hashes are computed identically.
 
-- **Record side:** the `context-update` skill and the `context-doc-agent` write or refresh a `refs.json` entry when they confirm a pointer — capturing the target's current body hash as the baseline.
+- **Record side:** the `context-update` skill and the `context-doc-agent` write or refresh a `refs.json` entry when they confirm a pointer — capturing the target's current body hash as the baseline. The recorder (`plugin/lib/refs-record.sh`) is idempotent on unchanged content: it preserves an entry's existing `recordedAt` when the same (source, target, hash) already exists and only stamps today's date when the target's body hash actually changed, so it is safe to run repeatedly as a verification step.
 - **Check side:** `context-validate` and `context-audit` recompute each pointer's target hash and compare it to the recorded baseline. A mismatch is a WARNING ("pointer may be stale (content drift)"); a pointer with no recorded entry is INFO by default, escalated to WARNING when `quality.context.requirePointerHashes` is `true`.
 
 ```text
