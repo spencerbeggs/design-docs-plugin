@@ -8,7 +8,6 @@
 	"scripts": {
 		"ci:build": "echo \"No build needed in this repo\"",
 		"ci:test": "CI=\"true\" bun test",
-		"ci:version": "savvy changeset version && biome format --write .",
 		"lint": "biome check --max-diagnostics=none",
 		"lint:fix": "biome check --write --max-diagnostics=none",
 		"lint:fix:unsafe": "biome check --write --unsafe --max-diagnostics=none",
