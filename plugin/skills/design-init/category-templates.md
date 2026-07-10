@@ -65,16 +65,16 @@ When no clear pattern matches, ask user to select category.
 
 ### Step 1: Check for Category-Specific Template
 
-Templates are located at `.claude/skills/design-init/templates/{category}.template.md`:
+Templates are located at `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/{category}.template.md`:
 
-- `.claude/skills/design-init/templates/architecture.template.md`
-- `.claude/skills/design-init/templates/performance.template.md`
-- `.claude/skills/design-init/templates/observability.template.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/architecture.template.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/performance.template.md`
+- `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/observability.template.md`
 
 ### Step 2: Fall Back to Default
 
 If category-specific template doesn't exist:
-`.claude/skills/design-init/templates/design-doc.template.md`
+`${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/design-doc.template.md`
 
 ## Template Variables
 

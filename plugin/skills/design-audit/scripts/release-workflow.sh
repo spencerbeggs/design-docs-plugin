@@ -21,7 +21,7 @@ if [ -z "$PLUGIN_ROOT" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 fi
-VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate.sh"
 
 echo "==================================="
 echo "Design Documentation Release Check"
@@ -30,7 +30,7 @@ echo ""
 
 # Run validation on all docs
 echo "Step 1: Validating all design documentation..."
-if ! "$VALIDATE_SCRIPT"; then
+if ! bash "$VALIDATE_SCRIPT" all; then
   echo ""
   echo "❌ Release check failed: Validation errors found"
   echo "Please fix all validation errors before releasing"
@@ -41,12 +41,19 @@ echo ""
 echo "Step 2: Checking for stub status documents..."
 STUB_COUNT=0
 
-# Find all markdown files
-mapfile -t DESIGN_FILES < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
+# Find all markdown files (mapfile is bash >= 4; macOS ships /bin/bash 3.2,
+# so build the array with a read loop instead)
+DESIGN_FILES=()
+while IFS= read -r _doc; do
+  [ -n "$_doc" ] && DESIGN_FILES+=("$_doc")
+done < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
 
-for file in "${DESIGN_FILES[@]}"; do
+# Guard the loops on emptiness: under bash 3.2 with set -u, expanding an
+# empty array with "${arr[@]}" is an unbound-variable error. The || true on
+# the greps keeps a missing field from killing the script under pipefail.
+[ ${#DESIGN_FILES[@]} -gt 0 ] && for file in "${DESIGN_FILES[@]}"; do
   # Extract status from frontmatter
-  STATUS=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^status:" | awk '{print $2}')
+  STATUS=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^status:" | awk '{print $2}' || true)
 
   if [[ "$STATUS" == "stub" ]]; then
     echo "⚠️  Stub status: $file"
@@ -64,9 +71,9 @@ echo ""
 echo "Step 3: Checking completeness scores..."
 LOW_COMPLETENESS_COUNT=0
 
-for file in "${DESIGN_FILES[@]}"; do
+[ ${#DESIGN_FILES[@]} -gt 0 ] && for file in "${DESIGN_FILES[@]}"; do
   # Extract completeness from frontmatter
-  COMPLETENESS=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^completeness:" | awk '{print $2}')
+  COMPLETENESS=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^completeness:" | awk '{print $2}' || true)
 
   if [[ -n "$COMPLETENESS" ]] && [[ "$COMPLETENESS" -lt 50 ]]; then
     echo "⚠️  Low completeness ($COMPLETENESS%): $file"

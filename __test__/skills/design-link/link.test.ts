@@ -296,4 +296,85 @@ describe("design-link link.sh", () => {
 		expect(parsed.summary.brokenAnchors).toBe(2);
 		expect(parsed.brokenAnchors.length).toBe(2);
 	});
+
+	function seedSubdirGraph(): void {
+		writeFileAt(
+			".claude/design/design.config.json",
+			JSON.stringify({
+				version: "1.0.0",
+				modules: { mod: { path: "mod" } },
+				quality: { designDocs: { requireFrontmatter: true } },
+			}),
+		);
+		writeFileAt(
+			".claude/design/mod/index.md",
+			[
+				"---",
+				"status: current",
+				"completeness: 80",
+				"related: []",
+				"dependencies: []",
+				"---",
+				"# Index",
+				"",
+				"See [toml](./packages/toml.md) and [its factories](./packages/toml.md#api-extractor--effect-class-factories).",
+				"",
+			].join("\n"),
+		);
+		writeFileAt(
+			".claude/design/mod/packages/toml.md",
+			[
+				"---",
+				"status: current",
+				"completeness: 70",
+				"related:",
+				"  - ../index.md",
+				"dependencies: []",
+				"---",
+				"# Toml",
+				"",
+				"## API Extractor × Effect class factories",
+				"",
+			].join("\n"),
+		);
+		writeFileAt(
+			".claude/design/mod/_archive/old.md",
+			["---", "status: archived", "completeness: 100", "related: []", "dependencies: []", "---", "# Old", ""].join(
+				"\n",
+			),
+		);
+	}
+
+	test("discovers docs in module subdirectories as graph nodes", () => {
+		seedSubdirGraph();
+		const { stdout } = run(repo, ["mod"]);
+		expect(stdout).toContain("- Documents: 2");
+		expect(stdout).toContain(".claude/design/mod/packages/toml.md");
+	});
+
+	test("resolves links into module subdirectories instead of reporting the target missing", () => {
+		seedSubdirGraph();
+		const { stdout } = run(repo, ["mod"]);
+		expect(stdout).toContain("- Broken references: 0");
+		expect(stdout).toContain(".claude/design/mod/index.md → .claude/design/mod/packages/toml.md (content-link)");
+	});
+
+	test("resolves frontmatter references from a subdirectory doc back to its parent", () => {
+		seedSubdirGraph();
+		const { stdout } = run(repo, ["mod"]);
+		expect(stdout).toContain(".claude/design/mod/packages/toml.md ↔ .claude/design/mod/index.md (related)");
+	});
+
+	test("excludes _archive docs from discovery", () => {
+		seedSubdirGraph();
+		const { stdout } = run(repo, ["mod"]);
+		expect(stdout).not.toContain("_archive/old.md");
+	});
+
+	test("preserves consecutive hyphens in heading slugs like GitHub does", () => {
+		seedSubdirGraph();
+		const { stdout } = run(repo, ["mod"]);
+		expect(stdout).not.toMatch(/toml\.md#api-extractor--effect-class-factories \(anchor missing\)/);
+		expect(stdout).toContain("- Broken anchors: 0");
+	});
 });

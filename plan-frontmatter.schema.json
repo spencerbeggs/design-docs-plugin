@@ -1,5 +1,6 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/plan-frontmatter.schema.json",
 	"title": "Plan Document Schema",
 	"description": "Schema for plan documents in the design-doc-system",
 	"type": "object",

@@ -155,7 +155,7 @@ Generated repository documentation is successful when:
 ## Integration Points
 
 - Uses `.claude/design/design.config.json` for configuration
-- Uses `.claude/skills/docs-generate-repo/templates/repo-doc.template.md` for structure
+- Uses `${CLAUDE_PLUGIN_ROOT}/skills/docs-generate-repo/templates/repo-doc.template.md` for structure
 - Reads design docs from module's `designDocsPath`
 - Writes to module's `userDocs.repoDocs` path
 - Validates against `quality.userDocs.level2` standards

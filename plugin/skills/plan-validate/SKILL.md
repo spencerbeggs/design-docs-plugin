@@ -1,7 +1,7 @@
 ---
 name: plan-validate
 description: Validate plan document structure and frontmatter. Use when checking plans for compliance, ensuring proper formatting, or verifying metadata before commits.
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash(bash *)
 context: fork
 agent: design-doc-agent
 ---
@@ -60,6 +60,8 @@ Read `.claude/design/design.config.json` to get:
 - Required frontmatter fields
 - Valid status values
 - Progress range limits
+
+The canonical JSON schema for plan frontmatter is published at `https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/plan-frontmatter.schema.json` — fetch it when a machine-checkable definition of the frontmatter contract is needed.
 
 ### 3. Locate Plan File
 
@@ -237,7 +239,7 @@ See [examples.md](./examples.md) for detailed usage examples.
 
 ## Related Skills
 
-- `plan-create` - Create new plans
-- `plan-update` - Update plan status/progress
-- `plan-list` - List all plans
-- `design-validate` - Validate design docs
+- `design-docs:plan-create` - Create new plans
+- `design-docs:plan-complete` - Complete a plan and persist knowledge to design docs
+- `design-docs:plan-list` - List all plans
+- `design-docs:design-validate` - Validate design docs

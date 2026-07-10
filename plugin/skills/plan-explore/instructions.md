@@ -119,10 +119,10 @@ get_field() {
 
 **Caching strategy:**
 
-- Store parsed metadata in associative array
+- Store parsed metadata in per-plan shell variables (bash-3.2 portable)
 - Use file mtime as cache key
 - Cache TTL: 5 minutes
-- Cache location: `/tmp/plan-explore-cache-{user}`
+- Cache location: `${DESIGN_DOCS_DATA_DIR:-/tmp}/plan-explore-cache-{user}` (the SessionStart hook exports `DESIGN_DOCS_DATA_DIR` from the host's plugin-data dir; `/tmp` is the standalone fallback)
 
 ### Step 5: Apply Filters
 
@@ -472,7 +472,7 @@ Fix status-progress alignment for: {plan}
 **Metadata cache:**
 
 ```bash
-CACHE_DIR="/tmp/plan-explore-cache-$(whoami)"
+CACHE_DIR="${DESIGN_DOCS_DATA_DIR:-/tmp}/plan-explore-cache-$(whoami)"
 CACHE_TTL=300  # 5 minutes
 
 get_cached_metadata() {

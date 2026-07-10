@@ -175,7 +175,7 @@ Generated site documentation is successful when:
 ## Integration Points
 
 - Uses `.claude/design/design.config.json` for configuration
-- Uses `.claude/skills/docs-generate-site/templates/site-doc.template.mdx` for structure
+- Uses `${CLAUDE_PLUGIN_ROOT}/skills/docs-generate-site/templates/site-doc.template.mdx` for structure
 - Reads design docs from module's `designDocsPath`
 - Writes to module's `userDocs.siteDocs` path
 - Validates against `quality.userDocs.level3` standards
@@ -184,5 +184,4 @@ Generated site documentation is successful when:
 
 - `/design-docs:user-docs-create-readme` - Generate Level 1 README
 - `/design-docs:docs-generate-repo` - Generate Level 2 repository docs
-- `/rspress-page` - Create individual RSPress pages
 - `/design-docs:docs-sync` - Sync docs with changes

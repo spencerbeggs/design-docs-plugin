@@ -20,7 +20,7 @@ if [ -z "$PLUGIN_ROOT" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 fi
-VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate.sh"
 
 echo "======================================="
 echo "Design Documentation Quality Analysis"
@@ -29,7 +29,7 @@ echo ""
 
 # Run validation first
 echo "Running validation..."
-if ! "$VALIDATE_SCRIPT"; then
+if ! bash "$VALIDATE_SCRIPT" all; then
   echo ""
   echo "❌ Quality check stopped: Fix validation errors first"
   exit 1
@@ -41,8 +41,12 @@ echo "Analyzing documentation quality..."
 echo "---------------------------------------"
 echo ""
 
-# Find all markdown files
-mapfile -t DESIGN_FILES < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
+# Find all markdown files (mapfile is bash >= 4; macOS ships /bin/bash 3.2,
+# so build the array with a read loop instead)
+DESIGN_FILES=()
+while IFS= read -r _doc; do
+  [ -n "$_doc" ] && DESIGN_FILES+=("$_doc")
+done < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
 
 # Statistics
 TOTAL=${#DESIGN_FILES[@]}
@@ -54,15 +58,18 @@ DRAFT_STATUS=0
 CURRENT_STATUS=0
 ARCHIVED_STATUS=0
 
-# Completeness distribution
-for file in "${DESIGN_FILES[@]}"; do
+# Completeness distribution. Guard the loop on emptiness: under bash 3.2
+# with set -u, expanding an empty array with "${arr[@]}" is an
+# unbound-variable error. The || true on the greps keeps a legitimately
+# missing field (grep exits 1) from killing the script under pipefail.
+[ "$TOTAL" -gt 0 ] && for file in "${DESIGN_FILES[@]}"; do
   FRONTMATTER=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file")
 
   # Extract completeness
-  COMPLETENESS=$(echo "$FRONTMATTER" | grep "^completeness:" | awk '{print $2}')
+  COMPLETENESS=$(echo "$FRONTMATTER" | grep "^completeness:" | awk '{print $2}' || true)
 
   # Extract status
-  STATUS=$(echo "$FRONTMATTER" | grep "^status:" | awk '{print $2}')
+  STATUS=$(echo "$FRONTMATTER" | grep "^status:" | awk '{print $2}' || true)
 
   # Categorize by completeness
   if [[ -n "$COMPLETENESS" ]]; then

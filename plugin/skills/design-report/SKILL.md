@@ -1,7 +1,7 @@
 ---
 name: design-report
 description: Generate status reports for design documentation. Use when creating documentation summaries, tracking progress, or preparing documentation reviews.
-allowed-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash(jq *)
 context: fork
 agent: design-doc-agent
 ---

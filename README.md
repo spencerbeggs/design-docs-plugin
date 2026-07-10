@@ -62,6 +62,21 @@ claude plugin add ./plugin
 | `DESIGN_DOCS_CONTEXT_ENABLED` | `"true"` \| `"false"` | `"true"` | Enable/disable context injection at session start |
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | `string` | unset | Optional PAT the session-start hook maps to `DESIGN_DOCS_GH_TOKEN` for GitHub operations in the finalize/review/merge-prep workflows |
 
+### JSON schemas
+
+Two JSON Schemas are published at the repository root and fetchable via raw GitHub URLs, so editors can validate and autocomplete plugin config files in consuming repos:
+
+* `design-docs.schema.json` -- validates `.claude/design/design.config.json`, including the `quality.context` options
+* `plan-frontmatter.schema.json` -- validates the frontmatter contract for plan documents in `.claude/plans/`
+
+Reference the config schema from a consuming repo's `design.config.json`:
+
+```json
+{
+ "$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json"
+}
+```
+
 ### GitHub authentication
 
 The workflow skills (`/design-docs:finalize`, `/design-docs:review`, `/design-docs:merge-prep`) call the `gh` CLI. No token setup is needed if you are already logged in with `gh auth login`. Authentication resolves in this order: `DESIGN_DOCS_GH_TOKEN` (set automatically from `GITHUB_PERSONAL_ACCESS_TOKEN` at session start), then `GH_TOKEN`, then `GITHUB_TOKEN`, then the credentials stored by `gh auth login`. The plugin scrubs stale token environment variables at each call site, so a leftover `GH_TOKEN` in your shell never overrides your keyring identity.

@@ -14,7 +14,7 @@ Complete examples of design-init skill usage in different scenarios.
 1. Module: `rspress-plugin-api-extractor`
 2. Topic: `component-lifecycle`
 3. Category: `architecture` (inferred from "architecture" in request)
-4. Template: `.claude/skills/design-init/templates/architecture.template.md`
+4. Template: `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/architecture.template.md`
 5. Output: `.claude/design/rspress-plugin-api-extractor/component-lifecycle.md`
 
 **Frontmatter generated:**
@@ -53,7 +53,7 @@ dependencies: []
 1. Module: `effect-type-registry`
 2. Topic: `caching-optimization`
 3. Category: `performance` (inferred from "optimization")
-4. Template: `.claude/skills/design-init/templates/performance.template.md`
+4. Template: `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/performance.template.md`
 5. Output: `.claude/design/effect-type-registry/caching-optimization.md`
 
 **Inference logic:**
@@ -81,7 +81,7 @@ dependencies: []
    - integration
    - other
 5. User selects: `other`
-6. Template: `.claude/skills/design-init/templates/design-doc.template.md`
+6. Template: `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/design-doc.template.md`
 7. Output: `.claude/design/website/deployment-process.md`
 
 **Why ambiguous:**
@@ -221,7 +221,7 @@ dependencies: []
    - import-generation ✅
    - source-mapping ✅
 5. Category valid
-6. Template: `.claude/skills/design-init/templates/observability.template.md`
+6. Template: `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/observability.template.md`
 7. Output: `.claude/design/rspress-plugin-api-extractor/error-tracking.md`
 
 ## Example 9: Success Report

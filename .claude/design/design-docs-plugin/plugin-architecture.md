@@ -3,10 +3,10 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-07-09
-last-synced: 2026-07-09
+updated: 2026-07-10
+last-synced: 2026-07-10
 completeness: 95
-related: []
+related: [system-model-vs-observed.md]
 dependencies: []
 ---
 
@@ -31,7 +31,7 @@ Comprehensive architecture of the design-docs Claude Code plugin: a pure bash an
 
 ## Overview
 
-The design-docs plugin provides design documentation management, implementation plan tracking, CLAUDE.md context file maintenance, and user-facing documentation generation to Claude Code users. It ships as pure bash hooks and markdown skills/agents with no compiled binary, no TypeScript runtime, and no runtime dependencies. The plugin has 50 skills organized across 3 specialized agents, activated through two hooks: a SessionStart hook that injects context and manages session tags, and a PreToolUse hook for auto-approving design directory writes. Hooks are organized by event name in subdirectories (`hooks/<event-kebab>/`) with shared bash helpers in `hooks/lib/`. SubagentStart, Stop, and git-safety hooks were removed in 0.3.x; those responsibilities were delegated to the session workflow and the commit plugin.
+The design-docs plugin provides design documentation management, implementation plan tracking, CLAUDE.md context file maintenance, and user-facing documentation generation to Claude Code users. It ships as pure bash hooks and markdown skills/agents with no compiled binary, no TypeScript runtime, and no runtime dependencies. The plugin has 50 skills organized across 3 specialized agents, activated through two hooks: a SessionStart hook that injects context and manages session tags, and a PreToolUse hook for auto-approving design directory and CLAUDE.md writes. Hooks are organized by event name in subdirectories (`hooks/<event-kebab>/`) with shared bash helpers in `hooks/lib/`. SubagentStart, Stop, and git-safety hooks were removed in 0.3.x; those responsibilities were delegated to the session workflow and the commit plugin.
 
 The plugin follows a **sidecar distribution pattern**: it is developed inside a monorepo with full dev tooling (linting, testing, CI), but only the `plugin/` directory reaches end users via git-subdir sparse cloning from a marketplace repository. This separation ensures dev infrastructure never ships.
 
@@ -114,7 +114,7 @@ Injects philosophy-first design documentation context into every Claude Code ses
 
 **pre-tool-use/allow-design-writes.sh (PreToolUse, matcher: `Write|Edit|MultiEdit`, timeout 3s):**
 
-Auto-approves Write, Edit, and MultiEdit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Reads stdin JSON, extracts `tool_input.file_path`, and emits `permissionDecision: "allow"` via `emit_permission_allow` when the path matches. Fails open when `jq` is missing (logs an error via `hook_error` and exits 0, deferring to normal permissions).
+Auto-approves Write, Edit, and MultiEdit operations targeting `.claude/design/` and `.claude/plans/` directories, plus any `CLAUDE.md` file — a deliberate trust expansion so `design-groom` and the documentation agents can update context files without permission prompts. Prevents repeated permission prompts when agents update documentation. Reads stdin JSON, extracts `tool_input.file_path`, and emits `permissionDecision: "allow"` via `emit_permission_allow` when the path matches. Fails open when `jq` is missing (logs an error via `hook_error` and exits 0, deferring to normal permissions). This plugin-level registration in `hooks/hooks.json` is the sole source of the auto-approval: it applies in subagent contexts too, because Claude Code drops `hooks`, `mcpServers`, and `permissionMode` from plugin agent frontmatter at load time.
 
 **Removed hooks (0.3.x):**
 
@@ -125,7 +125,7 @@ Auto-approves Write, Edit, and MultiEdit operations targeting `.claude/design/` 
 50 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
-| :------- | :---- | :----- |
+| --- | --- | --- |
 | design-* | 18 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, groom, split, docs-style |
 | context-* | 6 | validate, audit, review, update, split, docs-style |
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
@@ -133,7 +133,7 @@ Auto-approves Write, Edit, and MultiEdit operations targeting `.claude/design/` 
 | user-docs-* | 10 | add-page, badges, build-badges, build-toc, create-docs, create-readme, detect-shape, humanize, review, style |
 | workflow | 4 | finalize (end-of-branch orchestration with squash), review (PR feedback cycles), merge-prep (final squash before merge), handoff (bidirectional session handoff) |
 
-Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool permissions. Skills that need isolation use `context: fork` in frontmatter. Skills are invoked as `/design-docs:{skill-name}`. All skill and agent cross-references in SKILL.md files and agent prompts are namespace-qualified — `design-docs:<name>` for the `Skill` tool, `/design-docs:<name>` for slash commands, `design-docs:<agent>` for `Agent` dispatch — so references resolve unambiguously when the plugin is installed alongside others.
+Skill frontmatter uses `allowed-tools` (not `tools`) for declaring tool permissions; Bash grants are scoped to command patterns (e.g. `Bash(bash *)`, `Bash(grep *)`) rather than bare `Bash`. Skills that need isolation use `context: fork` in frontmatter. Skills are invoked as `/design-docs:{skill-name}`. All skill and agent cross-references in SKILL.md files and agent prompts are namespace-qualified — `design-docs:<name>` for the `Skill` tool, `/design-docs:<name>` for slash commands, `design-docs:<agent>` for `Agent` dispatch — so references resolve unambiguously when the plugin is installed alongside others. Skill docs reference their own shipped assets (validation scripts, templates) via `${CLAUDE_PLUGIN_ROOT}/skills/...` paths, never repo-local `.claude/skills/` paths, so instructions resolve wherever the plugin is installed. Every shipped script is documented in its owning SKILL.md, and oversized SKILL.md files are split into a lean entry point plus supporting files (instructions.md, examples.md, error-messages.md and skill-specific references such as checks.md or config-reference.md) — context-validate, context-split and design-config follow this pattern.
 
 Three of the workflow skills form a branch lifecycle: `/finalize` orchestrates the end-of-branch documentation update and squash-then-PR sequence, `/review` addresses PR feedback in small fix commits (supports `--squash` to fold review commits into the previous commit), and `/merge-prep` does a final squash for merge. `/review` and `/merge-prep` are user-invocable only (`disable-model-invocation: true`); `/finalize` is model-invokable so trigger phrases like "finalize this branch" or "wrap up" route to it via its `when_to_use` frontmatter hint.
 
@@ -155,7 +155,7 @@ Three agents orchestrate multi-skill workflows:
 - `agents/context-doc-agent.md` -- CLAUDE.md context files
 - `agents/user-docs.md` -- User-facing documentation generation (replaced `docs-gen-agent.md` in 0.3.x; covers user-docs-*and docs-* skills)
 
-Agent frontmatter declares skills and tools, includes a `color` field for the agent badge in transcripts (red for design-doc-agent, pink for context-doc-agent, blue for user-docs), and includes a `hooks` block with a PreToolUse entry for `pre-tool-use/allow-design-writes.sh` to auto-approve Write/Edit/MultiEdit operations to design directories in subagent contexts. All three agents declare `SendMessage` in `tools` so they can answer teammate protocol messages (e.g. `shutdown_request`) when running as coordinated subagents. Each agent also lists the matching `*-docs-style` skill (`design-docs-style`, `context-docs-style`, `user-docs-style`) so the path-based style rule auto-loads when the agent opens its respective doc type. The agent markdown body describes purpose, available skills, common workflows, and best practices.
+Agent frontmatter declares skills and tools and includes a `color` field for the agent badge in transcripts (red for design-doc-agent, pink for context-doc-agent, blue for user-docs). Agent frontmatter does not declare hooks: Claude Code drops `hooks`, `mcpServers`, and `permissionMode` from plugin agent frontmatter at load time, so the design-dir write auto-approval agents rely on comes solely from the plugin-level PreToolUse registration in `hooks/hooks.json` (which applies in subagent contexts too). All three agents declare `SendMessage` in `tools` so they can answer teammate protocol messages (e.g. `shutdown_request`) when running as coordinated subagents. Each agent also lists the matching `*-docs-style` skill (`design-docs-style`, `context-docs-style`, `user-docs-style`) so the path-based style rule auto-loads when the agent opens its respective doc type. The agent markdown body describes purpose, available skills, common workflows, and best practices.
 
 Agents are dispatched in two ways: directly by the user (`@design-doc-agent please audit the design docs`) for ad-hoc multi-skill work, or as orchestrated subagents from the `/finalize` skill, which calls each agent in turn with a shared branch summary so the three documentation layers stay coherent without leaking each domain's intermediate state into the orchestrator context.
 
@@ -288,6 +288,12 @@ Agents are dispatched in two ways: directly by the user (`@design-doc-agent plea
 - **Impact:** Hook scripts cannot rely on being executable
 - **Mitigation:** All hooks are invoked via `bash ${CLAUDE_PLUGIN_ROOT}/hooks/<event-kebab>/<name>.sh` rather than direct execution
 
+#### Constraint: Bash 3.2 Portability
+
+- **Description:** macOS ships `/bin/bash` 3.2, so every shipped script must avoid bash-4-only constructs (`mapfile`, associative arrays, and similar)
+- **Impact:** `plan-explore/scripts/explore-plans.sh` and the design-audit workflow scripts were rewritten to comply — plan metadata is stored in per-plan indirect variables instead of associative arrays. `explore-plans.sh` also guards its `jq` usage, falling back to the default `.claude/plans` path when `jq` is absent.
+- **Mitigation:** A static test (`__test__/portability/bash32.test.ts`) rejects bash-4-only constructs across `plugin/**/*.sh`, so regressions fail CI
+
 #### Trade-off: jq Dependency for Hook JSON
 
 - **What we gained:** Reliable JSON parsing for PreToolUse stdin and jq-encoded response envelopes from `lib/hook-output.sh`
@@ -328,7 +334,7 @@ Agents are dispatched in two ways: directly by the user (`@design-doc-agent plea
 **Components:**
 
 - `hooks/session-start/context-inject.sh` -- SessionStart handler (outputs XML context via `emit_session_start`, manages session/start git tag on feature branches, persists `DESIGN_DOCS_*` env vars to `$CLAUDE_ENV_FILE`)
-- `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse handler (auto-approves design dir writes via `emit_permission_allow`)
+- `hooks/pre-tool-use/allow-design-writes.sh` -- PreToolUse handler (auto-approves design dir and CLAUDE.md writes via `emit_permission_allow`)
 - `hooks/lib/hook-output.sh` -- canonical JSON emitters shared by both hooks
 - `hooks/lib/hook-debug.sh` -- structured stderr logging shared by both hooks
 - `hooks/lib/source-session-env.sh` -- helper for non-producer hooks to load the SessionStart env file into their subprocess
@@ -356,7 +362,7 @@ Exit code 0 indicates success.
 50 skill directories organized in 6 categories:
 
 | Category | Count | Skills |
-| :------- | :---- | :----- |
+| --- | --- | --- |
 | design-* | 18 | init, validate, update, sync, review, audit, search, compare, link, index, report, export, archive, prune, config, groom, split, docs-style |
 | context-* | 6 | validate, audit, review, update, split, docs-style |
 | docs-* | 7 | generate-contributing, generate-security, generate-repo, generate-site, review-package, sync, update |
@@ -520,7 +526,7 @@ Each agent dispatch carries the running file-modification list forward but no ot
     designDocs: { requireFrontmatter, requireTOC, minSections };
     userDocs: { level1, level2, level3 };
     context: { rootMaxWords, childMaxWords, requireDesignDocPointers,
-               requirePointerHashes };
+               requirePointerHashes, hardWrap };
     plans: { maxLineLength, requireFrontmatter, requiredFields, validStatuses,
              progressRange, stalenessThresholdDays, archiveAfterDays };
   };
@@ -529,7 +535,11 @@ Each agent dispatch carries the running file-modification list forward but no ot
 }
 ```
 
-`design-validate` derives its recommended-section warnings from `quality.designDocs.minSections`: when a `design.config.json` exists, an omitted or empty `minSections` means no recommended sections are required; the built-in `Overview` / `Current State` / `Rationale` default applies only when no config file exists at all. Heading matches are case-insensitive, so sentence-case headings satisfy title-case entries. The script also warns on hard-wrapped prose — one WARNING per offending paragraph, capped at 5 per file — enforcing the one-source-line-per-paragraph style (markdownlint MD013 stays disabled intentionally).
+`design-validate` derives its recommended-section warnings from `quality.designDocs.minSections`: when a `design.config.json` exists, an omitted or empty `minSections` means no recommended sections are required; the built-in `Overview` / `Current State` / `Rationale` default applies only when no config file exists at all. Heading matches are case-insensitive, so sentence-case headings satisfy title-case entries. The script also warns on hard-wrapped prose — one WARNING per offending paragraph, capped at 5 per file — enforcing the one-source-line-per-paragraph style (markdownlint MD013 stays disabled intentionally). `plugin/skills/design-validate/scripts/validate.sh` is the single canonical validator (the earlier duplicate pair `validate-all-docs.sh` / `validate-design-doc.sh` was deleted); design-audit's three workflow scripts (`maintenance-workflow.sh`, `quality-workflow.sh`, `release-workflow.sh`) invoke it with the `all` argument rather than carrying their own copies. design-audit's four scripts and plan-explore's `explore-plans.sh` are documented in their own SKILL.md files.
+
+For context files the wrapping policy is configurable via `quality.context.hardWrap` (`"forbid"`, the default, or `"allow"`): `context-docs-style` consults it, and under `"allow"` it enforces per-file wrapping consistency instead of forbidding hard wraps outright — accommodating repos with an entrenched hard-wrap convention.
+
+`design-link` is likewise backed by a deterministic script, `plugin/skills/design-link/scripts/link.sh`. It discovers module docs recursively — docs in module subdirectories such as `packages/*.md` are graph nodes — while pruning `_archive` trees, and its heading slugger matches GitHub's anchor algorithm by turning each space into a hyphen individually, preserving consecutive hyphens (e.g. "API Extractor × Effect class factories" → `api-extractor--effect-class-factories`).
 
 **Design Doc Frontmatter:**
 
@@ -550,7 +560,7 @@ dependencies: string[]
 ```yaml
 name: string                    # kebab-case skill identifier
 description: string             # human-readable description
-allowed-tools: string           # comma-separated tool list (Read, Write, Glob, Agent, TaskCreate, ...)
+allowed-tools: string           # comma-separated tool list; Bash grants are command-scoped, e.g. Bash(bash *), Bash(grep *)
 context: fork                   # execution context mode (optional)
 agent: string                   # agent that orchestrates this skill (optional)
 disable-model-invocation: true  # prevent model from auto-invoking (optional)
@@ -567,9 +577,9 @@ description: string    # when to use this agent
 skills: string         # comma-separated skill list (includes the matching *-docs-style skill)
 tools: string          # comma-separated tool list (includes SendMessage for teammate protocol replies)
 color: string          # transcript badge color: red | pink | blue | ...
-hooks:                 # PreToolUse entry that auto-approves design dir writes in subagent contexts
-  PreToolUse: [...]
 ```
+
+Agent frontmatter deliberately declares no `hooks`, `mcpServers`, or `permissionMode` fields — Claude Code drops all three from plugin agent frontmatter at load time. Auto-approval of design-directory and CLAUDE.md writes in subagent contexts comes from the plugin-level PreToolUse registration in `hooks/hooks.json`.
 
 ### Data Flow Diagrams
 
@@ -591,7 +601,7 @@ hooks:                 # PreToolUse entry that auto-approves design dir writes i
   v
 [Claude Code Session Active]
   |
-  +-- Write/Edit/MultiEdit to .claude/design/ or .claude/plans/
+  +-- Write/Edit/MultiEdit to .claude/design/, .claude/plans/, or a CLAUDE.md
         |
         v
       [hooks/pre-tool-use/allow-design-writes.sh]
@@ -689,7 +699,7 @@ Between steps, `TaskUpdate` flips each task to `completed`. On failure the in-pr
 - **Configuration** is a single env var: `DESIGN_DOCS_CONTEXT_ENABLED`. There is no plugin.config.ts, no options schema, no three-layer state merge.
 - **Design doc state** lives in YAML frontmatter within each markdown file. Status transitions follow: `stub` (0-20%) -> `draft` (21-90%) -> `current` (61-100%) -> `archived`. The draft and current bands overlap deliberately: a pre-implementation design can be fully fleshed out (high completeness) while its code is not yet written and stays `draft` — `current` asserts the doc reflects implemented code, not that the design is finished.
 - **Plan state** lives in YAML frontmatter with explicit `status` and `progress` fields. Status-progress alignment is enforced: `ready`=0%, `completed`=100%.
-- **Configuration state** lives in `.claude/design/design.config.json`, validated against a JSON schema at `plugin/skills/design-config/json-schemas/current.json`. Context size limits are measured in words (`rootMaxWords` / `childMaxWords`), not lines.
+- **Configuration state** lives in `.claude/design/design.config.json`, validated against the canonical JSON schema `design-docs.schema.json` at the repo root. The schema sits deliberately outside `plugin/` — it does not ship with the plugin — and is published for public raw access at `https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json`. The plan frontmatter schema lives beside it at repo-root `plan-frontmatter.schema.json`, published at the analogous raw URL. Context size limits are measured in words (`rootMaxWords` / `childMaxWords`), not lines.
 - **Pointer baseline state** lives in `.claude/design/refs.json`, a committed manifest recording the body hash each CLAUDE.md `@` pointer was written against (see [Pointer Integrity](#pointer-integrity-content-drift-detection)).
 
 ---
@@ -702,7 +712,7 @@ CLAUDE.md files point at design docs with `@` pointers (e.g. `@./.claude/design/
 
 The subsystem has three parts. The hashing primitive `plugin/lib/ref-hash.sh` emits a deterministic body-only sha256 of a design doc — it strips a leading YAML frontmatter block before hashing, so routine `updated` / `last-synced` timestamp bumps do not move the hash and only real content edits do. The manifest `.claude/design/refs.json` (`{version, refs:[{source, target, hash, recordedAt}]}`) is committed and records, per pointer, the content hash the pointer was written against. The record side and the check side both shell out to `ref-hash.sh` so the two hashes are computed identically.
 
-- **Record side:** the `context-update` skill and the `context-doc-agent` write or refresh a `refs.json` entry when they confirm a pointer — capturing the target's current body hash as the baseline. The recorder (`plugin/lib/refs-record.sh`) is idempotent on unchanged content: it preserves an entry's existing `recordedAt` when the same (source, target, hash) already exists and only stamps today's date when the target's body hash actually changed, so it is safe to run repeatedly as a verification step.
+- **Record side:** the `context-update` skill and the `context-doc-agent` write or refresh a `refs.json` entry when they confirm a pointer — capturing the target's current body hash as the baseline. The recorder (`plugin/lib/refs-record.sh`) is idempotent on unchanged content: it preserves an entry's existing `recordedAt` when the same (source, target, hash) already exists and only stamps today's date when the target's body hash actually changed, so it is safe to run repeatedly as a verification step. It resolves the repo root via the standard `DESIGN_DOCS_PROJECT_DIR` → `CLAUDE_PROJECT_DIR` → git-toplevel → cwd chain (canonicalized with `pwd -P`) rather than bare `pwd`, so it works from any cwd inside the project.
 - **Check side:** `context-validate` and `context-audit` recompute each pointer's target hash and compare it to the recorded baseline. A mismatch is a WARNING ("pointer may be stale (content drift)"); a pointer with no recorded entry is INFO by default, escalated to WARNING when `quality.context.requirePointerHashes` is `true`.
 
 ```text
@@ -793,6 +803,8 @@ __test__/
 +-- hooks/
 |   +-- session-start.test.ts       # Tests plugin/hooks/session-start/context-inject.sh
 |   +-- allow-design-writes.test.ts # Tests plugin/hooks/pre-tool-use/allow-design-writes.sh
++-- portability/
+|   +-- bash32.test.ts              # Static scan: rejects bash-4-only constructs in plugin/**/*.sh
 ```
 
 Test file names track the hook concept (one test file per hook) rather than the on-disk path, but each `HOOK_PATH` constant points at the new event- subdirectory location under `plugin/hooks/<event-kebab>/`.
@@ -819,8 +831,13 @@ Tests live outside `plugin/` because `plugin/` ships to users. Tests must not be
 **pre-tool-use/allow-design-writes.sh tests** (`__test__/hooks/allow-design-writes.test.ts`):
 
 - Approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.claude/plans/`
+- Approves writes to `CLAUDE.md` files at any depth, while rejecting files whose names merely end in `CLAUDE.md`
 - Passes through operations targeting other paths
 - Disabled state: outputs nothing when `DESIGN_DOCS_CONTEXT_ENABLED=false`
+
+**Portability tests** (`__test__/portability/bash32.test.ts`):
+
+- Static scan of every `plugin/**/*.sh` file rejecting bash-4-only constructs (`mapfile`, `declare -A`, and similar), keeping all shipped scripts runnable under macOS `/bin/bash` 3.2
 
 ---
 
@@ -855,7 +872,9 @@ Tests live outside `plugin/` because `plugin/` ships to users. Tests must not be
 
 **Internal Design Docs:**
 
+- [system-model-vs-observed.md](./system-model-vs-observed.md) -- five-repo field study of how the system behaves in practice; brainstorm input for the next iteration
 - `.claude/design/design.config.json` -- System configuration
+- `design-docs.schema.json` / `plan-frontmatter.schema.json` -- repo-root JSON schemas for the config and plan frontmatter, published via `raw.githubusercontent.com` (kept outside `plugin/`, so they do not ship)
 
 **Context Files:**
 

@@ -64,7 +64,7 @@
 		},
 		{
 			"fileMatch": [".claude/design/design.config.json"],
-			"url": ".claude/skills/design-config/json-schemas/current.json"
+			"url": "./design-docs.schema.json"
 		}
 	],
 	"markdownlint.configFile": "./lib/configs/.markdownlint-cli2.jsonc",

@@ -4,12 +4,6 @@ description: Maintain CLAUDE.md context files. Use for reviewing, updating, vali
 skills: context-validate, context-audit, context-review, context-update, context-split, context-docs-style
 tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage
 color: pink
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/allow-design-writes.sh"
 ---
 
 # LLM Context Documentation Agent
@@ -127,7 +121,7 @@ This enables:
 
 ### Pointer Integrity (`refs.json`)
 
-A pointer's path resolving does not mean its "Load when" guidance still matches the target. After writing or confirming the `@` pointers in a context file, record their target hashes in one shot with `bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>` (run from the repo root) — it walks every pointer, hashes each target body via `ref-hash.sh` (frontmatter excluded, so timestamp bumps never count as drift), and upserts `.claude/design/refs.json`. `design-docs:context-validate` and `design-docs:context-audit` then compare the recorded hash against the current one to flag pointers whose target drifted after an in-place edit. See the `design-docs:context-update` skill for the record format. Keep `refs.json` committed.
+A pointer's path resolving does not mean its "Load when" guidance still matches the target. After writing or confirming the `@` pointers in a context file, record their target hashes in one shot with `bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>` (works from any directory inside the project; the repo root is resolved from `DESIGN_DOCS_PROJECT_DIR`/`CLAUDE_PROJECT_DIR`) — it walks every pointer, hashes each target body via `ref-hash.sh` (frontmatter excluded, so timestamp bumps never count as drift), and upserts `.claude/design/refs.json`. `design-docs:context-validate` and `design-docs:context-audit` then compare the recorded hash against the current one to flag pointers whose target drifted after an in-place edit. See the `design-docs:context-update` skill for the record format. Keep `refs.json` committed.
 
 ## Common Workflows
 

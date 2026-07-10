@@ -154,7 +154,13 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
 	exit 1
 fi
 
-PLANS_DIR_REL=$(jq -r '.paths.plans' "$CONFIG_FILE")
+# jq is optional: without it, fall back to the default plans path instead of
+# dying under set -e before the fallback below can apply.
+if command -v jq &>/dev/null; then
+	PLANS_DIR_REL=$(jq -r '.paths.plans' "$CONFIG_FILE" 2>/dev/null || echo "")
+else
+	PLANS_DIR_REL=""
+fi
 if [[ -z "$PLANS_DIR_REL" ]] || [[ "$PLANS_DIR_REL" == "null" ]]; then
 	PLANS_DIR_REL=".claude/plans"
 fi
@@ -173,9 +179,12 @@ if [[ ! -d "$PLANS_DIR" ]]; then
 	exit 0
 fi
 
-# Discover plan files (exclude _archive)
-mapfile -t PLAN_FILES < <(find "$PLANS_DIR" -maxdepth 1 -name "*.md" -type f \
-	| sort -r)
+# Discover plan files (exclude _archive). mapfile is bash >= 4 and macOS
+# ships /bin/bash 3.2, so build the array with a read loop instead.
+PLAN_FILES=()
+while IFS= read -r _plan; do
+	[[ -n "$_plan" ]] && PLAN_FILES+=("$_plan")
+done < <(find "$PLANS_DIR" -maxdepth 1 -name "*.md" -type f | sort -r)
 
 
 if [[ ${#PLAN_FILES[@]} -eq 0 ]]; then
@@ -187,14 +196,39 @@ fi
 
 # Declare and initialize arrays early to avoid unbound variable errors with set -u
 declare -a FILTERED_PLANS=()
-declare -A PLAN_METADATA=()
 declare -a STALE_PLANS=()
 declare -a ORPHAN_PLANS=()
 declare -a BLOCKED_PLANS=()
 declare -a OVERDUE_PLANS=()
 declare -a MISALIGNED_PLANS=()
 declare -a RECOMMENDATIONS=()
-declare -A status_counts=()
+
+# Per-status counters (fixed enum, so plain scalars — `declare -A` is bash >= 4
+# and macOS ships /bin/bash 3.2).
+count_ready=0
+count_in_progress=0
+count_blocked=0
+count_completed=0
+count_abandoned=0
+
+# ============================================================================
+# Metadata store (bash-3.2 portable)
+# ============================================================================
+# One shell variable per plan+field via indirect expansion instead of an
+# associative array. Plans are keyed by their file basename.
+
+meta_key() {
+	printf '%s' "$1" | tr -c 'a-zA-Z0-9' '_'
+}
+
+meta_set() { # plan-name field value
+	printf -v "META_$(meta_key "$1")_$2" '%s' "$3"
+}
+
+meta_get() { # plan-name field
+	local _var="META_$(meta_key "$1")_$2"
+	printf '%s' "${!_var:-}"
+}
 
 # ============================================================================
 # Helper Functions - Metadata Extraction
@@ -206,12 +240,13 @@ extract_frontmatter() {
 	sed -n '/^---$/,/^---$/p' "$file" | sed '1d;$d'
 }
 
-# Get a single field value from frontmatter
+# Get a single field value from frontmatter. The `|| true` keeps a missing
+# optional field (grep exits 1) from killing the script under pipefail.
 get_field() {
 	local frontmatter=$1
 	local field=$2
 	echo "$frontmatter" | grep "^$field:" | head -1 | \
-		cut -d':' -f2- | sed 's/^ *//' | tr -d '"'
+		cut -d':' -f2- | sed 's/^ *//' | tr -d '"' || true
 }
 
 # Get array field values from frontmatter
@@ -352,16 +387,18 @@ for plan_file in "${PLAN_FILES[@]}"; do
 	# Plan passed filters - add to results
 	FILTERED_PLANS+=("$plan_file")
 
-	# Store metadata for later use
-	PLAN_METADATA["$name:title"]="$title"
-	PLAN_METADATA["$name:status"]="$status"
-	PLAN_METADATA["$name:progress"]="$progress"
-	PLAN_METADATA["$name:modules"]="$modules"
-	PLAN_METADATA["$name:implements"]="$implements"
-	PLAN_METADATA["$name:owner"]="$owner"
-	PLAN_METADATA["$name:created"]="$created"
-	PLAN_METADATA["$name:updated"]="$updated"
-	PLAN_METADATA["$name:started"]="$started"
+	# Store metadata for later use, keyed by file basename (every readback
+	# below derives the key from the filename, not the frontmatter name).
+	plan_key=$(basename "$plan_file" .md)
+	meta_set "$plan_key" title "$title"
+	meta_set "$plan_key" status "$status"
+	meta_set "$plan_key" progress "$progress"
+	meta_set "$plan_key" modules "$modules"
+	meta_set "$plan_key" implements "$implements"
+	meta_set "$plan_key" owner "$owner"
+	meta_set "$plan_key" created "$created"
+	meta_set "$plan_key" updated "$updated"
+	meta_set "$plan_key" started "$started"
 done
 
 # ============================================================================
@@ -409,7 +446,8 @@ check_schedule() {
 
 	local target
 	target=$(get_field "$frontmatter" "target-completion")
-	local progress="${PLAN_METADATA[$name:progress]}"
+	local progress
+	progress="$(meta_get "$name" progress)"
 
 	if [[ -z "$target" ]]; then
 		return 1
@@ -457,15 +495,17 @@ check_progress_alignment() {
 }
 
 # Perform health analysis on filtered plans
-if [[ "$SHOW_HEALTH" == true ]]; then
+# Guard the loop on emptiness: under bash 3.2 with set -u, expanding an empty
+# array with "${arr[@]}" is an unbound-variable error.
+if [[ "$SHOW_HEALTH" == true ]] && [[ ${#FILTERED_PLANS[@]} -gt 0 ]]; then
 	for plan_file in "${FILTERED_PLANS[@]}"; do
 		name=$(basename "$plan_file" .md)
 		frontmatter=$(extract_frontmatter "$plan_file")
 
-		status="${PLAN_METADATA[$name:status]}"
-		progress="${PLAN_METADATA[$name:progress]}"
-		updated="${PLAN_METADATA[$name:updated]}"
-		implements="${PLAN_METADATA[$name:implements]}"
+		status="$(meta_get "$name" status)"
+		progress="$(meta_get "$name" progress)"
+		updated="$(meta_get "$name" updated)"
+		implements="$(meta_get "$name" implements)"
 
 		# Run health checks
 		check_staleness "$name" "$updated" || true
@@ -559,36 +599,42 @@ output_summary() {
 	# Status summary
 	for plan_file in "${FILTERED_PLANS[@]}"; do
 		name=$(basename "$plan_file" .md)
-		status="${PLAN_METADATA[$name:status]}"
-		((status_counts[$status]++)) || status_counts[$status]=1
+		status="$(meta_get "$name" status)"
+		case "$status" in
+			ready) count_ready=$((count_ready + 1)) ;;
+			in-progress) count_in_progress=$((count_in_progress + 1)) ;;
+			blocked) count_blocked=$((count_blocked + 1)) ;;
+			completed) count_completed=$((count_completed + 1)) ;;
+			abandoned) count_abandoned=$((count_abandoned + 1)) ;;
+		esac
 	done
 
 	echo "Status Summary:"
-	[[ -n "${status_counts[ready]:-}" ]] && \
-		echo "  Ready: ${status_counts[ready]} plan(s)"
-	[[ -n "${status_counts[in-progress]:-}" ]] && \
-		echo "  In Progress: ${status_counts[in-progress]} plan(s)"
-	[[ -n "${status_counts[blocked]:-}" ]] && \
-		echo "  Blocked: ${status_counts[blocked]} plan(s)"
-	[[ -n "${status_counts[completed]:-}" ]] && \
-		echo "  Completed: ${status_counts[completed]} plan(s)"
-	[[ -n "${status_counts[abandoned]:-}" ]] && \
-		echo "  Abandoned: ${status_counts[abandoned]} plan(s)"
+	[[ $count_ready -gt 0 ]] && \
+		echo "  Ready: $count_ready plan(s)"
+	[[ $count_in_progress -gt 0 ]] && \
+		echo "  In Progress: $count_in_progress plan(s)"
+	[[ $count_blocked -gt 0 ]] && \
+		echo "  Blocked: $count_blocked plan(s)"
+	[[ $count_completed -gt 0 ]] && \
+		echo "  Completed: $count_completed plan(s)"
+	[[ $count_abandoned -gt 0 ]] && \
+		echo "  Abandoned: $count_abandoned plan(s)"
 	echo ""
 
 	# Active plans section (in-progress only)
-	if [[ -n "${status_counts[in-progress]:-}" ]]; then
+	if [[ $count_in_progress -gt 0 ]]; then
 		echo "Active Plans (In Progress):"
 		for plan_file in "${FILTERED_PLANS[@]}"; do
 			name=$(basename "$plan_file" .md)
-			status="${PLAN_METADATA[$name:status]}"
+			status="$(meta_get "$name" status)"
 
 			if [[ "$status" == "in-progress" ]]; then
-				title="${PLAN_METADATA[$name:title]}"
-				progress="${PLAN_METADATA[$name:progress]}"
-				modules="${PLAN_METADATA[$name:modules]}"
-				implements="${PLAN_METADATA[$name:implements]}"
-				updated="${PLAN_METADATA[$name:updated]}"
+				title="$(meta_get "$name" title)"
+				progress="$(meta_get "$name" progress)"
+				modules="$(meta_get "$name" modules)"
+				implements="$(meta_get "$name" implements)"
+				updated="$(meta_get "$name" updated)"
 
 				# Calculate age
 				if [[ -n "$updated" ]]; then
@@ -677,31 +723,34 @@ output_timeline() {
 	echo "======================================"
 	echo ""
 
-	# Group plans by creation date
-	declare -A plans_by_date
+	# Group plans by creation date: emit "date<TAB>name" pairs, sort newest
+	# first, and print a date header whenever the date changes (associative
+	# arrays are bash >= 4; macOS ships /bin/bash 3.2).
+	local pairs="" name created last_date="" date emoji
 	for plan_file in "${FILTERED_PLANS[@]}"; do
 		name=$(basename "$plan_file" .md)
-		created="${PLAN_METADATA[$name:created]}"
-		if [[ -z "${plans_by_date[$created]:-}" ]]; then
-			plans_by_date[$created]="$name"
-		else
-			plans_by_date[$created]="${plans_by_date[$created]},$name"
-		fi
+		created="$(meta_get "$name" created)"
+		pairs+="${created:-unknown}	${name}"$'\n'
 	done
 
 	# Output in chronological order (newest first)
-	for date in $(printf '%s\n' "${!plans_by_date[@]}" | sort -r); do
-		echo "[$date]"
-		IFS=',' read -ra names <<< "${plans_by_date[$date]}"
-		for name in "${names[@]}"; do
-			emoji=$(get_status_emoji "${PLAN_METADATA[$name:status]}")
-			echo -e "  ${emoji} ${PLAN_METADATA[$name:title]}"
-			echo "     Status: ${PLAN_METADATA[$name:status]} (${PLAN_METADATA[$name:progress]}%)"
-			[[ -n "${PLAN_METADATA[$name:modules]}" ]] && \
-				echo "     Module: ${PLAN_METADATA[$name:modules]}"
-		done
-		echo ""
-	done
+	while IFS=$'\t' read -r date name; do
+		[[ -n "$name" ]] || continue
+		if [[ "$date" != "$last_date" ]]; then
+			if [[ -n "$last_date" ]]; then
+				echo ""
+			fi
+			echo "[$date]"
+			last_date="$date"
+		fi
+		emoji=$(get_status_emoji "$(meta_get "$name" status)")
+		echo -e "  ${emoji} $(meta_get "$name" title)"
+		echo "     Status: $(meta_get "$name" status) ($(meta_get "$name" progress)%)"
+		if [[ -n "$(meta_get "$name" modules)" ]]; then
+			echo "     Module: $(meta_get "$name" modules)"
+		fi
+	done < <(printf '%s' "$pairs" | sort -r)
+	echo ""
 }
 
 # JSON output format (machine-readable)
@@ -718,19 +767,23 @@ output_json() {
 
 		echo "    {"
 		echo "      \"name\": \"$name\","
-		echo "      \"title\": \"${PLAN_METADATA[$name:title]}\","
-		echo "      \"status\": \"${PLAN_METADATA[$name:status]}\","
-		echo "      \"progress\": ${PLAN_METADATA[$name:progress]},"
-		echo "      \"created\": \"${PLAN_METADATA[$name:created]}\","
-		echo "      \"updated\": \"${PLAN_METADATA[$name:updated]}\","
+		echo "      \"title\": \"$(meta_get "$name" title)\","
+		echo "      \"status\": \"$(meta_get "$name" status)\","
+		echo "      \"progress\": $(meta_get "$name" progress),"
+		echo "      \"created\": \"$(meta_get "$name" created)\","
+		echo "      \"updated\": \"$(meta_get "$name" updated)\","
 
-		if [[ -n "${PLAN_METADATA[$name:started]}" ]] && [[ "${PLAN_METADATA[$name:started]}" != "null" ]]; then
-			echo "      \"started\": \"${PLAN_METADATA[$name:started]}\","
+		local started_val
+		started_val="$(meta_get "$name" started)"
+		if [[ -n "$started_val" ]] && [[ "$started_val" != "null" ]]; then
+			echo "      \"started\": \"$started_val\","
 		else
 			echo "      \"started\": null,"
 		fi
 
-		if [[ -n "${PLAN_METADATA[$name:modules]}" ]]; then
+		local modules_val
+		modules_val="$(meta_get "$name" modules)"
+		if [[ -n "$modules_val" ]]; then
 			# Convert newline-separated modules to JSON array
 			echo "      \"modules\": ["
 			local module_first=true
@@ -738,14 +791,16 @@ output_json() {
 				[[ "$module_first" == false ]] && echo ","
 				module_first=false
 				echo -n "        \"$module\""
-			done <<< "${PLAN_METADATA[$name:modules]}"
+			done <<< "$modules_val"
 			echo ""
 			echo "      ],"
 		else
 			echo "      \"modules\": [],"
 		fi
 
-		if [[ -n "${PLAN_METADATA[$name:implements]}" ]]; then
+		local implements_val
+		implements_val="$(meta_get "$name" implements)"
+		if [[ -n "$implements_val" ]]; then
 			# Convert newline-separated implements to JSON array
 			echo "      \"implements\": ["
 			local impl_first=true
@@ -753,7 +808,7 @@ output_json() {
 				[[ "$impl_first" == false ]] && echo ","
 				impl_first=false
 				echo -n "        \"$impl\""
-			done <<< "${PLAN_METADATA[$name:implements]}"
+			done <<< "$implements_val"
 			echo ""
 			echo "      ]"
 		else
@@ -784,28 +839,33 @@ output_detailed() {
 	echo "========================================"
 	echo ""
 
+	local started_val modules_val implements_val owner_val
 	for plan_file in "${FILTERED_PLANS[@]}"; do
 		name=$(basename "$plan_file" .md)
-		emoji=$(get_status_emoji "${PLAN_METADATA[$name:status]}")
+		emoji=$(get_status_emoji "$(meta_get "$name" status)")
 
-		echo -e "${emoji} ${PLAN_METADATA[$name:title]}"
+		echo -e "${emoji} $(meta_get "$name" title)"
 		echo "---"
 		echo "  Name: $name"
-		echo "  Status: ${PLAN_METADATA[$name:status]} (${PLAN_METADATA[$name:progress]}%)"
-		echo "  Created: ${PLAN_METADATA[$name:created]}"
-		echo "  Updated: ${PLAN_METADATA[$name:updated]}"
+		echo "  Status: $(meta_get "$name" status) ($(meta_get "$name" progress)%)"
+		echo "  Created: $(meta_get "$name" created)"
+		echo "  Updated: $(meta_get "$name" updated)"
 
-		[[ -n "${PLAN_METADATA[$name:started]}" ]] && [[ "${PLAN_METADATA[$name:started]}" != "null" ]] && \
-			echo "  Started: ${PLAN_METADATA[$name:started]}"
+		started_val="$(meta_get "$name" started)"
+		[[ -n "$started_val" ]] && [[ "$started_val" != "null" ]] && \
+			echo "  Started: $started_val"
 
-		[[ -n "${PLAN_METADATA[$name:modules]}" ]] && \
-			echo "  Modules: ${PLAN_METADATA[$name:modules]}"
+		modules_val="$(meta_get "$name" modules)"
+		[[ -n "$modules_val" ]] && \
+			echo "  Modules: $modules_val"
 
-		[[ -n "${PLAN_METADATA[$name:implements]}" ]] && \
-			echo "  Implements: ${PLAN_METADATA[$name:implements]}"
+		implements_val="$(meta_get "$name" implements)"
+		[[ -n "$implements_val" ]] && \
+			echo "  Implements: $implements_val"
 
-		[[ -n "${PLAN_METADATA[$name:owner]}" ]] && [[ "${PLAN_METADATA[$name:owner]}" != "null" ]] && \
-			echo "  Owner: ${PLAN_METADATA[$name:owner]}"
+		owner_val="$(meta_get "$name" owner)"
+		[[ -n "$owner_val" ]] && [[ "$owner_val" != "null" ]] && \
+			echo "  Owner: $owner_val"
 
 		echo ""
 	done

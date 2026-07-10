@@ -20,7 +20,7 @@ if [ -z "$PLUGIN_ROOT" ]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 fi
-VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate-all-docs.sh"
+VALIDATE_SCRIPT="$PLUGIN_ROOT/skills/design-validate/scripts/validate.sh"
 
 echo "==================================="
 echo "Design Documentation Maintenance"
@@ -29,7 +29,7 @@ echo ""
 
 # Run validation on all docs
 echo "Running validation..."
-if "$VALIDATE_SCRIPT"; then
+if bash "$VALIDATE_SCRIPT" all; then
   echo "✅ All design docs are valid"
 else
   echo "❌ Some design docs have validation errors"
@@ -47,12 +47,19 @@ STALE_COUNT=0
 TODAY=$(date +%s)
 THIRTY_DAYS_AGO=$((TODAY - 30*24*60*60))
 
-# Find all markdown files
-mapfile -t DESIGN_FILES < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
+# Find all markdown files (mapfile is bash >= 4; macOS ships /bin/bash 3.2,
+# so build the array with a read loop instead)
+DESIGN_FILES=()
+while IFS= read -r _doc; do
+  [ -n "$_doc" ] && DESIGN_FILES+=("$_doc")
+done < <(find "$DESIGN_DIR" -type f -name "*.md" ! -name "design.config.json" | sort)
 
-for file in "${DESIGN_FILES[@]}"; do
-  # Extract last-synced date from frontmatter
-  LAST_SYNCED=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^last-synced:" | awk '{print $2}')
+# Guard the loop on emptiness: under bash 3.2 with set -u, expanding an
+# empty array with "${arr[@]}" is an unbound-variable error.
+[ ${#DESIGN_FILES[@]} -gt 0 ] && for file in "${DESIGN_FILES[@]}"; do
+  # Extract last-synced date from frontmatter (grep may legitimately not
+  # match; || true keeps pipefail from killing the script)
+  LAST_SYNCED=$(awk 'BEGIN{found=0} /^---$/{found++; next} found==1{print} found==2{exit}' "$file" | grep "^last-synced:" | awk '{print $2}' || true)
 
   if [[ -n "$LAST_SYNCED" ]]; then
     # Convert date to timestamp (BSD/macOS compatible)

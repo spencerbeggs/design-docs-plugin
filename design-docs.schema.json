@@ -270,6 +270,17 @@
 							"type": "boolean",
 							"description": "Whether design doc references are required",
 							"default": true
+						},
+						"requirePointerHashes": {
+							"type": "boolean",
+							"description": "When true, context-validate/context-audit treat a design-doc pointer with no recorded content hash in refs.json as a WARNING rather than INFO",
+							"default": false
+						},
+						"hardWrap": {
+							"type": "string",
+							"description": "Hard line breaks inside paragraphs and list items of context files: 'forbid' keeps each paragraph on a single source line; 'allow' accepts a repo's entrenched hard-wrap convention and enforces per-file consistency instead",
+							"enum": ["forbid", "allow"],
+							"default": "forbid"
 						}
 					}
 				},
