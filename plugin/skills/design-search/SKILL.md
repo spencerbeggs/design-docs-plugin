@@ -23,19 +23,19 @@ the entire design documentation system.
 **Simple search:**
 
 ```bash
-/design-search "observability"
+/design-docs:design-search "observability"
 ```
 
 **Filtered search:**
 
 ```bash
-/design-search "data flow" --category=architecture
+/design-docs:design-search "data flow" --category=architecture
 ```
 
 **Section-specific:**
 
 ```bash
-/design-search "performance" --section=Rationale
+/design-docs:design-search "performance" --section=Rationale
 ```
 
 ## Parameters
@@ -156,10 +156,10 @@ Valid values: {valid-list}
 
 Works well with:
 
-- `/design-review` - Review docs found in search
-- `/design-validate` - Validate docs found
-- `/design-link` - See relationships between search results
-- `/design-update` - Update docs found in search
+- `/design-docs:design-review` - Review docs found in search
+- `/design-docs:design-validate` - Validate docs found
+- `/design-docs:design-link` - See relationships between search results
+- `/design-docs:design-update` - Update docs found in search
 
 ## Success Criteria
 

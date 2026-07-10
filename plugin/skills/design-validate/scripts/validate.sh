@@ -9,6 +9,15 @@ set -euo pipefail
 # missing or jq is not installed, modules are discovered by listing direct
 # subdirectories of .claude/design/ and category validation is skipped.
 #
+# Recommended-section warnings ("Missing recommended section '<name>'") are
+# driven by quality.designDocs.minSections in design.config.json when that
+# file exists -- an omitted or empty minSections is treated as "this project
+# doesn't require recommended sections," not as a cue to use the built-in
+# default list. The built-in default (Overview / Current State / Rationale)
+# only applies when there is no design.config.json at all. Heading matches
+# are case-insensitive, so sentence-case headings (the project's own style
+# convention) are honored the same as title-case ones.
+#
 # Usage:
 #   ./validate.sh [module|all]
 #
@@ -35,6 +44,77 @@ echo ""
 echo "**Date:** $(date +%Y-%m-%d)"
 echo "**Modules:** ${1:-all}"
 echo ""
+
+# Scans a design doc's markdown body (everything after the frontmatter) for
+# prose paragraphs hard-wrapped across multiple source lines. The project's
+# style mandates one source line per paragraph -- the renderer soft-wraps,
+# and MD013 (line length) is disabled intentionally -- so a paragraph split
+# across consecutive source lines is a style violation, not a formatting nicety.
+#
+# Heuristic: walk the body tracking whether we're inside a fenced code block
+# (```/~~~ toggle) or on a table row (line starts with |, after trimming
+# leading whitespace). Neither ever warns. Otherwise, when two consecutive
+# non-blank lines appear with no blank line between them, the second line
+# warns UNLESS it itself starts a new block (heading `#`, list marker
+# `-`/`*`/`+`/`N.`, blockquote `>`, or table `|`) -- that covers list items
+# and headings that legitimately follow one another without a blank line.
+# Emits at most one warning per offending paragraph (suppressed until the
+# next blank line or block-start line) and caps total warnings per file at
+# HARD_WRAP_MAX_WARNINGS to avoid flooding the report. Sets the global
+# HARD_WRAP_COUNT to the number of warnings emitted so the caller can fold
+# it into WARNINGS / file_warnings.
+HARD_WRAP_MAX_WARNINGS=5
+
+check_hard_wrapped_prose() {
+	local file="$1"
+	local body_start="$2"
+	local in_code=0
+	local prev_nonblank=0
+	local warned_this_paragraph=0
+	local lineno=$((body_start - 1))
+	local line trimmed is_block_start
+
+	HARD_WRAP_COUNT=0
+
+	while IFS= read -r line; do
+		lineno=$((lineno + 1))
+
+		trimmed="${line#"${line%%[![:space:]]*}"}"
+
+		if [[ "$trimmed" =~ ^(\`\`\`|~~~) ]]; then
+			in_code=$((1 - in_code))
+			prev_nonblank=0
+			warned_this_paragraph=0
+			continue
+		fi
+		[ "$in_code" -eq 1 ] && continue
+
+		if [ -z "${line//[[:space:]]/}" ]; then
+			prev_nonblank=0
+			warned_this_paragraph=0
+			continue
+		fi
+
+		is_block_start=0
+		if [[ "$trimmed" =~ ^# ]] ||
+			[[ "$trimmed" =~ ^[-*+][[:space:]] ]] ||
+			[[ "$trimmed" =~ ^[0-9]+\.[[:space:]] ]] ||
+			[[ "$trimmed" =~ ^\> ]] ||
+			[[ "$trimmed" =~ ^\| ]]; then
+			is_block_start=1
+		fi
+
+		if [ "$prev_nonblank" -ne 0 ] && [ "$is_block_start" -eq 0 ] && [ "$warned_this_paragraph" -eq 0 ] &&
+			[ "$HARD_WRAP_COUNT" -lt "$HARD_WRAP_MAX_WARNINGS" ]; then
+			echo "  - ⚠️  WARNING: Hard-wrapped prose detected (line ${lineno}): paragraphs must occupy a single source line"
+			HARD_WRAP_COUNT=$((HARD_WRAP_COUNT + 1))
+			warned_this_paragraph=1
+		fi
+
+		[ "$is_block_start" -eq 1 ] && warned_this_paragraph=0
+		prev_nonblank=$lineno
+	done < <(tail -n +"$body_start" "$file")
+}
 
 # Function to validate a single file
 validate_file() {
@@ -158,8 +238,12 @@ validate_file() {
 				fi
 				;;
 			"draft")
-				if [ "$completeness" -le 20 ] || [ "$completeness" -gt 60 ]; then
-					echo "  - ⚠️  WARNING: Status 'draft' but completeness ${completeness} outside 21-60 range"
+				# A pre-implementation design doc can legitimately be draft with
+				# high completeness (design fully fleshed out, code not yet
+				# written), so the upper bound is 90, not 60 -- otherwise a
+				# fully-designed draft gets a false "promote to current" nudge.
+				if [ "$completeness" -le 20 ] || [ "$completeness" -gt 90 ]; then
+					echo "  - ⚠️  WARNING: Status 'draft' but completeness ${completeness} outside 21-90 range"
 					WARNINGS=$((WARNINGS + 1))
 					file_warnings=$((file_warnings + 1))
 				fi
@@ -179,12 +263,21 @@ validate_file() {
 	# the project's configured standard instead of a hardcoded default.
 	if [ ${#MIN_SECTIONS[@]} -gt 0 ]; then
 		for section in "${MIN_SECTIONS[@]}"; do
-			if ! grep -q "^## ${section}" "$file"; then
+			if ! grep -qi "^## ${section}" "$file"; then
 				echo "  - ⚠️  WARNING: Missing recommended section '${section}'"
 				WARNINGS=$((WARNINGS + 1))
 				file_warnings=$((file_warnings + 1))
 			fi
 		done
+	fi
+
+	# Check the markdown body (after frontmatter) for hard-wrapped prose. The
+	# project's style mandates one source line per paragraph; MD013 is
+	# disabled intentionally because the renderer soft-wraps.
+	check_hard_wrapped_prose "$file" "$((fm_end + 1))"
+	if [ "$HARD_WRAP_COUNT" -gt 0 ]; then
+		WARNINGS=$((WARNINGS + HARD_WRAP_COUNT))
+		file_warnings=$((file_warnings + HARD_WRAP_COUNT))
 	fi
 
 	if [ $file_errors -eq 0 ] && [ $file_warnings -eq 0 ]; then
@@ -199,18 +292,24 @@ validate_file() {
 CONFIG_FILE="$PROJECT_DIR/.claude/design/design.config.json"
 DESIGN_ROOT="$PROJECT_DIR/.claude/design"
 
-# Recommended sections come from quality.designDocs.minSections when the config
-# declares them; otherwise fall back to the historical default. Reading the
-# config here keeps validate_file's section warnings aligned with the project's
-# configured standard rather than fighting it.
+# Recommended sections come from quality.designDocs.minSections when a
+# design.config.json is present -- including the case where the config
+# exists but the project simply hasn't declared minSections (or declares an
+# empty array), which is treated as an explicit "no recommended sections
+# required" signal rather than a cue to fall back to a hardcoded list. The
+# historical default list only applies when there is no design.config.json
+# at all, so a project without one still gets sensible out-of-the-box
+# warnings. Heading matches in validate_file are case-insensitive so this
+# list can be written in either title case or the project's sentence-case
+# heading convention.
 MIN_SECTIONS=()
-if [ -f "$CONFIG_FILE" ] && command -v jq &>/dev/null &&
+if [ ! -f "$CONFIG_FILE" ]; then
+	MIN_SECTIONS=("Overview" "Current State" "Rationale")
+elif command -v jq &>/dev/null &&
 	jq -e '.quality.designDocs.minSections | type == "array"' "$CONFIG_FILE" >/dev/null 2>&1; then
 	while IFS= read -r section; do
 		[ -n "$section" ] && MIN_SECTIONS+=("$section")
 	done < <(jq -r '.quality.designDocs.minSections[]' "$CONFIG_FILE" 2>/dev/null)
-else
-	MIN_SECTIONS=("Overview" "Current State" "Rationale")
 fi
 
 discover_modules_from_config() {

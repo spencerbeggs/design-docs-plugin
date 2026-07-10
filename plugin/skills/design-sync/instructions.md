@@ -11,11 +11,11 @@ Extract module and document from user request.
 
 **Parameter parsing examples:**
 
-- `/design-sync effect-type-registry` → module: `effect-type-registry`,
+- `/design-docs:design-sync effect-type-registry` → module: `effect-type-registry`,
   doc: `all`
-- `/design-sync module observability.md` → module: `module`, doc:
+- `/design-docs:design-sync module observability.md` → module: `module`, doc:
   `observability.md`
-- `/design-sync module --auto-update` → enable automatic safe updates
+- `/design-docs:design-sync module --auto-update` → enable automatic safe updates
 
 ### 2. Load Configuration
 

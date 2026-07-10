@@ -27,19 +27,19 @@ This skill validates design documentation by:
 **Basic validation:**
 
 ```bash
-/design-validate effect-type-registry
+/design-docs:design-validate effect-type-registry
 ```
 
 **Validate specific file:**
 
 ```bash
-/design-validate effect-type-registry cache-optimization.md
+/design-docs:design-validate effect-type-registry cache-optimization.md
 ```
 
 **Strict mode (additional quality checks):**
 
 ```bash
-/design-validate all --strict
+/design-docs:design-validate all --strict
 ```
 
 ## How It Works
@@ -199,11 +199,11 @@ Design docs can reference implementation plans via the
 
 This skill integrates with:
 
-- `/design-init` - Validate newly created docs
-- `/design-update` - Validate after updates
-- `/design-sync` - Validate after syncing with code
-- `/plan-create` - Validate plan-design links when creating plans
-- `/plan-validate` - Complementary validation for plans
+- `/design-docs:design-init` - Validate newly created docs
+- `/design-docs:design-update` - Validate after updates
+- `/design-docs:design-sync` - Validate after syncing with code
+- `/design-docs:plan-create` - Validate plan-design links when creating plans
+- `/design-docs:plan-validate` - Complementary validation for plans
 - CI/CD pipelines - Pre-commit or PR validation
 
 ### Standalone Script

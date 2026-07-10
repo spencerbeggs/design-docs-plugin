@@ -231,7 +231,7 @@ Complete usage examples for design-report skill in different scenarios.
    - effect-type-registry/cache-optimization.md
    - effect-type-registry/type-system.md
    - design-doc-system/implementation-status.md
-   - **Fix:** Run /design-sync to verify accuracy
+   - **Fix:** Run /design-docs:design-sync to verify accuracy
 
 2. **Low Completeness for Current Status (1 doc)**
    - design-doc-system/user-documentation.md (current, 65%)
@@ -914,9 +914,9 @@ This is normal for new modules.
 
 **Next steps:**
 
-1. Run /design-init new-module {topic} to create your first design doc
+1. Run /design-docs:design-init new-module {topic} to create your first design doc
 2. Document key architectural decisions
-3. Run /design-report to track progress
+3. Run /design-docs:design-report to track progress
 
 **Suggested first docs:**
 
@@ -960,9 +960,9 @@ This is normal for new modules.
 
 **Fix:**
 
-1. Run /design-validate effect-type-registry
+1. Run /design-docs:design-validate effect-type-registry
 2. Add missing frontmatter fields
-3. Re-run /design-report
+3. Re-run /design-docs:design-report
 
 ---
 

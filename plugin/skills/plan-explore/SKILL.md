@@ -35,31 +35,31 @@ The plan-explore skill enables agents to:
 **Show all active plans:**
 
 ```bash
-/plan-explore --status=in-progress
+/design-docs:plan-explore --status=in-progress
 ```
 
 **Show plans for specific module:**
 
 ```bash
-/plan-explore effect-type-registry
+/design-docs:plan-explore effect-type-registry
 ```
 
 **Find orphaned plans:**
 
 ```bash
-/plan-explore --orphans
+/design-docs:plan-explore --orphans
 ```
 
 **Show stale plans:**
 
 ```bash
-/plan-explore --stale --age-threshold=60
+/design-docs:plan-explore --stale --age-threshold=60
 ```
 
 **Timeline view:**
 
 ```bash
-/plan-explore --format=timeline
+/design-docs:plan-explore --format=timeline
 ```
 
 ## Parameters
@@ -201,10 +201,10 @@ See [examples.md](examples.md) for:
 
 Works well with:
 
-- `/plan-list` - Quick list of plans (lighter weight)
-- `/plan-validate` - Validate plan structure
-- `/design-review` - Review design docs with plan context
-- `/design-sync` - Sync design docs and check plan progress
+- `/design-docs:plan-list` - Quick list of plans (lighter weight)
+- `/design-docs:plan-validate` - Validate plan structure
+- `/design-docs:design-review` - Review design docs with plan context
+- `/design-docs:design-sync` - Sync design docs and check plan progress
 
 ## Success Criteria
 

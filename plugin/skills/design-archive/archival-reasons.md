@@ -30,7 +30,7 @@ Document replaced by newer, better documentation covering the same topic.
 
 **Not appropriate:**
 
-- Doc just needs minor updates (use /design-update instead)
+- Doc just needs minor updates (use /design-docs:design-update instead)
 - Only formatting changes needed
 - Content is still accurate but incomplete
 
@@ -137,7 +137,7 @@ Feature or system documented is deprecated and will be removed.
 
 **Not appropriate:**
 
-- Feature just being updated (use /design-update)
+- Feature just being updated (use /design-docs:design-update)
 - Temporary issues with feature
 - Feature paused but may return
 

@@ -11,9 +11,9 @@ Extract module, format, and export options from user request.
 
 **Parameter parsing examples:**
 
-- `/design-export --format=pdf` → all modules, PDF format
-- `/design-export effect-type-registry --format=html` → single module, HTML
-- `/design-export module --format=markdown --standalone` → standalone file
+- `/design-docs:design-export --format=pdf` → all modules, PDF format
+- `/design-docs:design-export effect-type-registry --format=html` → single module, HTML
+- `/design-docs:design-export module --format=markdown --standalone` → standalone file
 
 ### 2. Load Configuration
 
@@ -303,7 +303,7 @@ Generate export summary:
 Export to multiple formats at once:
 
 ```bash
-/design-export --format=pdf,html,markdown
+/design-docs:design-export --format=pdf,html,markdown
 ```
 
 ### Selective Export
@@ -311,8 +311,8 @@ Export to multiple formats at once:
 Export specific categories or statuses:
 
 ```bash
-/design-export --category=architecture
-/design-export --status=current
+/design-docs:design-export --category=architecture
+/design-docs:design-export --status=current
 ```
 
 ### Incremental Export
@@ -320,7 +320,7 @@ Export specific categories or statuses:
 Export only changed documents since last export:
 
 ```bash
-/design-export --since=2026-01-01
+/design-docs:design-export --since=2026-01-01
 ```
 
 ### Template Customization
@@ -328,5 +328,5 @@ Export only changed documents since last export:
 Use custom export templates:
 
 ```bash
-/design-export --template=custom.latex
+/design-docs:design-export --template=custom.latex
 ```

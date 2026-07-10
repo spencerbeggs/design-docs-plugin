@@ -4,7 +4,7 @@ disable-model-invocation: true
 argument-hint: "[path]"
 ---
 
-# /user-docs-review
+# /design-docs:user-docs-review
 
 Review user-facing docs at `$ARGUMENTS` (defaults to `README.md` and `docs/` in the current directory).
 

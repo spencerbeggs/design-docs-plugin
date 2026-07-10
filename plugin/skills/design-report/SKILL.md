@@ -23,25 +23,25 @@ sync lag), and provides prioritized recommendations for improvement.
 **Full report:**
 
 ```bash
-/design-report
+/design-docs:design-report
 ```
 
 **Module-specific:**
 
 ```bash
-/design-report effect-type-registry
+/design-docs:design-report effect-type-registry
 ```
 
 **JSON output:**
 
 ```bash
-/design-report --format=json
+/design-docs:design-report --format=json
 ```
 
 **Focus on health:**
 
 ```bash
-/design-report --focus=health
+/design-docs:design-report --focus=health
 ```
 
 ## Parameters
@@ -136,7 +136,7 @@ See [examples.md](examples.md) for:
 ```text
 INFO: No design documents found in {module}
 
-This is normal for new modules. Run /design-init to create your first
+This is normal for new modules. Run /design-docs:design-init to create your first
 design doc.
 ```
 
@@ -147,18 +147,18 @@ WARNING: Invalid frontmatter in {file}
 Issue: {error-description}
 
 Impact: Document excluded from report
-Fix: Run /design-validate {module} to identify and fix issues
+Fix: Run /design-docs:design-validate {module} to identify and fix issues
 ```
 
 ## Integration
 
 Works well with:
 
-- `/design-review` - Review docs flagged in report
-- `/design-validate` - Fix frontmatter issues
-- `/design-update` - Improve metrics by updating docs
-- `/design-sync` - Sync never-synced or stale docs
-- `/design-link` - Resolve orphaned documents
+- `/design-docs:design-review` - Review docs flagged in report
+- `/design-docs:design-validate` - Fix frontmatter issues
+- `/design-docs:design-update` - Improve metrics by updating docs
+- `/design-docs:design-sync` - Sync never-synced or stale docs
+- `/design-docs:design-link` - Resolve orphaned documents
 
 ## Success Criteria
 

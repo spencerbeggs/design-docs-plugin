@@ -1,12 +1,17 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
 	"changelog": [
-		"@savvy-web/silk/changesets/changelog",
+		"@savvy-web/changelog",
 		{
 			"repo": "spencerbeggs/design-docs-plugin",
 			"packages": {
 				"design-docs": {
-					"versionFiles": [{ "glob": "plugin/.claude-plugin/plugin.json", "paths": ["$.version"] }]
+					"versionFiles": [
+						{
+							"glob": "plugin/.claude-plugin/plugin.json",
+							"paths": ["$.version"]
+						}
+					]
 				}
 			}
 		}

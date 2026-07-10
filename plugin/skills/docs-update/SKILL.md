@@ -27,19 +27,19 @@ Run this skill when:
 **Full documentation update:**
 
 ```bash
-/docs-update
+/design-docs:docs-update
 ```
 
 **Update specific module only:**
 
 ```bash
-/docs-update my-package
+/design-docs:docs-update my-package
 ```
 
 **Review only (no changes):**
 
 ```bash
-/docs-update --review-only
+/design-docs:docs-update --review-only
 ```
 
 ## Systematic Workflow
@@ -53,7 +53,7 @@ This skill follows a specific order to ensure consistency:
 Run package.json review first - it's the source of truth for metadata.
 
 ```bash
-# Internally runs: /docs-review-package
+# Internally runs: /design-docs:docs-review-package
 ```
 
 Check:
@@ -90,7 +90,7 @@ Ensure:
 Generate or update contribution guide.
 
 ```bash
-# Internally runs: /docs-generate-contributing
+# Internally runs: /design-docs:docs-generate-contributing
 ```
 
 Ensure:
@@ -105,7 +105,7 @@ Ensure:
 Generate or update security policy.
 
 ```bash
-# Internally runs: /docs-generate-security
+# Internally runs: /design-docs:docs-generate-security
 ```
 
 Ensure:
@@ -121,7 +121,7 @@ Ensure:
 If design docs exist, generate repository documentation.
 
 ```bash
-# Internally runs: /docs-generate-repo (if applicable)
+# Internally runs: /design-docs:docs-generate-repo (if applicable)
 ```
 
 Ensure:

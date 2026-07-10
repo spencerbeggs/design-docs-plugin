@@ -203,7 +203,7 @@ Provide a summary of what was created:
 3. Document current state
 4. Update completeness score (0-100)
 5. Change status from `stub` to `draft` when partially complete
-6. Run `/design-validate {module}` to check for issues
+6. Run `/design-docs:design-validate {module}` to check for issues
 
 ## Related Documentation
 

@@ -10,11 +10,11 @@ Extract module, document, reason, and options from user request.
 
 **Parameter parsing examples:**
 
-- `/design-archive effect-type-registry old-cache.md` → module:
+- `/design-docs:design-archive effect-type-registry old-cache.md` → module:
   `effect-type-registry`, doc: `old-cache.md`
-- `/design-archive module doc.md --replacement=new.md` → reason: `superseded`,
+- `/design-docs:design-archive module doc.md --replacement=new.md` → reason: `superseded`,
   replacement: `new.md`
-- `/design-archive module doc.md --move` → move to archive directory
+- `/design-docs:design-archive module doc.md --move` → move to archive directory
 
 **Default values:**
 

@@ -5,7 +5,7 @@
 ### Validate Specific Plan
 
 ```bash
-/plan-validate plan-design-linking-phase-1
+/design-docs:plan-validate plan-design-linking-phase-1
 ```
 
 **Output:**
@@ -35,7 +35,7 @@ Validating field values...
 ### Validate All Plans
 
 ```bash
-/plan-validate --all
+/design-docs:plan-validate --all
 ```
 
 **Output:**
@@ -199,7 +199,7 @@ Fix: Change to: created: 2026-01-18
 ### Basic Strict Validation
 
 ```bash
-/plan-validate my-feature-plan --strict
+/design-docs:plan-validate my-feature-plan --strict
 ```
 
 Strict mode adds:
@@ -227,7 +227,7 @@ Strict Mode Checks:
 ### Stale Plan Detection
 
 ```bash
-/plan-validate old-feature-plan --strict
+/design-docs:plan-validate old-feature-plan --strict
 ```
 
 **Output:**
@@ -249,7 +249,7 @@ Recommendations:
 ### Orphaned Plan
 
 ```bash
-/plan-validate orphan-plan --strict
+/design-docs:plan-validate orphan-plan --strict
 ```
 
 **Output:**
@@ -272,7 +272,7 @@ Recommendations:
 ### Auto-Fix Issues
 
 ```bash
-/plan-validate my-feature-plan --fix
+/design-docs:plan-validate my-feature-plan --fix
 ```
 
 **Auto-fixes:**
@@ -339,27 +339,27 @@ jobs:
 
 ```bash
 # Create plan
-/plan-create "My Feature Implementation" --module=effect-type-registry
+/design-docs:plan-create "My Feature Implementation" --module=effect-type-registry
 
 # Immediately validate
-/plan-validate my-feature-implementation
+/design-docs:plan-validate my-feature-implementation
 ```
 
 ### Before Updating Design Doc
 
 ```bash
 # Validate plan is complete
-/plan-validate cache-optimization-plan
+/design-docs:plan-validate cache-optimization-plan
 
 # If valid and completed, update design doc
-/design-update effect-type-registry cache-optimization.md --status=current
+/design-docs:design-update effect-type-registry cache-optimization.md --status=current
 ```
 
 ### Weekly Health Check
 
 ```bash
 # Check all plans for staleness
-/plan-validate --all --strict
+/design-docs:plan-validate --all --strict
 ```
 
 **Output:**

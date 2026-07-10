@@ -4,7 +4,7 @@ disable-model-invocation: true
 argument-hint: "<page-name> [topic-hint]"
 ---
 
-# /user-docs-add-page
+# /design-docs:user-docs-add-page
 
 Add a new topical page to `./docs/`. The first argument is the page slug (e.g. `comparison`). Remaining arguments form an optional topic hint that goes into the page's draft.
 

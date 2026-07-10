@@ -39,7 +39,7 @@ Do **not** split when:
 
 ## Scope
 
-`design-split` operates **only within `.claude/design/`**. It does not touch `CLAUDE.md` files — updating `@`-pointers to the new child docs is the context-doc-agent's job, handled after this skill runs. Always report the new file paths so that work can happen.
+`design-split` operates **only within `.claude/design/`**. It does not touch `CLAUDE.md` files — updating `@`-pointers to the new child docs is the design-docs:context-doc-agent's job, handled after this skill runs. Always report the new file paths so that work can happen.
 
 ## Success Criteria
 

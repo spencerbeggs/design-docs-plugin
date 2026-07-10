@@ -155,7 +155,7 @@ See [examples.md](examples.md) for:
 ```text
 INFO: No design documents found in {module}
 
-This is normal for new modules. Run /design-init to create your first
+This is normal for new modules. Run /design-docs:design-init to create your first
 design doc.
 ```
 
@@ -173,10 +173,10 @@ Fix: Remove reference from frontmatter or create the missing document
 
 Works well with:
 
-- `/design-review` - Review docs flagged as orphaned
-- `/design-update` - Add missing cross-references
-- `/design-validate` - Ensure references are valid
-- `/design-search` - Find related docs to add references
+- `/design-docs:design-review` - Review docs flagged as orphaned
+- `/design-docs:design-update` - Add missing cross-references
+- `/design-docs:design-validate` - Ensure references are valid
+- `/design-docs:design-search` - Find related docs to add references
 
 ## Success Criteria
 

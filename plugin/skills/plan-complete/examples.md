@@ -5,7 +5,7 @@
 Complete a successfully implemented plan:
 
 ```bash
-/plan-complete plan-design-linking-phase-1
+/design-docs:plan-complete plan-design-linking-phase-1
 ```
 
 **What happens:**
@@ -56,7 +56,7 @@ Summary:
 When implementation is partial but still valuable:
 
 ```bash
-/plan-complete cache-optimization --outcome=partial
+/design-docs:plan-complete cache-optimization --outcome=partial
 ```
 
 **Use when:**
@@ -79,7 +79,7 @@ completed-plans:
 Record failed attempts (knowledge is still valuable):
 
 ```bash
-/plan-complete experimental-approach --outcome=failed
+/design-docs:plan-complete experimental-approach --outcome=failed
 ```
 
 **Use when:**
@@ -95,7 +95,7 @@ Record failed attempts (knowledge is still valuable):
 Preview changes before executing:
 
 ```bash
-/plan-complete subagent-integration --dry-run
+/design-docs:plan-complete subagent-integration --dry-run
 ```
 
 **Output:**
@@ -129,7 +129,7 @@ Updating linked design docs:
 Complete but keep the plan for reference:
 
 ```bash
-/plan-complete major-refactor --keep
+/design-docs:plan-complete major-refactor --keep
 ```
 
 **Use when:**
@@ -153,7 +153,7 @@ implements:
 ```
 
 ```bash
-/plan-complete multi-doc-plan
+/design-docs:plan-complete multi-doc-plan
 ```
 
 **Result:** All three design docs updated to current status with completion metadata.
@@ -163,7 +163,7 @@ implements:
 Attempting to complete an in-progress plan:
 
 ```bash
-/plan-complete active-work
+/design-docs:plan-complete active-work
 ```
 
 **Output:**
@@ -191,7 +191,7 @@ Fix these issues before completing the plan
 Plan links to non-existent design doc:
 
 ```bash
-/plan-complete broken-links
+/design-docs:plan-complete broken-links
 ```
 
 **Output:**
@@ -217,19 +217,19 @@ Typical completion workflow:
 
 ```bash
 # 1. Validate plan is ready
-/plan-validate plan-design-linking-phase-1
+/design-docs:plan-validate plan-design-linking-phase-1
 
 # 2. Sync design docs with implementation
-/design-sync design-doc-system
+/design-docs:design-sync design-doc-system
 
 # 3. Preview completion
-/plan-complete plan-design-linking-phase-1 --dry-run
+/design-docs:plan-complete plan-design-linking-phase-1 --dry-run
 
 # 4. Complete for real
-/plan-complete plan-design-linking-phase-1
+/design-docs:plan-complete plan-design-linking-phase-1
 
 # 5. Verify design docs updated
-/design-review design-doc-system
+/design-docs:design-review design-doc-system
 ```
 
 ## Integration with Git
@@ -238,7 +238,7 @@ Typical git workflow:
 
 ```bash
 # Complete the plan (updates design docs, deletes plan)
-/plan-complete my-feature
+/design-docs:plan-complete my-feature
 
 # Review changes
 git status

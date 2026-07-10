@@ -9,7 +9,7 @@ argument-hint: "[module] [--dry-run] [--no-commit]"
 
 # Design Documentation Grooming
 
-Drive a complete, **unattended** overhaul of the project's design docs. For each module, dispatch the design-doc-agent to validate, restyle, resync against code, prune stale context, and split oversized docs. Then reconcile cross-references across modules, dispatch the context-doc-agent to update CLAUDE.md references, and commit the result.
+Drive a complete, **unattended** overhaul of the project's design docs. For each module, dispatch the design-docs:design-doc-agent to validate, restyle, resync against code, prune stale context, and split oversized docs. Then reconcile cross-references across modules, dispatch the design-docs:context-doc-agent to update CLAUDE.md references, and commit the result.
 
 This skill runs **without confirmation gates** — once invoked it does the full pass autonomously. The commit (which is **not** pushed) is the review gate: inspect the diff, amend, or `git reset` afterward.
 
@@ -27,9 +27,9 @@ Before Step 1, use `TaskCreate` to add one task per step below (omit Step 6 if `
 
 1. Preflight checks
 2. Discover modules
-3. Groom each module (design-doc-agent)
+3. Groom each module (design-docs:design-doc-agent)
 4. Reconcile cross-references
-5. Update CLAUDE.md references (context-doc-agent)
+5. Update CLAUDE.md references (design-docs:context-doc-agent)
 6. Commit
 
 ## Step 1: Preflight Checks
@@ -78,7 +78,7 @@ For each module, dispatch the `design-docs:design-doc-agent` via the `Agent` too
 > 1. **Valid state.** Every doc MUST have valid frontmatter, resolvable cross-references, a status that matches its completeness, and clean markdown lint.
 > 2. **Style.** Every doc MUST conform to the design-docs style. Remove pre-existing formatting violations even if they predate this pass.
 > 3. **Reflect the code; strip stale context.** Every doc MUST match the current implementation. Remove every reference to plans, specs, or prior states that a first-time reader would not benefit from — a doc that is ambiguous about what is current versus historical is failing.
-> 4. **Split oversized docs.** If a doc covers more than one unrelated subsystem, split it into atomic, cross-referenced pieces with your design-split skill, unless you can state a specific reason its scope is warranted.
+> 4. **Split oversized docs.** If a doc covers more than one unrelated subsystem, split it into atomic, cross-referenced pieces with your `design-docs:design-split` skill, unless you can state a specific reason its scope is warranted.
 > 5. **Stop over-recording.** Remove exact test counts, method counts, and exhaustive parameter enumerations. Keep load-bearing code references and "where this system lives" pointers; point at the source file instead of restating it.
 >
 > Report back: the files you modified, any docs you split (with the new file paths), or that no changes were needed.
@@ -98,7 +98,7 @@ Splits in Step 3 may have created files that docs in other modules link to, so r
 - `design-validate` — confirm every doc's frontmatter and links are valid post-groom.
 - `design-link` — rebuild the cross-reference graph and surface any now-broken links.
 
-Both run in the design-doc-agent (they are `context: fork` skills); each reads the full design tree from disk, so a single invocation of each already covers every module — there is no need for a per-module pass here. If validation surfaces broken links, fix them yourself with `Edit`/`Write` in this orchestrator context, then re-invoke `design-validate` to confirm. Report the reconciliation result.
+Both run in the design-docs:design-doc-agent (they are `context: fork` skills); each reads the full design tree from disk, so a single invocation of each already covers every module — there is no need for a per-module pass here. If validation surfaces broken links, fix them yourself with `Edit`/`Write` in this orchestrator context, then re-invoke `design-docs:design-validate` to confirm. Report the reconciliation result.
 
 ## Step 5: Update CLAUDE.md References
 
@@ -116,7 +116,7 @@ Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass the Step
 
 If every step reported "no changes needed" and `git status --porcelain` is empty, there is nothing to commit. Report the clean bill of health and stop — do NOT create an empty commit.
 
-Otherwise stage and commit (git-only — no `gh`, no push). Stage exactly the files reported modified or created in Steps 3–5 — the design docs the agents changed, any new files from splits, and the `CLAUDE.md` files the context-doc-agent updated — not the whole tree. This keeps the commit structurally limited to what the groom touched, beyond the preflight's starting-state guarantee:
+Otherwise stage and commit (git-only — no `gh`, no push). Stage exactly the files reported modified or created in Steps 3–5 — the design docs the agents changed, any new files from splits, and the `CLAUDE.md` files the design-docs:context-doc-agent updated — not the whole tree. This keeps the commit structurally limited to what the groom touched, beyond the preflight's starting-state guarantee:
 
 ```bash
 git add <files reported modified/created in Steps 3–5>

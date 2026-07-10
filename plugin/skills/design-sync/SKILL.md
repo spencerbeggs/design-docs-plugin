@@ -23,19 +23,19 @@ flagging unsafe changes for manual review.
 **Basic sync (check-only):**
 
 ```bash
-/design-sync effect-type-registry
+/design-docs:design-sync effect-type-registry
 ```
 
 **Sync with auto-update:**
 
 ```bash
-/design-sync effect-type-registry --auto-update
+/design-docs:design-sync effect-type-registry --auto-update
 ```
 
 **Sync specific document:**
 
 ```bash
-/design-sync effect-type-registry observability.md
+/design-docs:design-sync effect-type-registry observability.md
 ```
 
 ## Parameters
@@ -146,7 +146,7 @@ INFO: No design documents found to sync
 
 Module: {module}
 
-This is normal for new modules. Run /design-init to create design docs.
+This is normal for new modules. Run /design-docs:design-init to create design docs.
 ```
 
 ### Module Not Found
@@ -167,17 +167,17 @@ ERROR: Design document not found
 Document: {doc}
 Path: .claude/design/{module}/{doc}
 
-Fix: Check document name or create with /design-init
+Fix: Check document name or create with /design-docs:design-init
 ```
 
 ## Integration
 
 Works well with:
 
-- `/design-validate` - Validate before syncing
-- `/design-update` - Update docs after sync identifies issues
-- `/design-review` - Review sync status across modules
-- `/design-report` - Include sync status in health reports
+- `/design-docs:design-validate` - Validate before syncing
+- `/design-docs:design-update` - Update docs after sync identifies issues
+- `/design-docs:design-review` - Review sync status across modules
+- `/design-docs:design-report` - Include sync status in health reports
 
 ## Success Criteria
 

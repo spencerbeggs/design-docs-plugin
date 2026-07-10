@@ -129,7 +129,7 @@ Machine-readable JSON with all findings and scores.
 **Status:** current
 **Last Synced:** Never
 **Age:** 45 days
-**Fix:** Run /design-sync to align with codebase
+**Fix:** Run /design-docs:design-sync to align with codebase
 ```
 
 ### Content Quality Issues

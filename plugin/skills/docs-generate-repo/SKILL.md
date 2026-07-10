@@ -29,19 +29,19 @@ repository documentation by:
 **Generate all repository docs for a module:**
 
 ```bash
-/docs-generate-repo effect-type-registry
+/design-docs:docs-generate-repo effect-type-registry
 ```
 
 **Generate specific topic only:**
 
 ```bash
-/docs-generate-repo effect-type-registry --topic=caching
+/design-docs:docs-generate-repo effect-type-registry --topic=caching
 ```
 
 **Preview without writing:**
 
 ```bash
-/docs-generate-repo rspress-plugin-api-extractor --dry-run
+/design-docs:docs-generate-repo rspress-plugin-api-extractor --dry-run
 ```
 
 ## How It Works
@@ -163,6 +163,6 @@ Generated repository documentation is successful when:
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Generate Level 1 package README
-- `/docs-generate-site` - Generate Level 3 site documentation
-- `/docs-sync` - Sync docs with design doc changes
-- `/design-review` - Review source design docs
+- `/design-docs:docs-generate-site` - Generate Level 3 site documentation
+- `/design-docs:docs-sync` - Sync docs with design doc changes
+- `/design-docs:design-review` - Review source design docs

@@ -297,10 +297,13 @@ if estimated_completeness <= 20:
 elif estimated_completeness <= 60:
     suggested_status = "draft"
 elif estimated_completeness <= 90:
-    suggested_status = "current" or "needs-review"
+    # pre-implementation designs stay "draft" regardless of completeness
+    suggested_status = "draft" if not implemented else "current" or "needs-review"
 else:
     suggested_status = "current"
 ```
+
+Never suggest promoting a pre-implementation design (code not yet written) to `current` — `current` asserts the doc reflects implemented code. High completeness on a draft is valid up to 90%.
 
 ## Interactive Estimation
 
@@ -350,9 +353,7 @@ Provide detailed estimation reasoning:
 - Placeholders: 3 found (-9 points)
 
 **Recommendation:**
-Update completeness to 70% and status to 'current' to accurately reflect
-the well-documented core sections. Consider completing Implementation
-section to reach 85%.
+Update completeness to 70%. If the documented design is implemented in code, also update status to 'current'; if this is a pre-implementation design, keep 'draft'. Consider completing the Implementation section to reach 85%.
 ```
 
 ## Validation Against Estimation

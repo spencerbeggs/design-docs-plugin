@@ -23,19 +23,19 @@ lifecycle management and maintains documentation integrity.
 **Basic archival:**
 
 ```bash
-/design-archive effect-type-registry old-cache-design.md
+/design-docs:design-archive effect-type-registry old-cache-design.md
 ```
 
 **With replacement:**
 
 ```bash
-/design-archive effect-type-registry cache-v1.md --replacement=cache-optimization.md
+/design-docs:design-archive effect-type-registry cache-v1.md --replacement=cache-optimization.md
 ```
 
 **Move to archive directory:**
 
 ```bash
-/design-archive design-doc-system obsolete-patterns.md --move
+/design-docs:design-archive design-doc-system obsolete-patterns.md --move
 ```
 
 ## Parameters
@@ -153,10 +153,10 @@ Fix: Create replacement doc first or correct the path
 
 Works well with:
 
-- `/design-review` - Identify candidates for archival
-- `/design-validate` - Validate before and after archival
-- `/design-update` - Update replacement docs
-- `/design-init` - Create replacement before archiving
+- `/design-docs:design-review` - Identify candidates for archival
+- `/design-docs:design-validate` - Validate before and after archival
+- `/design-docs:design-update` - Update replacement docs
+- `/design-docs:design-init` - Create replacement before archiving
 
 ## Success Criteria
 

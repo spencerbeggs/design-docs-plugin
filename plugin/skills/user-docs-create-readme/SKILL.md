@@ -4,7 +4,7 @@ disable-model-invocation: true
 argument-hint: "[path]"
 ---
 
-# /user-docs-create-readme
+# /design-docs:user-docs-create-readme
 
 Bootstrap a README for the repo or package at `$ARGUMENTS` (defaults to current working directory).
 
@@ -12,7 +12,7 @@ Bootstrap a README for the repo or package at `$ARGUMENTS` (defaults to current 
 
 1. Resolves the target directory.
 2. Confirms there is no existing `README.md` at that path. If one exists, asks whether to overwrite.
-3. Delegates to the `user-docs` with a clear directive.
+3. Delegates to the `design-docs:user-docs` agent with a clear directive.
 
 ## Implementation
 
@@ -32,4 +32,4 @@ Use the Agent tool with subagent_type="user-docs". Prompt:
 
 ## Pre-flight checks
 
-- The target directory must contain a `package.json`. If not, abort with: "No package.json found at `<target>`. /user-docs-create-readme requires a package to bootstrap docs for."
+- The target directory must contain a `package.json`. If not, abort with: "No package.json found at `<target>`. /design-docs:user-docs-create-readme requires a package to bootstrap docs for."

@@ -477,13 +477,13 @@ This is normal for new modules.
 
 **Next steps:**
 
-1. Run `/design-init new-module {topic}` to create your first design doc
+1. Run `/design-docs:design-init new-module {topic}` to create your first design doc
 2. Add cross-references as you create more docs
-3. Run `/design-link new-module` to see relationships
+3. Run `/design-docs:design-link new-module` to see relationships
 
 **Example:**
 
-/design-init new-module architecture
+/design-docs:design-init new-module architecture
 
 ## Example 8: Broken References
 
@@ -539,5 +539,5 @@ WARNING: Broken references detected
 ## Example 8 Recommendations
 
 1. Fix 2 broken references
-2. Run `/design-validate` to check for other issues
-3. Re-run `/design-link` to verify graph health
+2. Run `/design-docs:design-validate` to check for other issues
+3. Re-run `/design-docs:design-link` to verify graph health

@@ -38,19 +38,19 @@ This skill generates SECURITY.md by:
 **Generate SECURITY.md:**
 
 ```bash
-/docs-generate-security
+/design-docs:docs-generate-security
 ```
 
 **With custom security contact:**
 
 ```bash
-/docs-generate-security --email=security@example.com
+/design-docs:docs-generate-security --email=security@example.com
 ```
 
 **Preview without writing:**
 
 ```bash
-/docs-generate-security --dry-run
+/design-docs:docs-generate-security --dry-run
 ```
 
 ## How It Works
@@ -124,9 +124,9 @@ A generated SECURITY.md is successful when:
 - Reads `package.json` for version and contact info
 - Checks `.changeset/` for pending versions
 - Writes to repository root as `SECURITY.md`
-- Uses user-docs agent for generation
+- Uses the `design-docs:user-docs` agent for generation
 
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Generate package README
-- `/docs-generate-contributing` - Generate CONTRIBUTING.md
+- `/design-docs:docs-generate-contributing` - Generate CONTRIBUTING.md

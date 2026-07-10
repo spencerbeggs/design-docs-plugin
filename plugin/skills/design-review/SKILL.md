@@ -28,25 +28,25 @@ This skill performs comprehensive health checks on design documentation by:
 **Review single module:**
 
 ```bash
-/design-review effect-type-registry
+/design-docs:design-review effect-type-registry
 ```
 
 **Review all modules:**
 
 ```bash
-/design-review all
+/design-docs:design-review all
 ```
 
 **Detailed analysis:**
 
 ```bash
-/design-review all --verbose
+/design-docs:design-review all --verbose
 ```
 
 **Focus on specific aspect:**
 
 ```bash
-/design-review rspress-plugin-api-extractor --focus=completeness
+/design-docs:design-review rspress-plugin-api-extractor --focus=completeness
 ```
 
 ## Parameters
@@ -124,10 +124,10 @@ Overall Health = (Completeness + Recency + Quality + References) / 4
 
 Use this skill with:
 
-- `/design-validate` - Fix structural/frontmatter issues first
-- `/design-update` - Apply recommended improvements
-- `/design-sync` - Address staleness and sync issues
-- `/design-prune` - Remove historical cruft identified in review
+- `/design-docs:design-validate` - Fix structural/frontmatter issues first
+- `/design-docs:design-update` - Apply recommended improvements
+- `/design-docs:design-sync` - Address staleness and sync issues
+- `/design-docs:design-prune` - Remove historical cruft identified in review
 
 ## Success Criteria
 

@@ -4,7 +4,7 @@ disable-model-invocation: false
 argument-hint: "<file-path>"
 ---
 
-# /user-docs-humanize
+# /design-docs:user-docs-humanize
 
 Deep humanizer-style rewrite of a docs file. The rewrite preserves meaning and technical accuracy; it changes voice and rhythm to read more like a human-written document.
 

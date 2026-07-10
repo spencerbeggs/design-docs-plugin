@@ -41,19 +41,19 @@ This skill generates CONTRIBUTING.md by:
 **Generate CONTRIBUTING.md for a module:**
 
 ```bash
-/docs-generate-contributing my-package
+/design-docs:docs-generate-contributing my-package
 ```
 
 **Update existing CONTRIBUTING.md:**
 
 ```bash
-/docs-generate-contributing my-package --update
+/design-docs:docs-generate-contributing my-package --update
 ```
 
 **Preview without writing:**
 
 ```bash
-/docs-generate-contributing my-package --dry-run
+/design-docs:docs-generate-contributing my-package --dry-run
 ```
 
 ## How It Works
@@ -144,10 +144,10 @@ A generated CONTRIBUTING.md is successful when:
 - Reads `package.json` for scripts and engines
 - Reads config files (biome.jsonc, tsconfig.json, vitest.config.ts)
 - Writes to module root as `CONTRIBUTING.md`
-- Uses user-docs agent for generation
+- Uses the `design-docs:user-docs` agent for generation
 
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Generate package README
-- `/docs-generate-repo` - Generate Level 2 docs
-- `/docs-sync` - Sync docs with changes
+- `/design-docs:docs-generate-repo` - Generate Level 2 docs
+- `/design-docs:docs-sync` - Sync docs with changes

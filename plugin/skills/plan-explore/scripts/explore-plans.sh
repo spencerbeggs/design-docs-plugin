@@ -169,7 +169,7 @@ fi
 if [[ ! -d "$PLANS_DIR" ]]; then
 	echo -e "${YELLOW}No plans found in $PLANS_DIR${NC}"
 	echo ""
-	echo "Suggestion: Create a plan with /plan-create"
+	echo "Suggestion: Create a plan with /design-docs:plan-create"
 	exit 0
 fi
 
@@ -181,7 +181,7 @@ mapfile -t PLAN_FILES < <(find "$PLANS_DIR" -maxdepth 1 -name "*.md" -type f \
 if [[ ${#PLAN_FILES[@]} -eq 0 ]]; then
 	echo -e "${YELLOW}No plans found in $PLANS_DIR${NC}"
 	echo ""
-	echo "Suggestion: Create a plan with /plan-create"
+	echo "Suggestion: Create a plan with /design-docs:plan-create"
 	exit 0
 fi
 
@@ -530,7 +530,7 @@ if [[ ${#FILTERED_PLANS[@]} -eq 0 ]]; then
 		echo ""
 		echo "Try:"
 		echo "  - Remove some filters"
-		echo "  - Use /plan-list to see all plans"
+		echo "  - Use /design-docs:plan-list to see all plans"
 	fi
 	exit 0
 fi

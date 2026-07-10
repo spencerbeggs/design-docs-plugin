@@ -2,7 +2,7 @@
 name: design-doc-agent
 description: Maintain internal design documentation and implementation plans. Use for creating, updating, validating, syncing, and managing design docs and plans.
 skills: design-docs-style, design-validate, design-init, design-update, design-sync, design-prune, design-split, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage
 color: red
 hooks:
   PreToolUse:
@@ -205,8 +205,8 @@ Validate and report on documentation health in one workflow:
 ```bash
 # Request: "Check design doc quality for effect-type-registry"
 # The agent will automatically:
-# 1. Run design-validate to check structure
-# 2. Run design-report to generate health scores
+# 1. Run design-docs:design-validate to check structure
+# 2. Run design-docs:design-report to generate health scores
 # Both skills share context, no redundant file reads
 ```
 
@@ -223,7 +223,7 @@ Explore plans and validate them in one workflow:
 ```bash
 # Request: "Show me all in-progress plans and validate them"
 # The agent will:
-# 1. Run plan-explore --status=in-progress
+# 1. Run design-docs:plan-explore --status=in-progress
 # 2. Automatically validate each plan found
 # 3. Report health status
 ```
@@ -241,9 +241,9 @@ Run a complete audit pipeline:
 ```bash
 # Request: "Audit all design documentation"
 # The agent will:
-# 1. Run design-audit for health scores
-# 2. Run design-validate for structural checks
-# 3. Run design-report for summary
+# 1. Run design-docs:design-audit for health scores
+# 2. Run design-docs:design-validate for structural checks
+# 3. Run design-docs:design-report for summary
 # 4. Provide prioritized recommendations
 ```
 
@@ -257,20 +257,19 @@ Run a complete audit pipeline:
 
 When documenting a new feature or system:
 
-1. **Initialize documentation**: `/design-init [module] [topic]`
+1. **Initialize documentation**: `/design-docs:design-init [module] [topic]`
 2. **Fill in design details**: Edit the created document
-3. **Validate structure**: `/design-validate [module]`
+3. **Validate structure**: `/design-docs:design-validate [module]`
 4. **Update CLAUDE.md**: Add pointer to design doc
 
 ### Implementation Planning
 
 When starting work on a feature:
 
-1. **Create design doc** (if needed): `/design-init [module] [topic]`
-2. **Create implementation plan**: `/plan-create "Feature Name"
-   --module=[module] --implements=[design-doc]`
+1. **Create design doc** (if needed): `/design-docs:design-init [module] [topic]`
+2. **Create implementation plan**: `/design-docs:plan-create "Feature Name" --module=[module] --implements=[design-doc]`
 3. **Fill in plan details**: Edit phases, tasks, and estimates
-4. **Validate plan**: `/plan-validate [plan-name]`
+4. **Validate plan**: `/design-docs:plan-validate [plan-name]`
 5. **Start work**: Update plan status to in-progress
 6. **Track progress**: Update plan progress and phases as work proceeds
 7. **Complete plan**: Mark as completed when done, archive if needed
@@ -279,54 +278,54 @@ When starting work on a feature:
 
 To see what's currently in progress:
 
-1. **List active plans**: `/plan-list --status=in-progress`
-2. **Check ready plans**: `/plan-list --status=ready`
-3. **Find blocked work**: `/plan-list --status=blocked`
-4. **Module-specific plans**: `/plan-list --module=[module]`
+1. **List active plans**: `/design-docs:plan-list --status=in-progress`
+2. **Check ready plans**: `/design-docs:plan-list --status=ready`
+3. **Find blocked work**: `/design-docs:plan-list --status=blocked`
+4. **Module-specific plans**: `/design-docs:plan-list --module=[module]`
 
 ### Weekly Maintenance
 
 Regular maintenance workflow:
 
-1. **Search for stale docs**: `/design-audit [module] --check-stale`
-2. **Sync outdated docs**: `/design-sync [module]`
-3. **Validate all docs**: `/design-validate all`
-4. **Generate health report**: `/design-report [module]`
+1. **Search for stale docs**: `/design-docs:design-audit [module] --check-stale`
+2. **Sync outdated docs**: `/design-docs:design-sync [module]`
+3. **Validate all docs**: `/design-docs:design-validate all`
+4. **Generate health report**: `/design-docs:design-report [module]`
 
 ### Pre-Release Documentation Audit
 
 Before a release:
 
-1. **Sync all design docs**: `/design-sync all`
-2. **Prune historical content**: `/design-prune all`
-3. **Run comprehensive audit**: `/design-audit all --strict`
-4. **Generate release report**: `/design-report all --format=release`
-5. **Validate final state**: `/design-validate all`
+1. **Sync all design docs**: `/design-docs:design-sync all`
+2. **Prune historical content**: `/design-docs:design-prune all`
+3. **Run comprehensive audit**: `/design-docs:design-audit all --strict`
+4. **Generate release report**: `/design-docs:design-report all --format=release`
+5. **Validate final state**: `/design-docs:design-validate all`
 
 ### Refactoring Documentation
 
 After major refactoring:
 
-1. **Update affected docs**: `/design-update [module] [topic]`
-2. **Prune obsolete content**: `/design-prune [module]`
-3. **Sync with new code**: `/design-sync [module]`
-4. **Review completeness**: `/design-review [module]`
-5. **Archive deprecated docs**: `/design-archive [module] [old-topic]`
+1. **Update affected docs**: `/design-docs:design-update [module] [topic]`
+2. **Prune obsolete content**: `/design-docs:design-prune [module]`
+3. **Sync with new code**: `/design-docs:design-sync [module]`
+4. **Review completeness**: `/design-docs:design-review [module]`
+5. **Archive deprecated docs**: `/design-docs:design-archive [module] [old-topic]`
 
 ### Finding Design Decisions
 
 To locate past design decisions:
 
-1. **Search by keyword**: `/design-search "caching strategy"`
-2. **View cross-references**: `/design-link [module]`
-3. **Check document history**: `/design-compare [module] [file]`
-4. **Generate index**: `/design-index [module]`
+1. **Search by keyword**: `/design-docs:design-search "caching strategy"`
+2. **View cross-references**: `/design-docs:design-link [module]`
+3. **Check document history**: `/design-docs:design-compare [module] [file]`
+4. **Generate index**: `/design-docs:design-index [module]`
 
 ## Best Practices
 
 ### When Creating Design Docs
 
-- **Start with templates**: Use `/design-init` to ensure proper structure
+- **Start with templates**: Use `/design-docs:design-init` to ensure proper structure
 - **Choose appropriate category**: architecture, performance, observability, etc.
 - **Keep it high-level**: Focus on "what" and "why", not implementation details
 - **Link liberally**: Use `related` and `dependencies` frontmatter fields
@@ -334,7 +333,7 @@ To locate past design decisions:
 
 ### When Updating Design Docs
 
-- **Sync regularly**: Run `/design-sync` when code changes significantly
+- **Sync regularly**: Run `/design-docs:design-sync` when code changes significantly
 - **Update completeness**: Reflect actual documentation coverage (0-100)
 - **Update status**: Move from `stub` → `draft` → `current` as you progress
 - **Track sync date**: `last-synced` should be within 30 days for active modules
@@ -343,12 +342,12 @@ To locate past design decisions:
 
 - **Required frontmatter fields**: status, module, category, created, updated,
   last-synced, completeness
-- **Valid status values**: stub (0-10%), draft (11-70%), current (71-100%),
-  archived
+- **Valid status values**: stub (0-20%), draft (21-90%), current and needs-review (61-100%), archived
 - **Completeness guidelines**:
-  - 0-10%: Stub with basic outline
-  - 11-70%: Draft with some sections complete
-  - 71-100%: Current with all sections documented
+  - 0-20%: Stub with basic outline
+  - 21-60%: Draft with some sections complete
+  - 61-90%: Draft (pre-implementation), current or needs-review — a detailed design whose code is not yet written stays draft; never suggest promoting a pre-implementation draft to current
+  - 91-100%: Current with all sections documented and implemented
 - **Markdown linting**: All docs must pass markdownlint checks
 
 ### Documentation Hygiene
@@ -356,7 +355,7 @@ To locate past design decisions:
 - **Prune after refactoring**: Remove outdated implementation details
 - **Archive deprecated docs**: Don't delete, archive with context
 - **Maintain cross-references**: Keep `related` and `dependencies` current
-- **Validate regularly**: Run `/design-validate` before commits
+- **Validate regularly**: Run `/design-docs:design-validate` before commits
 
 ## Examples
 
@@ -364,10 +363,10 @@ To locate past design decisions:
 
 ```bash
 # Initialize new design doc
-/design-init effect-type-registry caching-strategy
+/design-docs:design-init effect-type-registry caching-strategy
 
 # After writing content, validate
-/design-validate effect-type-registry
+/design-docs:design-validate effect-type-registry
 
 # Update CLAUDE.md with pointer
 # Add to pkgs/effect-type-registry/CLAUDE.md:
@@ -379,48 +378,48 @@ To locate past design decisions:
 
 ```bash
 # Sync all design docs with current code
-/design-sync all
+/design-docs:design-sync all
 
 # Prune outdated content
-/design-prune all
+/design-docs:design-prune all
 
 # Run strict audit
-/design-audit all --strict
+/design-docs:design-audit all --strict
 
 # Generate release report
-/design-report all --format=release
+/design-docs:design-report all --format=release
 
 # Validate everything passes
-/design-validate all
+/design-docs:design-validate all
 ```
 
 ### Example 3: Find Design Decision
 
 ```bash
 # Search for specific decision
-/design-search "error handling strategy"
+/design-docs:design-search "error handling strategy"
 
 # View related docs
-/design-link effect-type-registry
+/design-docs:design-link effect-type-registry
 
 # Compare versions to see when decision was made
-/design-compare effect-type-registry observability.md
+/design-docs:design-compare effect-type-registry observability.md
 ```
 
 ### Example 4: Refactoring Documentation Update
 
 ```bash
 # After refactoring type loading system
-/design-update my-module type-loading-vfs
+/design-docs:design-update my-module type-loading-vfs
 
 # Prune obsolete implementation details
-/design-prune my-module
+/design-docs:design-prune my-module
 
 # Sync with new implementation
-/design-sync my-module
+/design-docs:design-sync my-module
 
 # Review completeness
-/design-review my-module
+/design-docs:design-review my-module
 ```
 
 ## Integration with Other Agents
@@ -467,7 +466,7 @@ Design documentation system is configured in
 }
 ```
 
-Use `/design-config` to manage configuration.
+Use `/design-docs:design-config` to manage configuration.
 
 ## Success Criteria
 

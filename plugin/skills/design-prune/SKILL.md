@@ -24,19 +24,19 @@ while preserving important context.
 **Basic pruning:**
 
 ```bash
-/design-prune effect-type-registry
+/design-docs:design-prune effect-type-registry
 ```
 
 **Aggressive pruning:**
 
 ```bash
-/design-prune effect-type-registry --aggressive
+/design-docs:design-prune effect-type-registry --aggressive
 ```
 
 **Dry-run (preview only):**
 
 ```bash
-/design-prune effect-type-registry --dry-run
+/design-docs:design-prune effect-type-registry --dry-run
 ```
 
 ## Parameters
@@ -170,10 +170,10 @@ Update referencing docs before pruning.
 
 Works well with:
 
-- `/design-sync` - Sync docs before pruning to ensure currency
-- `/design-review` - Identify documents needing pruning
-- `/design-validate` - Validate after pruning
-- `/design-archive` - Archive documents that are mostly historical
+- `/design-docs:design-sync` - Sync docs before pruning to ensure currency
+- `/design-docs:design-review` - Identify documents needing pruning
+- `/design-docs:design-validate` - Validate after pruning
+- `/design-docs:design-archive` - Archive documents that are mostly historical
 
 ## Success Criteria
 

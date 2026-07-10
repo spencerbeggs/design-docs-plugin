@@ -4,7 +4,7 @@ Thank you for your interest in contributing to design-docs-plugin.
 
 ## Prerequisites
 
-* [Bun](https://bun.sh) >= 1.3.9
+* [Bun](https://bun.sh) >= 1.3.14
 * [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI (for plugin validation)
 * Git
 
@@ -63,7 +63,7 @@ Thank you for your interest in contributing to design-docs-plugin.
 | `plugin/` | Plugin source, hooks, skills, agents | Yes |
 | `__test__/` | All tests | No |
 | `lib/` | Dev tooling configs | No |
-| `docs/` | Public documentation | No |
+| `docs/` | Internal plans and specs | No |
 
 ### Where to put things
 

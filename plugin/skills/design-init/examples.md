@@ -40,7 +40,7 @@ dependencies: []
 - Fill in placeholders
 - Add Overview, Current State, Rationale sections
 - Update completeness
-- Run `/design-validate` when ready
+- Run `/design-docs:design-validate` when ready
 
 ## Example 2: Performance Doc with Category Inference
 
@@ -244,7 +244,7 @@ After successful creation, provide this report:
 3. Document current state
 4. Update completeness score (0-100)
 5. Change status from `stub` to `draft` when partially complete
-6. Run `/design-validate effect-type-registry` to check for issues
+6. Run `/design-docs:design-validate effect-type-registry` to check for issues
 
 ## Related Documentation
 

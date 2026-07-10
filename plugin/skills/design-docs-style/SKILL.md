@@ -53,7 +53,9 @@ Exception: cardinal types whose shapes must stay stable across many files. If a 
 
 ### No artificial line breaks
 
-Each paragraph and each list item occupies a single source line. The renderer handles wrapping. Do not insert hard line breaks inside a sentence or bullet point. If you encounter a pre-existing violation of this rule, you MUST fix it when you edit the file for other reasons, but do not add new violations.
+Each paragraph and each list item occupies a single source line. The renderer handles wrapping. Do not insert hard line breaks inside a sentence or bullet point. If you encounter a pre-existing violation of this rule, you MUST fix it when you edit the file for other reasons, but do not add new violations. When editing a section of a hard-wrapped legacy doc, reflow the paragraphs you touch rather than matching the surrounding wrapping — a correctly formatted island is the migration path, not an inconsistency to avoid.
+
+This is the enforced wrapping policy: `design-validate` warns on hard-wrapped prose, and markdownlint's MD013 (line length) is disabled intentionally — there is no maximum line length for prose.
 
 Wrong:
 

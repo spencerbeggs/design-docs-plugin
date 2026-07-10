@@ -23,19 +23,19 @@ creating table of contents, and producing professional output files.
 **Export to PDF:**
 
 ```bash
-/design-export --format=pdf
+/design-docs:design-export --format=pdf
 ```
 
 **Export specific module to HTML:**
 
 ```bash
-/design-export effect-type-registry --format=html
+/design-docs:design-export effect-type-registry --format=html
 ```
 
 **Export to multiple formats:**
 
 ```bash
-/design-export --format=pdf,html,markdown
+/design-docs:design-export --format=pdf,html,markdown
 ```
 
 ## Parameters
@@ -141,17 +141,17 @@ ERROR: Invalid export format: {format}
 
 Valid formats: pdf, html, markdown
 
-Example: /design-export --format=pdf
+Example: /design-docs:design-export --format=pdf
 ```
 
 ## Integration
 
 Works well with:
 
-- `/design-review` - Review docs before exporting
-- `/design-validate` - Ensure docs valid before export
-- `/design-sync` - Sync docs before exporting
-- `/design-prune` - Clean docs before exporting
+- `/design-docs:design-review` - Review docs before exporting
+- `/design-docs:design-validate` - Ensure docs valid before export
+- `/design-docs:design-sync` - Sync docs before exporting
+- `/design-docs:design-prune` - Clean docs before exporting
 
 ## Success Criteria
 

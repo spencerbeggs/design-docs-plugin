@@ -27,19 +27,19 @@ user documentation by:
 **Sync all levels for a module:**
 
 ```bash
-/docs-sync effect-type-registry
+/design-docs:docs-sync effect-type-registry
 ```
 
 **Sync specific level only:**
 
 ```bash
-/docs-sync rspress-plugin-api-extractor --level=1
+/design-docs:docs-sync rspress-plugin-api-extractor --level=1
 ```
 
 **Preview changes without writing:**
 
 ```bash
-/docs-sync website --dry-run
+/design-docs:docs-sync website --dry-run
 ```
 
 ## How It Works
@@ -110,6 +110,6 @@ Mark synced docs with current timestamp.
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Regenerate README
-- `/docs-generate-repo` - Regenerate repo docs
-- `/docs-generate-site` - Regenerate site docs
+- `/design-docs:docs-generate-repo` - Regenerate repo docs
+- `/design-docs:docs-generate-site` - Regenerate site docs
 - `/design-docs:user-docs-review` - Review sync quality

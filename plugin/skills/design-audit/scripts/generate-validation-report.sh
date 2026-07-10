@@ -31,6 +31,6 @@ cat <<'EOF'
 
 - Fix validation errors before merging
 - Update design docs to match current codebase state
-- Run \`/design-validate\` locally to verify changes
+- Run \`/design-docs:design-validate\` locally to verify changes
 
 EOF

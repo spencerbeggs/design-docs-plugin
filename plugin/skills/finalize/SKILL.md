@@ -27,8 +27,8 @@ Parse `$ARGUMENTS` for flags:
 - `--no-pr` — push the branch in step 8 but skip PR creation (useful when the PR will be opened separately, e.g. by CI)
 - `--no-squash` — skip the squash step (step 7), commit docs/changeset normally
 - `--split-docs` — in step 7, squash into **two** commits instead of one: functional code changes (`review-focus: primary`) and ancillary docs/changeset changes (`review-focus: ancillary`), as a review-time focus signal for agent reviewers. Opt-in; default is a single commit. Ignored when `--no-squash` is set (nothing is squashed, so there is nothing to split).
-- `--no-context-docs` — skip step 4 (Update CLAUDE.md Files / context-doc-agent dispatch)
-- `--no-user-docs` — skip step 5 (Update User Docs / user-docs agent dispatch)
+- `--no-context-docs` — skip step 4 (Update CLAUDE.md Files / design-docs:context-doc-agent dispatch)
+- `--no-user-docs` — skip step 5 (Update User Docs / `design-docs:user-docs` agent dispatch)
 - `--dry-run` — preview what each step would do without modifying any files
 
 If no arguments are provided, run the full workflow.
@@ -184,7 +184,7 @@ When the agent returns, capture its report (which files it modified, or "no chan
 
 **Skip if `--no-context-docs` flag is set.** Proceed to step 5.
 
-Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass a prompt containing the Step 2 branch summary plus whatever the design-doc-agent reported in Step 3 — the context agent needs to know which design docs were touched so it can update `@` pointers, references, and CLAUDE.md sections that index those docs. The agent also re-records pointer content hashes in `.claude/design/refs.json`, so any design doc edited in Step 3 leaves its pointers drift-clean.
+Dispatch the `design-docs:context-doc-agent` via the `Agent` tool. Pass a prompt containing the Step 2 branch summary plus whatever the design-docs:design-doc-agent reported in Step 3 — the context agent needs to know which design docs were touched so it can update `@` pointers, references, and CLAUDE.md sections that index those docs. The agent also re-records pointer content hashes in `.claude/design/refs.json`, so any design doc edited in Step 3 leaves its pointers drift-clean.
 
 When the agent returns, capture its report for the Step 5 dispatch context.
 

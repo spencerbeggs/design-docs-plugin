@@ -27,25 +27,25 @@ This skill lists plan documents by:
 **List all plans:**
 
 ```bash
-/plan-list
+/design-docs:plan-list
 ```
 
 **List by status:**
 
 ```bash
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 ```
 
 **List by module:**
 
 ```bash
-/plan-list --module=effect-type-registry
+/design-docs:plan-list --module=effect-type-registry
 ```
 
 **Detailed view:**
 
 ```bash
-/plan-list --format=detailed
+/design-docs:plan-list --format=detailed
 ```
 
 ## How It Works
@@ -195,7 +195,7 @@ Output listing results with:
 ### List All Plans
 
 ```bash
-/plan-list
+/design-docs:plan-list
 ```
 
 Shows all plans sorted by last update.
@@ -204,16 +204,16 @@ Shows all plans sorted by last update.
 
 ```bash
 # Active plans only
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 
 # Multiple statuses
-/plan-list --status=ready,in-progress
+/design-docs:plan-list --status=ready,in-progress
 ```
 
 ### Filter by Module
 
 ```bash
-/plan-list --module=effect-type-registry
+/design-docs:plan-list --module=effect-type-registry
 ```
 
 Shows only plans for specific module.
@@ -221,7 +221,7 @@ Shows only plans for specific module.
 ### Show Stale Plans
 
 ```bash
-/plan-list --stale
+/design-docs:plan-list --stale
 ```
 
 Shows plans not updated in 30+ days.
@@ -229,7 +229,7 @@ Shows plans not updated in 30+ days.
 ### Detailed View
 
 ```bash
-/plan-list --format=detailed --status=in-progress
+/design-docs:plan-list --format=detailed --status=in-progress
 ```
 
 Shows full metadata for filtered plans.
@@ -237,7 +237,7 @@ Shows full metadata for filtered plans.
 ### Timeline View
 
 ```bash
-/plan-list --format=timeline --status=in-progress
+/design-docs:plan-list --format=timeline --status=in-progress
 ```
 
 Shows Gantt-style timeline of active plans.
@@ -245,7 +245,7 @@ Shows Gantt-style timeline of active plans.
 ### Include Archived Plans
 
 ```bash
-/plan-list --include-archived
+/design-docs:plan-list --include-archived
 ```
 
 Shows both active and archived plans.
@@ -253,7 +253,7 @@ Shows both active and archived plans.
 ### Sort by Progress
 
 ```bash
-/plan-list --sort=progress --order=asc
+/design-docs:plan-list --sort=progress --order=asc
 ```
 
 Shows plans sorted by progress (lowest first).
@@ -261,7 +261,7 @@ Shows plans sorted by progress (lowest first).
 ### Sort by Creation Date
 
 ```bash
-/plan-list --sort=created --order=desc
+/design-docs:plan-list --sort=created --order=desc
 ```
 
 Shows newest plans first.
@@ -321,9 +321,9 @@ Filters:
   Module: effect-type-registry
 
 Suggestions:
-  1. Remove filters: /plan-list
-  2. Create new plan: /plan-create "My Feature"
-  3. Check archived plans: /plan-list --include-archived
+  1. Remove filters: /design-docs:plan-list
+  2. Create new plan: /design-docs:plan-create "My Feature"
+  3. Check archived plans: /design-docs:plan-list --include-archived
 ```
 
 ### Invalid Status
@@ -365,7 +365,7 @@ Create it with:
   mkdir -p .claude/plans
 
 Or create your first plan:
-  /plan-create "My First Plan"
+  /design-docs:plan-create "My First Plan"
 ```
 
 ## Statistics

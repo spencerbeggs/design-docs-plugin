@@ -23,19 +23,19 @@ pages, documentation overviews, or structured indexes for design docs.
 **Generate module index:**
 
 ```bash
-/design-index effect-type-registry
+/design-docs:design-index effect-type-registry
 ```
 
 **HTML navigation:**
 
 ```bash
-/design-index all --format=html
+/design-docs:design-index all --format=html
 ```
 
 **Organize by status:**
 
 ```bash
-/design-index module --organize-by=status
+/design-docs:design-index module --organize-by=status
 ```
 
 ## Parameters
@@ -121,7 +121,7 @@ See [examples.md](examples.md) for:
 INFO: No design documents found in {module}
 
 This module has no design documentation yet.
-Run /design-init to create your first design doc.
+Run /design-docs:design-init to create your first design doc.
 ```
 
 ### Invalid Organization Method
@@ -135,10 +135,10 @@ Valid options: category, status, alphabetical, date
 
 Works well with:
 
-- `/design-review` - Review docs before indexing
-- `/design-validate` - Ensure docs are valid
-- `/design-export` - Export index with docs
-- `/design-update` - Update docs then regenerate index
+- `/design-docs:design-review` - Review docs before indexing
+- `/design-docs:design-validate` - Ensure docs are valid
+- `/design-docs:design-export` - Export index with docs
+- `/design-docs:design-update` - Update docs then regenerate index
 
 ## Success Criteria
 

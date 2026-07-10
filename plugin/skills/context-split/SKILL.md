@@ -623,10 +623,10 @@ WARNING: File too small for meaningful split
 
 Works well with:
 
-- `/context-review` - Identify split candidates
-- `/context-validate` - Validate before and after
-- `/context-update` - Optimize before splitting
-- `/design-validate` - Ensure design doc refs work
+- `/design-docs:context-review` - Identify split candidates
+- `/design-docs:context-validate` - Validate before and after
+- `/design-docs:context-update` - Optimize before splitting
+- `/design-docs:design-validate` - Ensure design doc refs work
 
 ## Success Criteria
 
