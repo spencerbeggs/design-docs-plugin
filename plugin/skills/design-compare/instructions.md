@@ -11,11 +11,11 @@ Extract document and comparison reference from user request.
 
 **Parameter parsing examples:**
 
-- `/design-compare observability.md --ref=main` → compare current with main
+- `/design-docs:design-compare observability.md --ref=main` → compare current with main
   branch
-- `/design-compare doc.md --ref=abc123` → compare with specific commit
-- `/design-compare doc.md --ref=v1.0.0` → compare with tag
-- `/design-compare doc.md --from=abc123 --to=def456` → compare two commits
+- `/design-docs:design-compare doc.md --ref=abc123` → compare with specific commit
+- `/design-docs:design-compare doc.md --ref=v1.0.0` → compare with tag
+- `/design-docs:design-compare doc.md --from=abc123 --to=def456` → compare two commits
 
 ### 2. Validate References
 
@@ -243,7 +243,7 @@ git diff ${ref-from}..${ref-to} .claude/design/${module}/${doc}
 Compare current version with historical reference.
 
 ```bash
-/design-compare doc.md --ref=main
+/design-docs:design-compare doc.md --ref=main
 ```
 
 Compares: `HEAD` vs `main`
@@ -253,7 +253,7 @@ Compares: `HEAD` vs `main`
 Compare two historical versions.
 
 ```bash
-/design-compare doc.md --from=v1.0.0 --to=v2.0.0
+/design-docs:design-compare doc.md --from=v1.0.0 --to=v2.0.0
 ```
 
 Compares: `v1.0.0` vs `v2.0.0`
@@ -263,7 +263,7 @@ Compares: `v1.0.0` vs `v2.0.0`
 Compare across branches.
 
 ```bash
-/design-compare doc.md --ref=feature-branch
+/design-docs:design-compare doc.md --ref=feature-branch
 ```
 
 Compares: `HEAD` (current branch) vs `feature-branch`
@@ -273,7 +273,7 @@ Compares: `HEAD` (current branch) vs `feature-branch`
 Compare with tagged versions.
 
 ```bash
-/design-compare doc.md --ref=v1.0.0
+/design-docs:design-compare doc.md --ref=v1.0.0
 ```
 
 Compares: `HEAD` vs `v1.0.0` tag

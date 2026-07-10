@@ -10,7 +10,7 @@ to reflect the new feature.
 **Input:**
 
 ```bash
-/docs-sync effect-type-registry
+/design-docs:docs-sync effect-type-registry
 ```
 
 **Result:**
@@ -35,7 +35,7 @@ Sync only the README file, skipping repository and site documentation.
 **Input:**
 
 ```bash
-/docs-sync rspress-plugin-api-extractor --level=1
+/design-docs:docs-sync rspress-plugin-api-extractor --level=1
 ```
 
 **Result:**
@@ -57,7 +57,7 @@ Preview what would change without actually writing files.
 **Input:**
 
 ```bash
-/docs-sync effect-type-registry --dry-run
+/design-docs:docs-sync effect-type-registry --dry-run
 ```
 
 **Result:**
@@ -79,7 +79,7 @@ Would update:
    - Add new TTL configuration example
 
 No files written (dry-run mode)
-To apply changes: /docs-sync effect-type-registry
+To apply changes: /design-docs:docs-sync effect-type-registry
 ```
 
 ## Example 4: Multiple Documentation Levels Updated
@@ -89,7 +89,7 @@ Architecture change affects README, repository guides, and site documentation.
 **Input:**
 
 ```bash
-/docs-sync rspress-plugin-api-extractor
+/design-docs:docs-sync rspress-plugin-api-extractor
 ```
 
 **Result:**
@@ -163,7 +163,7 @@ User modified quick start example, but design doc also changed it.
 **Input:**
 
 ```bash
-/docs-sync effect-type-registry
+/design-docs:docs-sync effect-type-registry
 ```
 
 **Result:**
@@ -192,7 +192,7 @@ Design doc indicates breaking API changes that require manual review.
 **Input:**
 
 ```bash
-/docs-sync effect-type-registry
+/design-docs:docs-sync effect-type-registry
 ```
 
 **Result:**
@@ -222,7 +222,7 @@ All documentation is already up to date.
 **Input:**
 
 ```bash
-/docs-sync website
+/design-docs:docs-sync website
 ```
 
 **Result:**
@@ -243,7 +243,7 @@ Update only repository documentation, skip README and site docs.
 **Input:**
 
 ```bash
-/docs-sync effect-type-registry --level=2
+/design-docs:docs-sync effect-type-registry --level=2
 ```
 
 **Result:**
@@ -274,7 +274,7 @@ Sync all documentation levels after multiple design doc updates.
 **Input:**
 
 ```bash
-/docs-sync rspress-plugin-api-extractor
+/design-docs:docs-sync rspress-plugin-api-extractor
 ```
 
 **Result:**

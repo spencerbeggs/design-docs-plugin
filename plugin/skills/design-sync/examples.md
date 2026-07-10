@@ -199,7 +199,7 @@ Move to "Current State" section and mark as complete
 Run sync with auto-update to apply 2 safe fixes:
 
 ```bash
-/design-sync effect-type-registry observability.md --auto-update
+/design-docs:design-sync effect-type-registry observability.md --auto-update
 ```
 
 Then manually resolve DiskCache deletion.
@@ -324,7 +324,7 @@ Then manually resolve DiskCache deletion.
 
 1. Verify cache hit rate metric source
 2. Add instrumentation if metric is current goal
-3. Re-run sync after manual fixes: `/design-sync effect-type-registry cache-optimization.md`
+3. Re-run sync after manual fixes: `/design-docs:design-sync effect-type-registry cache-optimization.md`
 ```
 
 ## Example 4: Newly Implemented Feature Detection
@@ -548,7 +548,7 @@ Update "Architecture" section to reflect:
 1. Review suggested architecture update
 2. Update design rationale if pattern choice changed
 3. Document why refactor from dual-cache to strategy pattern
-4. Re-sync to verify: `/design-sync effect-type-registry cache-optimization.md --check-only`
+4. Re-sync to verify: `/design-docs:design-sync effect-type-registry cache-optimization.md --check-only`
 ```
 
 ## Example 6: Deleted Feature Detection
@@ -629,7 +629,7 @@ archived:
 
 ## Next Steps
 
-1. Run `/design-archive effect-type-registry experimental-caching.md`
+1. Run `/design-docs:design-archive effect-type-registry experimental-caching.md`
    with `--reason=completed --outcome=cancelled`
 2. Add lessons learned to cache-optimization.md
 3. Document why approach was rejected

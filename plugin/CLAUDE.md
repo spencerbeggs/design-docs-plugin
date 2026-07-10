@@ -30,7 +30,7 @@ All hooks check `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `fals
 
 ### session-start/context-inject.sh (SessionStart)
 
-Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. Parses the envelope to pick up `cwd` as a fallback for `CLAUDE_PROJECT_DIR`. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it. Writes `DESIGN_DOCS_GH_TOKEN` and `GITHUB_REPOSITORY` to `$CLAUDE_ENV_FILE` for downstream skills.
+Injects design documentation system context into new sessions. Fires on all SessionStart sources (startup, resume, compact, clear). Outputs a philosophy-first message that explains what design docs are, why they matter, and when to update them. Parses the envelope to pick up `cwd` as a fallback for `CLAUDE_PROJECT_DIR`. If `.claude/design/` does not exist, shows initialization guidance instead. On feature branches, manages the `session/start` local git tag for session boundary tracking — creates at merge-base if missing, reports existing tag without moving it. Writes `DESIGN_DOCS_GH_TOKEN` (from `GITHUB_PERSONAL_ACCESS_TOKEN`) and `GITHUB_REPOSITORY` (derived from the git remote) to `$CLAUDE_ENV_FILE` when each is available; both are optional, since workflow skills fall back to `gh` keyring auth.
 
 ### pre-tool-use/allow-design-writes.sh (PreToolUse)
 
@@ -48,7 +48,7 @@ Flags: `--no-push`, `--no-pr`, `--no-squash`, `--split-docs`, `--no-context-docs
 
 ### design-groom
 
-Autonomous design-doc overhaul invoked via `/design-docs:design-groom`. Dispatches the design-doc-agent per module to validate, restyle, resync, prune stale context, and split oversized docs (via the new `design-split` skill), then reconciles cross-references, dispatches the context-doc-agent to fix CLAUDE.md references, and commits (no push). Runs unattended.
+Autonomous design-doc overhaul invoked via `/design-docs:design-groom`. Dispatches the design-doc-agent per module to validate, restyle, resync, prune stale context, and split oversized docs (via `design-split`), then reconciles cross-references, dispatches the context-doc-agent to fix CLAUDE.md references, and commits (no push). Runs unattended.
 
 Flags: `[module]`, `--dry-run`, `--no-commit`
 
@@ -91,12 +91,14 @@ User-invocable only (`disable-model-invocation: true`). The `.claude/handoffs/` 
 1. Create `skills/{name}/SKILL.md` with YAML frontmatter and instructions
 1. Add the skill directory path to `.claude-plugin/plugin.json` skills array
 1. Supported frontmatter: `name`, `description`, `when_to_use`, `allowed-tools`, `context`, `agent`, `model`, `effort`, `disable-model-invocation`, `user-invocable`, `argument-hint`, `hooks`, `paths`, `shell`. Use `when_to_use` to declare trigger phrases for model-invokable workflow skills (see `finalize` for the canonical example).
+1. Namespace-qualify every cross-reference: `design-docs:<skill>` in prose, `/design-docs:<command>` for slash invocations. Bare names collide with same-named skills from other installed plugins. Filesystem paths stay unqualified.
 
 ## Adding Agents
 
 1. Create `agents/{name}.md` with YAML frontmatter and system prompt
 1. Add the agent file path to `.claude-plugin/plugin.json` agents array
 1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `color`, `hooks`, `maxTurns`, `memory`, `effort`, `isolation`. Use `color` for the transcript badge (red/pink/blue used by the three doc agents); use `hooks` to declare per-agent PreToolUse approvals (all three doc agents auto-approve Write/Edit on design dirs)
+1. Include `SendMessage` in `tools:` so the agent can report back when an orchestration skill dispatches it as a teammate
 1. Note: plugin agents ignore `mcpServers` and `permissionMode` fields
 1. Each doc agent should also list its matching `*-docs-style` skill in `skills:` so the style rule auto-loads
 

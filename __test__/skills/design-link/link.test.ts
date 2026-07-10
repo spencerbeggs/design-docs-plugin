@@ -159,4 +159,141 @@ describe("design-link link.sh", () => {
 		expect(stdout).toContain("- Documents: 0");
 		expect(stdout).toContain("_No design documents found._");
 	});
+
+	function seedAnchorGraph(): void {
+		writeFileAt(
+			".claude/design/design.config.json",
+			JSON.stringify({
+				version: "1.0.0",
+				modules: { anchors: { path: "anchors" } },
+				quality: { designDocs: { requireFrontmatter: true } },
+			}),
+		);
+		writeFileAt(
+			".claude/design/anchors/self.md",
+			[
+				"---",
+				"status: current",
+				"completeness: 90",
+				"related: []",
+				"dependencies: []",
+				"---",
+				"# Self",
+				"",
+				"## Setup",
+				"",
+				"See the [setup section](#setup) for details.",
+				"",
+				"Broken: [nowhere](#does-not-exist).",
+				"",
+			].join("\n"),
+		);
+		writeFileAt(
+			".claude/design/anchors/target.md",
+			[
+				"---",
+				"status: current",
+				"completeness: 90",
+				"related: []",
+				"dependencies: []",
+				"---",
+				"# Target",
+				"",
+				"## Consumer Seam",
+				"",
+				"## Resolution belongs to @effected/npm",
+				"",
+				"## Use `foo()` correctly",
+				"",
+				"## Setup",
+				"",
+				"## Setup",
+				"",
+			].join("\n"),
+		);
+		writeFileAt(
+			".claude/design/anchors/linker.md",
+			[
+				"---",
+				"status: current",
+				"completeness: 90",
+				"related: []",
+				"dependencies: []",
+				"---",
+				"# Linker",
+				"",
+				"Valid: [consumer seam](./target.md#consumer-seam).",
+				"",
+				"Broken: [nope](./target.md#does-not-exist-either).",
+				"",
+				"Glyph: [glyph heading](./target.md#resolution-belongs-to-effectednpm).",
+				"",
+				"Backtick: [code heading](./target.md#use-foo-correctly).",
+				"",
+				"Dup: [second setup](./target.md#setup-1).",
+				"",
+			].join("\n"),
+		);
+	}
+
+	test("resolves a valid same-file anchor link", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).not.toMatch(/anchors\/self\.md → #setup \(anchor missing\)/);
+	});
+
+	test("flags a broken same-file anchor link", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).toContain(".claude/design/anchors/self.md → #does-not-exist (anchor missing)");
+	});
+
+	test("resolves a valid cross-file anchor link", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).not.toMatch(/target\.md#consumer-seam \(anchor missing\)/);
+	});
+
+	test("flags a broken cross-file anchor link", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).toContain(
+			".claude/design/anchors/linker.md → .claude/design/anchors/target.md#does-not-exist-either (anchor missing)",
+		);
+	});
+
+	test("resolves a duplicate heading via the -1 suffix", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).not.toMatch(/target\.md#setup-1 \(anchor missing\)/);
+	});
+
+	test("resolves a heading slug with punctuation and an @ glyph", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).not.toMatch(/target\.md#resolution-belongs-to-effectednpm \(anchor missing\)/);
+	});
+
+	test("resolves a heading slug from text containing backticks", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).not.toMatch(/target\.md#use-foo-correctly \(anchor missing\)/);
+	});
+
+	test("counts broken anchors in the summary", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors"]);
+		expect(stdout).toContain("- Broken anchors: 2");
+	});
+
+	test("includes brokenAnchors in JSON output", () => {
+		seedAnchorGraph();
+		const { stdout } = run(repo, ["anchors", "--format=json"]);
+		const parsed = JSON.parse(stdout) as {
+			summary: { brokenAnchors: number };
+			brokenAnchors: { from: string; to: string; anchor: string }[];
+		};
+		expect(parsed.summary.brokenAnchors).toBe(2);
+		expect(parsed.brokenAnchors.length).toBe(2);
+	});
 });

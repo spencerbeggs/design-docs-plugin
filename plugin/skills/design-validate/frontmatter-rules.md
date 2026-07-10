@@ -23,8 +23,10 @@ values.
 | :----------- | :-------------- |
 | 0-20 | stub |
 | 21-60 | draft |
-| 61-90 | current, needs-review |
+| 61-90 | draft (pre-implementation), current, needs-review |
 | 91-100 | current |
+
+A `draft` at 61-90% is valid for pre-implementation designs (design fleshed out, code not yet written) and must not trigger a promote-to-current suggestion; `current` asserts the doc reflects implemented code.
 
 ## Required Sections
 

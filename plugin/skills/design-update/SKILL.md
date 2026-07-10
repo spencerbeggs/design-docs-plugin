@@ -28,31 +28,31 @@ This skill updates design documents by:
 **Update status:**
 
 ```bash
-/design-update effect-type-registry cache-optimization.md --status=draft
+/design-docs:design-update effect-type-registry cache-optimization.md --status=draft
 ```
 
 **Update completeness:**
 
 ```bash
-/design-update effect-type-registry observability.md --completeness=80
+/design-docs:design-update effect-type-registry observability.md --completeness=80
 ```
 
 **Mark as synced:**
 
 ```bash
-/design-update effect-type-registry cache-optimization.md --sync
+/design-docs:design-update effect-type-registry cache-optimization.md --sync
 ```
 
 **Update section:**
 
 ```bash
-/design-update rspress-plugin-api-extractor type-loading.md --section=Overview
+/design-docs:design-update rspress-plugin-api-extractor type-loading.md --section=Overview
 ```
 
 **Bulk update:**
 
 ```bash
-/design-update effect-type-registry observability.md \
+/design-docs:design-update effect-type-registry observability.md \
   --status=current --completeness=90 --sync
 ```
 
@@ -128,17 +128,19 @@ Quick reference for alignment:
 | :----------- | :-------------- |
 | 0-20 | stub |
 | 21-60 | draft |
-| 61-90 | current, needs-review |
+| 61-90 | draft (pre-implementation), current, needs-review |
 | 91-100 | current |
+
+A `draft` at 61-90% is valid for pre-implementation designs — the design is fleshed out but the code is not yet written. Never recommend promoting a pre-implementation draft to `current`; `current` asserts the doc reflects implemented code, not that the design is finished.
 
 ## Integration
 
 Use this skill with:
 
-- `/design-validate` - Validate after updates
-- `/design-sync` - Sync with codebase before updating
-- `/design-review` - Review to identify needed updates
-- `/design-init` - Create before updating
+- `/design-docs:design-validate` - Validate after updates
+- `/design-docs:design-sync` - Sync with codebase before updating
+- `/design-docs:design-review` - Review to identify needed updates
+- `/design-docs:design-init` - Create before updating
 
 ## Success Criteria
 

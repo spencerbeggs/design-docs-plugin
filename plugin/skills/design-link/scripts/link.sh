@@ -140,6 +140,76 @@ fm_field() {
 		grep -E "^${key}:" | head -1 | sed -E "s/^${key}:[[:space:]]*//; s/[[:space:]]*$//" || true
 }
 
+# --- heading anchors ---------------------------------------------------------
+
+# Print each ATX heading's rendered text, one per line, skipping fenced code
+# blocks so headings that appear inside ``` fences aren't mistaken for real
+# headings.
+extract_headings() {
+	local file="$1"
+	awk '
+		/^```/ { fence = !fence; next }
+		fence { next }
+		/^#+[[:space:]]/ {
+			line = $0
+			sub(/^#+[[:space:]]+/, "", line)
+			sub(/[[:space:]]+#+[[:space:]]*$/, "", line)
+			sub(/[[:space:]]+$/, "", line)
+			print line
+		}
+	' "$file"
+}
+
+# GitHub's heading-anchor algorithm: lowercase, drop everything that is not a
+# letter, digit, space, or hyphen (this is what strips `@`, backticks, `.`,
+# `/`, `(`, `)`, `:`, `,`, etc.), then turn whitespace runs into hyphens.
+slugify_heading() {
+	local text="$1" slug
+	slug="$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')"
+	slug="$(printf '%s' "$slug" | sed -E 's/[^a-z0-9 -]//g')"
+	slug="$(printf '%s' "$slug" | sed -E 's/[[:space:]]+/-/g')"
+	printf '%s' "$slug"
+}
+
+# All heading slugs for a file, in document order, with GitHub's -1, -2, …
+# duplicate-suffix behavior applied.
+heading_slugs() {
+	local file="$1" heading base slug count
+	local seen=$'\x1e'
+	while IFS= read -r heading; do
+		[ -n "$heading" ] || continue
+		base="$(slugify_heading "$heading")"
+		slug="$base"
+		count=1
+		while [[ "$seen" == *$'\x1e'"$slug"$'\x1e'* ]]; do
+			slug="${base}-${count}"
+			count=$((count + 1))
+		done
+		seen+="${slug}"$'\x1e'
+		printf '%s\n' "$slug"
+	done < <(extract_headings "$file")
+}
+
+file_has_anchor() { # file anchor
+	local file="$1" anchor="$2" slugs
+	[ -f "$file" ] || return 1
+	# Capture into a variable first and match via a here-string, not a live
+	# pipe: `grep -q` exits as soon as it finds a match, and under
+	# `pipefail` a SIGPIPE-killed upstream producer (heading_slugs) would
+	# otherwise make the whole pipeline look like a failed lookup even
+	# though the anchor matched.
+	slugs="$(heading_slugs "$file")"
+	grep -Fxq "$anchor" <<<"$slugs"
+}
+
+# Print raw `](...)` link targets that contain a '#', anchor intact (matches
+# both same-file `(#anchor)` links and cross-file `(path.md#anchor)` links).
+extract_anchor_refs() {
+	local file="$1"
+	grep -oE '\]\([^)]*#[^)]*\)' "$file" 2>/dev/null |
+		sed -E 's/^\]\(//; s/\)$//' || true
+}
+
 # --- discover modules ------------------------------------------------------
 
 discover_modules() {
@@ -183,6 +253,8 @@ is_node() { printf '%s' "$NODES" | grep -Fxq "$1"; }
 EDGES=""
 # BROKEN lines: from<TAB>intended-target
 BROKEN=""
+# BROKEN_ANCHORS lines: from<TAB>display-target(empty for same-file)<TAB>anchor
+BROKEN_ANCHORS=""
 
 collect_for_doc() {
 	local src="$1" docdir ref resolved
@@ -207,6 +279,36 @@ collect_for_doc() {
 	add_refs related < <(extract_fm_list "$PROJECT_DIR/$src" related)
 	add_refs dependency < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
 	add_refs content-link < <(extract_content_links "$PROJECT_DIR/$src")
+
+	check_anchor_refs "$src" "$docdir"
+}
+
+# Validate every `#anchor` / `path.md#anchor` link in a doc against the real
+# heading slugs of its target file (same doc for bare `#anchor` links).
+#
+# `to` is always populated (never left empty) even for same-file anchors —
+# tab is an IFS-whitespace character, so a genuinely empty field between two
+# tabs gets squeezed away by bash's field splitting on read, shifting every
+# field after it. Same-file links are detected downstream by `to == from`.
+check_anchor_refs() {
+	local src="$1" docdir="$2" raw path anchor target target_file
+	while IFS= read -r raw; do
+		[ -n "$raw" ] || continue
+		path="${raw%%#*}"
+		anchor="${raw#*#}"
+		[ -n "$anchor" ] || continue
+		if [ -z "$path" ]; then
+			target="$src"
+		else
+			target="$(resolve_ref "$docdir" "$path")"
+			[ -n "$target" ] || continue
+			is_node "$target" || continue # file-existence already reported via BROKEN
+		fi
+		target_file="$PROJECT_DIR/$target"
+		if ! file_has_anchor "$target_file" "$anchor"; then
+			BROKEN_ANCHORS+="${src}	${target}	${anchor}"$'\n'
+		fi
+	done < <(extract_anchor_refs "$PROJECT_DIR/$src")
 }
 
 # Iterate only the in-scope module(s) as edge sources.
@@ -226,6 +328,7 @@ done <<<"$ALL_MODULES"
 # Dedupe.
 EDGES="$(printf '%s' "$EDGES" | grep -v '^$' | sort -u || true)"
 BROKEN="$(printf '%s' "$BROKEN" | grep -v '^$' | sort -u || true)"
+BROKEN_ANCHORS="$(printf '%s' "$BROKEN_ANCHORS" | grep -v '^$' | sort -u || true)"
 
 edge_exists() { # from to
 	printf '%s\n' "$EDGES" | grep -qE "^$1	$2	" 2>/dev/null
@@ -261,6 +364,7 @@ count_lines() {
 DOC_COUNT="$(count_lines "$SCOPE_NODES")"
 EDGE_COUNT="$(count_lines "$EDGES")"
 BROKEN_COUNT="$(count_lines "$BROKEN")"
+BROKEN_ANCHOR_COUNT="$(count_lines "$BROKEN_ANCHORS")"
 
 ORPHANS=""
 while IFS= read -r n; do
@@ -283,6 +387,7 @@ emit_text() {
 	echo "- Documents: ${DOC_COUNT}"
 	echo "- References: ${EDGE_COUNT}"
 	echo "- Broken references: ${BROKEN_COUNT}"
+	echo "- Broken anchors: ${BROKEN_ANCHOR_COUNT}"
 	echo "- Orphaned documents: ${ORPHAN_COUNT}"
 	echo ""
 
@@ -335,6 +440,22 @@ emit_text() {
 	fi
 	echo ""
 
+	echo "## Broken Anchors"
+	echo ""
+	if [ -z "$BROKEN_ANCHORS" ]; then
+		echo "_None._"
+	else
+		while IFS=$'\t' read -r from to anchor; do
+			[ -n "$from" ] || continue
+			if [ "$to" = "$from" ]; then
+				echo "- ${from} → #${anchor} (anchor missing)"
+			else
+				echo "- ${from} → ${to}#${anchor} (anchor missing)"
+			fi
+		done <<<"$BROKEN_ANCHORS"
+	fi
+	echo ""
+
 	echo "## Orphaned Documents"
 	echo ""
 	if [ -z "$ORPHANS" ]; then
@@ -352,22 +473,31 @@ json_array() { # turns newline list on stdin into a JSON string array
 }
 
 emit_json() {
-	local nodes_json edges_json broken_json orphans_json
-	nodes_json="$(printf '%s' "$SCOPE_NODES" | grep -v '^$' | json_array)"
-	orphans_json="$(printf '%s' "$ORPHANS" | grep -v '^$' | json_array)"
+	# Every substitution below ends in `|| true`: under `set -o pipefail`,
+	# `grep -v '^$'` exits 1 when its input is empty (a legitimately empty
+	# list — e.g. no broken references), and without the guard that
+	# non-zero status propagates through the pipe and `set -e` would abort
+	# the whole script even though jq already produced a valid `[]`.
+	local nodes_json edges_json broken_json broken_anchors_json orphans_json
+	nodes_json="$(printf '%s' "$SCOPE_NODES" | grep -v '^$' | json_array || true)"
+	orphans_json="$(printf '%s' "$ORPHANS" | grep -v '^$' | json_array || true)"
 	edges_json="$(printf '%s' "$EDGES" | grep -v '^$' |
 		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"type\":\"%s\"}\n", $1, $2, $3}' |
-		jq -s .)"
+		jq -s . || true)"
 	broken_json="$(printf '%s' "$BROKEN" | grep -v '^$' |
 		awk -F'\t' 'NF>=2 {printf "{\"from\":\"%s\",\"to\":\"%s\"}\n", $1, $2}' |
-		jq -s .)"
+		jq -s . || true)"
+	broken_anchors_json="$(printf '%s' "$BROKEN_ANCHORS" | grep -v '^$' |
+		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"anchor\":\"%s\"}\n", $1, $2, $3}' |
+		jq -s . || true)"
 	jq -n \
 		--arg scope "$MODULE_ARG" \
 		--argjson nodes "$nodes_json" \
 		--argjson edges "$edges_json" \
 		--argjson broken "$broken_json" \
+		--argjson brokenAnchors "$broken_anchors_json" \
 		--argjson orphans "$orphans_json" \
-		'{scope: $scope, summary: {documents: ($nodes|length), references: ($edges|length), broken: ($broken|length), orphaned: ($orphans|length)}, nodes: $nodes, edges: $edges, broken: $broken, orphaned: $orphans}'
+		'{scope: $scope, summary: {documents: ($nodes|length), references: ($edges|length), broken: ($broken|length), brokenAnchors: ($brokenAnchors|length), orphaned: ($orphans|length)}, nodes: $nodes, edges: $edges, broken: $broken, brokenAnchors: $brokenAnchors, orphaned: $orphans}'
 }
 
 emit_mermaid() {

@@ -11,7 +11,7 @@ files in your repository.
 **Command:**
 
 ```bash
-/context-audit
+/design-docs:context-audit
 ```
 
 **Expected Output:**
@@ -73,7 +73,7 @@ files in your repository.
 **Findings:**
 
 1. [HIGH] Exceeds line limit by 27% (380/300 lines)
-   - Use /context-split to split into child files
+   - Use /design-docs:context-split to split into child files
 2. [MEDIUM] Verbose explanations could be more concise
 3. [LOW] Consider adding more design doc pointers
 
@@ -83,12 +83,12 @@ files in your repository.
 
 1. Add design doc pointer in root CLAUDE.md for architecture
    - File: CLAUDE.md
-   - Skill: /context-update
+   - Skill: /design-docs:context-update
    - Impact: Better context separation
 
 2. Split rspress-plugin-api-extractor/CLAUDE.md
    - File: pkgs/rspress-plugin-api-extractor/CLAUDE.md
-   - Skill: /context-split --strategy=topic
+   - Skill: /design-docs:context-split --strategy=topic
    - Impact: Reduces token usage, improves organization
 
 ### Medium Priority (Nice to Have)
@@ -119,7 +119,7 @@ strict validation.
 **Command:**
 
 ```bash
-/context-audit CLAUDE.md --strict=false
+/design-docs:context-audit CLAUDE.md --strict=false
 ```
 
 **Expected Output:**
@@ -162,7 +162,7 @@ strict validation.
 ### Medium Priority (Nice to Have)
 
 1. Shorten code example (lines 120-135)
-   - Skill: /context-update
+   - Skill: /design-docs:context-update
    - Impact: Minor token savings
 
 ## Quality Metrics
@@ -184,7 +184,7 @@ strict validation.
 **Command:**
 
 ```bash
-/context-audit pkgs/effect-type-registry/CLAUDE.md
+/design-docs:context-audit pkgs/effect-type-registry/CLAUDE.md
 ```
 
 **Expected Output:**
@@ -251,7 +251,7 @@ strict validation.
 **Command:**
 
 ```bash
-/context-audit pkgs/my-package/CLAUDE.md
+/design-docs:context-audit pkgs/my-package/CLAUDE.md
 ```
 
 **Expected Output:**
@@ -312,19 +312,19 @@ strict validation.
 
 1. Split file to reduce line count
    - File: pkgs/my-package/CLAUDE.md
-   - Skill: /context-split --strategy=topic
+   - Skill: /design-docs:context-split --strategy=topic
    - Impact: Critical - brings under limit, improves efficiency
 
 2. Fix broken design doc pointer
    - File: pkgs/my-package/CLAUDE.md (line 78)
    - Fix: Create .claude/design/my-package/missing.md or update pointer
-   - Skill: /design-init or /context-update
+   - Skill: /design-docs:design-init or /design-docs:context-update
    - Impact: Critical - prevents confusion
 
 ### High Priority (Should Fix)
 
 1. Add design doc pointers for architecture section
-   - Skill: /design-init my-package architecture
+   - Skill: /design-docs:design-init my-package architecture
    - Then update CLAUDE.md with pointer
 
 2. Replace code examples with design doc links
@@ -347,17 +347,17 @@ strict validation.
 ❌ Critical issues found! You must:
 
 1. Split pkgs/my-package/CLAUDE.md immediately
-   - Run: /context-split pkgs/my-package/CLAUDE.md --strategy=topic
+   - Run: /design-docs:context-split pkgs/my-package/CLAUDE.md --strategy=topic
 
 2. Fix broken design doc pointer
    - Create missing.md or update reference
 
 3. Create design docs for detailed content
-   - Run: /design-init my-package architecture
+   - Run: /design-docs:design-init my-package architecture
    - Move implementation details there
 
 4. Re-run audit after fixes
-   - Run: /context-audit pkgs/my-package/CLAUDE.md
+   - Run: /design-docs:context-audit pkgs/my-package/CLAUDE.md
 
 Would you like help fixing these issues?
 ```
@@ -369,7 +369,7 @@ Would you like help fixing these issues?
 **Command:**
 
 ```bash
-/context-audit --check-refs=false
+/design-docs:context-audit --check-refs=false
 ```
 
 **Expected Output:**
@@ -406,7 +406,7 @@ Would you like help fixing these issues?
 **Command:**
 
 ```bash
-/context-audit --output=.claude/reports/context-audit-2026-01-17.md
+/design-docs:context-audit --output=.claude/reports/context-audit-2026-01-17.md
 ```
 
 **Expected Output:**
@@ -433,30 +433,30 @@ After running an audit, you typically want to:
 
 ```bash
 # Split oversized file
-/context-split pkgs/my-package/CLAUDE.md --strategy=topic
+/design-docs:context-split pkgs/my-package/CLAUDE.md --strategy=topic
 
 # Fix broken pointer by creating design doc
-/design-init my-package missing-topic
+/design-docs:design-init my-package missing-topic
 ```
 
 ### Address High Priority Issues
 
 ```bash
 # Update context file with design doc pointers
-/context-update CLAUDE.md
+/design-docs:context-update CLAUDE.md
 
 # Review and improve specific file
-/context-review pkgs/my-package/CLAUDE.md
+/design-docs:context-review pkgs/my-package/CLAUDE.md
 ```
 
 ### Verify Fixes
 
 ```bash
 # Re-run audit after making changes
-/context-audit
+/design-docs:context-audit
 
 # Validate specific file
-/context-validate pkgs/my-package/CLAUDE.md
+/design-docs:context-validate pkgs/my-package/CLAUDE.md
 ```
 
 ## Tips for Best Results

@@ -23,19 +23,19 @@ audit reports with prioritized recommendations.
 **Audit all modules:**
 
 ```bash
-/design-audit
+/design-docs:design-audit
 ```
 
 **Audit specific module:**
 
 ```bash
-/design-audit effect-type-registry
+/design-docs:design-audit effect-type-registry
 ```
 
 **Quick audit (non-strict):**
 
 ```bash
-/design-audit --strict=false
+/design-docs:design-audit --strict=false
 ```
 
 ## Parameters
@@ -125,7 +125,7 @@ INFO: No design documents found to audit
 
 Scope: {module}
 
-This is normal for new modules. Run /design-init to create your first
+This is normal for new modules. Run /design-docs:design-init to create your first
 design doc.
 ```
 
@@ -142,11 +142,11 @@ No issues found.
 
 Works well with:
 
-- `/design-validate` - Run validation before full audit
-- `/design-review` - Review issues found in audit
-- `/design-sync` - Fix sync issues identified
-- `/design-update` - Address content quality issues
-- `/design-report` - Compare audit with health report
+- `/design-docs:design-validate` - Run validation before full audit
+- `/design-docs:design-review` - Review issues found in audit
+- `/design-docs:design-sync` - Fix sync issues identified
+- `/design-docs:design-update` - Address content quality issues
+- `/design-docs:design-report` - Compare audit with health report
 
 ## Success Criteria
 

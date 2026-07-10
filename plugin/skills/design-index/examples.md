@@ -121,7 +121,7 @@ Documents grouped by update recency (This Week, This Month, Older).
 **Input:**
 
 ```bash
-/design-index new-module
+/design-docs:design-index new-module
 ```
 
 **Output:**
@@ -133,7 +133,7 @@ Module: new-module
 Path: .claude/design/new-module
 
 This module has no design documentation yet.
-Run /design-init to create your first design doc.
+Run /design-docs:design-init to create your first design doc.
 ```
 
 ### Invalid Organization Method
@@ -141,7 +141,7 @@ Run /design-init to create your first design doc.
 **Input:**
 
 ```bash
-/design-index module --organize-by=invalid
+/design-docs:design-index module --organize-by=invalid
 ```
 
 **Output:**
@@ -152,5 +152,5 @@ ERROR: Invalid organization method
 Provided: invalid
 Valid options: category, status, alphabetical, date
 
-Example: /design-index effect-type-registry --organize-by=category
+Example: /design-docs:design-index effect-type-registry --organize-by=category
 ```

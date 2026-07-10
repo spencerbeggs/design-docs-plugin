@@ -679,6 +679,6 @@ Monitor docs and auto-regenerate:
 # Watch for changes
 inotifywait -m .claude/design/ -e modify,create,delete |
 while read path action file; do
-  /design-index ${module}
+  /design-docs:design-index ${module}
 done
 ~~~

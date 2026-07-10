@@ -24,25 +24,25 @@ reports with prioritized recommendations.
 **Audit all context files:**
 
 ```bash
-/context-audit
+/design-docs:context-audit
 ```
 
 **Audit specific file:**
 
 ```bash
-/context-audit CLAUDE.md
+/design-docs:context-audit CLAUDE.md
 ```
 
 **Audit package context:**
 
 ```bash
-/context-audit pkgs/effect-type-registry/CLAUDE.md
+/design-docs:context-audit pkgs/effect-type-registry/CLAUDE.md
 ```
 
 **Quick audit (non-strict):**
 
 ```bash
-/context-audit --strict=false
+/design-docs:context-audit --strict=false
 ```
 
 ## Parameters
@@ -127,8 +127,8 @@ The audit passes when:
 
 ## Related Skills
 
-- `/context-validate` - Basic structure and formatting validation
-- `/context-review` - Quality and efficiency review
-- `/context-update` - Update context files based on audit findings
-- `/context-split` - Split large files that exceed limits
-- `/design-audit` - Similar comprehensive audit for design docs
+- `/design-docs:context-validate` - Basic structure and formatting validation
+- `/design-docs:context-review` - Quality and efficiency review
+- `/design-docs:context-update` - Update context files based on audit findings
+- `/design-docs:context-split` - Split large files that exceed limits
+- `/design-docs:design-audit` - Similar comprehensive audit for design docs

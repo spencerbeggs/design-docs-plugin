@@ -5,7 +5,7 @@
 ### List All Plans
 
 ```bash
-/plan-list
+/design-docs:plan-list
 ```
 
 **Output:**
@@ -41,7 +41,7 @@ Health Summary:
 ### List by Status
 
 ```bash
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 ```
 
 **Output:**
@@ -69,7 +69,7 @@ Progress Summary:
 ### List by Module
 
 ```bash
-/plan-list --module=effect-type-registry
+/design-docs:plan-list --module=effect-type-registry
 ```
 
 **Output:**
@@ -102,7 +102,7 @@ Module Health:
 ### Multiple Statuses
 
 ```bash
-/plan-list --status=ready,in-progress
+/design-docs:plan-list --status=ready,in-progress
 ```
 
 **Output:**
@@ -124,7 +124,7 @@ Recommendation: Start design-linking-phase-1 (all prerequisites met)
 ### Filter by Owner
 
 ```bash
-/plan-list --owner=@spencerbeggs
+/design-docs:plan-list --owner=@spencerbeggs
 ```
 
 **Output:**
@@ -144,7 +144,7 @@ Workload Summary:
 ### Show Stale Plans
 
 ```bash
-/plan-list --stale
+/design-docs:plan-list --stale
 ```
 
 **Output:**
@@ -171,7 +171,7 @@ Recommendations:
 ### Summary Format (Default)
 
 ```bash
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 ```
 
 **Output:**
@@ -193,7 +193,7 @@ Clean, compact view for quick scanning.
 ### Detailed Format
 
 ```bash
-/plan-list --status=in-progress --format=detailed
+/design-docs:plan-list --status=in-progress --format=detailed
 ```
 
 **Output:**
@@ -272,7 +272,7 @@ Full metadata and phase details for deep inspection.
 ### Timeline Format
 
 ```bash
-/plan-list --status=in-progress --format=timeline
+/design-docs:plan-list --status=in-progress --format=timeline
 ```
 
 **Output:**
@@ -305,7 +305,7 @@ Visual timeline for schedule tracking.
 ### Sort by Update Date (Default)
 
 ```bash
-/plan-list --sort=updated --order=desc
+/design-docs:plan-list --sort=updated --order=desc
 ```
 
 Shows most recently updated plans first.
@@ -313,7 +313,7 @@ Shows most recently updated plans first.
 ### Sort by Progress
 
 ```bash
-/plan-list --status=in-progress --sort=progress --order=asc
+/design-docs:plan-list --status=in-progress --sort=progress --order=asc
 ```
 
 **Output:**
@@ -332,7 +332,7 @@ Recommendation: Focus on low-progress plans to prevent stalling
 ### Sort by Creation Date
 
 ```bash
-/plan-list --sort=created --order=desc
+/design-docs:plan-list --sort=created --order=desc
 ```
 
 Shows newest plans first.
@@ -340,7 +340,7 @@ Shows newest plans first.
 ### Sort by Name
 
 ```bash
-/plan-list --sort=name --order=asc
+/design-docs:plan-list --sort=name --order=asc
 ```
 
 Alphabetical order for browsing.
@@ -350,7 +350,7 @@ Alphabetical order for browsing.
 ### Combine Filters
 
 ```bash
-/plan-list --status=in-progress \
+/design-docs:plan-list --status=in-progress \
   --module=effect-type-registry \
   --owner=@spencerbeggs
 ```
@@ -370,7 +370,7 @@ Filtered Plans (2):
 ### Find Blocked Plans
 
 ```bash
-/plan-list --status=blocked
+/design-docs:plan-list --status=blocked
 ```
 
 **Output:**
@@ -394,7 +394,7 @@ Recommendation: Follow up on blocker status weekly
 ### Find Ready Plans
 
 ```bash
-/plan-list --status=ready
+/design-docs:plan-list --status=ready
 ```
 
 **Output:**
@@ -424,7 +424,7 @@ Recommendation: Start design-linking-phase-1 (highest priority)
 ### Check All Plans Health
 
 ```bash
-/plan-list --format=detailed
+/design-docs:plan-list --format=detailed
 ```
 
 **Output includes health section for each plan:**
@@ -443,7 +443,7 @@ Health:
 ### Find At-Risk Plans
 
 ```bash
-/plan-list --status=in-progress --stale
+/design-docs:plan-list --status=in-progress --stale
 ```
 
 Shows in-progress plans that haven't been updated recently (red flag).
@@ -452,7 +452,7 @@ Shows in-progress plans that haven't been updated recently (red flag).
 
 ```bash
 # Check all active work
-/plan-list --status=ready,in-progress,blocked --format=detailed
+/design-docs:plan-list --status=ready,in-progress,blocked --format=detailed
 ```
 
 Comprehensive review of all active plans with health indicators.
@@ -462,7 +462,7 @@ Comprehensive review of all active plans with health indicators.
 ### List Active and Archived
 
 ```bash
-/plan-list --include-archived
+/design-docs:plan-list --include-archived
 ```
 
 **Output:**
@@ -485,7 +485,7 @@ Archived Plans (7):
 ### Count Archived Plans
 
 ```bash
-/plan-list --include-archived --status=completed
+/design-docs:plan-list --include-archived --status=completed
 ```
 
 Shows all completed plans, including archived ones.
@@ -496,10 +496,10 @@ Shows all completed plans, including archived ones.
 
 ```bash
 # Check what's in progress
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 
 # Check what's ready to start
-/plan-list --status=ready
+/design-docs:plan-list --status=ready
 ```
 
 Helps prioritize work for the day.
@@ -508,33 +508,33 @@ Helps prioritize work for the day.
 
 ```bash
 # Review all active work
-/plan-list --status=ready,in-progress,blocked --format=detailed
+/design-docs:plan-list --status=ready,in-progress,blocked --format=detailed
 
 # Check for stale plans
-/plan-list --stale
+/design-docs:plan-list --stale
 
 # Review completed work
-/plan-list --status=completed --sort=completed --order=desc
+/design-docs:plan-list --status=completed --sort=completed --order=desc
 ```
 
 ### Module Review
 
 ```bash
 # Check plans for specific module
-/plan-list --module=effect-type-registry --format=detailed
+/design-docs:plan-list --module=effect-type-registry --format=detailed
 
 # Find module-specific issues
-/plan-list --module=effect-type-registry --stale
+/design-docs:plan-list --module=effect-type-registry --stale
 ```
 
 ### Owner Workload
 
 ```bash
 # Check personal workload
-/plan-list --owner=@spencerbeggs --status=in-progress
+/design-docs:plan-list --owner=@spencerbeggs --status=in-progress
 
 # Find ready plans to start
-/plan-list --owner=@spencerbeggs --status=ready
+/design-docs:plan-list --owner=@spencerbeggs --status=ready
 ```
 
 ## Empty Results
@@ -542,7 +542,7 @@ Helps prioritize work for the day.
 ### No Plans Match Filters
 
 ```bash
-/plan-list --status=blocked --module=effect-type-registry
+/design-docs:plan-list --status=blocked --module=effect-type-registry
 ```
 
 **Output:**
@@ -555,15 +555,15 @@ Filters Applied:
   Module: effect-type-registry
 
 Suggestions:
-  1. Remove status filter: /plan-list --module=effect-type-registry
-  2. Check other statuses: /plan-list --module=effect-type-registry
-  3. List all plans: /plan-list
+  1. Remove status filter: /design-docs:plan-list --module=effect-type-registry
+  2. Check other statuses: /design-docs:plan-list --module=effect-type-registry
+  3. List all plans: /design-docs:plan-list
 ```
 
 ### No Plans Exist
 
 ```bash
-/plan-list
+/design-docs:plan-list
 ```
 
 **Output (when .claude/plans/ is empty):**
@@ -574,7 +574,7 @@ No plans found
 The plans directory is empty.
 
 Get started:
-  1. Create your first plan: /plan-create "My First Feature"
+  1. Create your first plan: /design-docs:plan-create "My First Feature"
   2. See templates: ls .claude/plans/_templates/
   3. Read plan docs: cat .claude/design/design-doc-system/...
 ```
@@ -584,7 +584,7 @@ Get started:
 ### Summary Statistics
 
 ```bash
-/plan-list
+/design-docs:plan-list
 ```
 
 **Top of output always shows statistics:**
@@ -615,7 +615,7 @@ Last Week Activity:
 ### Quick Status Check
 
 ```bash
-/plan-list --status=in-progress
+/design-docs:plan-list --status=in-progress
 ```
 
 Fastest way to see what's actively being worked on.
@@ -623,7 +623,7 @@ Fastest way to see what's actively being worked on.
 ### Find Work to Do
 
 ```bash
-/plan-list --status=ready --module=my-module
+/design-docs:plan-list --status=ready --module=my-module
 ```
 
 Find ready plans for your current focus area.
@@ -631,7 +631,7 @@ Find ready plans for your current focus area.
 ### Quick Health Check
 
 ```bash
-/plan-list --stale
+/design-docs:plan-list --stale
 ```
 
 Regular health check to prevent abandoned work.
@@ -639,7 +639,7 @@ Regular health check to prevent abandoned work.
 ### Timeline Planning
 
 ```bash
-/plan-list --status=in-progress,ready --format=timeline
+/design-docs:plan-list --status=in-progress,ready --format=timeline
 ```
 
 Visual timeline for sprint planning.
@@ -647,7 +647,7 @@ Visual timeline for sprint planning.
 ### Export to JSON
 
 ```bash
-/plan-list --format=json > plans.json
+/design-docs:plan-list --format=json > plans.json
 ```
 
 Machine-readable output for tooling integration.

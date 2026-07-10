@@ -11,8 +11,8 @@ All supported update operations for design documentation files.
 **Valid Values:**
 
 - `stub` - Initial state, outline only (0-20% complete)
-- `draft` - Work in progress (21-60% complete)
-- `current` - Up-to-date documentation (61-100% complete)
+- `draft` - Work in progress (21-90% complete; the 61-90 band covers pre-implementation designs whose code is not yet written)
+- `current` - Up-to-date documentation reflecting implemented code (61-100% complete)
 - `needs-review` - Ready for review
 - `archived` - No longer current, superseded or obsolete
 
@@ -35,10 +35,10 @@ updated: {current-date}
 | :----------- | :-------------- |
 | 0-20 | stub |
 | 21-60 | draft |
-| 61-90 | current, needs-review |
+| 61-90 | draft (pre-implementation), current, needs-review |
 | 91-100 | current |
 
-**Recommendation:** If status doesn't match completeness, suggest updating both.
+**Recommendation:** If status doesn't match completeness, suggest updating both — except for pre-implementation drafts: a detailed design (61-90%) whose code is not yet written stays `draft`, and promotion to `current` should not be suggested.
 
 ### Update Completeness
 
@@ -79,7 +79,7 @@ updated: {current-date}
 
 **Use Cases:**
 
-- After running `/design-sync`
+- After running `/design-docs:design-sync`
 - After manually verifying accuracy
 - After code changes that don't require doc changes
 
@@ -355,7 +355,7 @@ After successful update, provide summary:
 ## Next Steps
 
 1. Review changes in the file
-2. Run `/design-validate {module}` to check for issues
+2. Run `/design-docs:design-validate {module}` to check for issues
 3. Consider updating related documentation
 4. If significant changes, update CLAUDE.md reference
 ```

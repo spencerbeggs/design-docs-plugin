@@ -23,10 +23,15 @@
 #       Submit a formal APPROVE review on the PR. Use only when all
 #       previously reported issues are resolved and no new issues exist.
 #
-# Required environment (one of):
+# Authentication (first match wins):
 #   DESIGN_DOCS_GH_TOKEN  Plugin-scoped GitHub token (preferred — set by
 #                         session-start.sh from GITHUB_PERSONAL_ACCESS_TOKEN)
 #   GH_TOKEN              Fallback (user's shell token; do not rely on this)
+#   gh keyring            Fallback when no env token is set — credentials
+#                         from `gh auth login`. Every gh call scrubs stale
+#                         env tokens so the keyring entry actually wins.
+#
+# Required environment:
 #   GITHUB_REPOSITORY     "owner/repo" (auto under GitHub Actions)
 #
 # Optional environment:
@@ -282,7 +287,7 @@ Usage:
 
 Environment:
   DESIGN_DOCS_GH_TOKEN  preferred GitHub token (set by session-start hook)
-  GH_TOKEN              fallback token
+  GH_TOKEN              fallback token (gh keyring auth used when neither is set)
   GITHUB_REPOSITORY     "owner/repo" (auto under Actions)
   APP_BOT_NAME          required for minimize-old-summaries
   CLAUDE_COMMENT_ID     sticky comment id to exclude from minimization
@@ -290,7 +295,14 @@ EOF
 	exit 1
 }
 
-[[ -z "$(_resolve_token)" ]] && err "DESIGN_DOCS_GH_TOKEN (or GH_TOKEN) is required"
+# No env token is fine as long as gh keyring auth exists: _gh's empty
+# GH_TOKEN= assignment scrubs stale env tokens on every call, so gh falls
+# back to the credentials `gh auth login` stored. Probe with the same env
+# hygiene the call sites use so the check and the writes see one identity.
+if [[ -z "$(_resolve_token)" ]]; then
+	GH_TOKEN='' GITHUB_TOKEN='' gh auth status &>/dev/null ||
+		err "No GitHub auth: set DESIGN_DOCS_GH_TOKEN (or GH_TOKEN), or run 'gh auth login'"
+fi
 
 cmd="${1:-}"
 shift || true

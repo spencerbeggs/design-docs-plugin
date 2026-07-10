@@ -5,7 +5,7 @@
 ### Create Simple Plan
 
 ```bash
-/plan-create "My Feature Implementation"
+/design-docs:plan-create "My Feature Implementation"
 ```
 
 **Output:**
@@ -46,7 +46,7 @@ categories: [feature]
 ### Create Plan with Module
 
 ```bash
-/plan-create "Add Caching Layer" --module=effect-type-registry
+/design-docs:plan-create "Add Caching Layer" --module=effect-type-registry
 ```
 
 **Output:**
@@ -79,7 +79,7 @@ progress: 0
 ### Create Plan with Design Doc Link
 
 ```bash
-/plan-create "Implement Observability" \
+/design-docs:plan-create "Implement Observability" \
   --module=effect-type-registry \
   --implements=effect-type-registry/observability.md
 ```
@@ -119,7 +119,7 @@ modules:
 ### Create with Custom Name
 
 ```bash
-/plan-create "Phase 2: Advanced Features" \
+/design-docs:plan-create "Phase 2: Advanced Features" \
   --name=advanced-features-phase-2
 ```
 
@@ -139,7 +139,7 @@ Useful when title has special characters or doesn't convert well.
 ### Create Refactoring Plan
 
 ```bash
-/plan-create "Refactor Type Loading System" --type=refactor
+/design-docs:plan-create "Refactor Type Loading System" --type=refactor
 ```
 
 **Output:**
@@ -162,7 +162,7 @@ Creating plan: refactor-type-loading-system
 ### Create Documentation Plan
 
 ```bash
-/plan-create "Write API Documentation" --type=docs
+/design-docs:plan-create "Write API Documentation" --type=docs
 ```
 
 **Output:**
@@ -185,7 +185,7 @@ Creating plan: write-api-documentation
 ### Create with All Metadata
 
 ```bash
-/plan-create "Cache Optimization" \
+/design-docs:plan-create "Cache Optimization" \
   --module=effect-type-registry \
   --implements=effect-type-registry/cache-optimization.md \
   --owner=@spencerbeggs \
@@ -229,7 +229,7 @@ progress: 0
 ### Plan Already Exists
 
 ```bash
-/plan-create "Existing Feature"
+/design-docs:plan-create "Existing Feature"
 ```
 
 **Output:**
@@ -243,14 +243,14 @@ Created: 2026-01-15
 
 Options:
   1. Use different name: --name=existing-feature-v2
-  2. Update existing: /plan-update existing-feature
+  2. Update the existing plan by editing its frontmatter directly (status, progress)
   3. Archive old plan first
 ```
 
 ### Invalid Module
 
 ```bash
-/plan-create "New Feature" --module=nonexistent-module
+/design-docs:plan-create "New Feature" --module=nonexistent-module
 ```
 
 **Output:**
@@ -271,7 +271,7 @@ Fix: Use --module={valid-module} or omit --module flag
 ### Invalid Design Doc Path
 
 ```bash
-/plan-create "Feature" \
+/design-docs:plan-create "Feature" \
   --implements=effect-type-registry/nonexistent.md
 ```
 
@@ -293,7 +293,7 @@ Fix: Verify path or omit --implements flag
 ### Invalid Name Format
 
 ```bash
-/plan-create "Feature" --name="Invalid Name With Spaces"
+/design-docs:plan-create "Feature" --name="Invalid Name With Spaces"
 ```
 
 **Output:**
@@ -321,7 +321,7 @@ Fix: Use --name={valid-kebab-case} or omit --name to auto-generate
 ### Invalid Template Type
 
 ```bash
-/plan-create "Feature" --type=invalid
+/design-docs:plan-create "Feature" --type=invalid
 ```
 
 **Output:**
@@ -345,10 +345,10 @@ Fix: Use --type=feature|refactor|docs
 
 ```bash
 # Create design doc first
-/design-init effect-type-registry "Cache Optimization"
+/design-docs:design-init effect-type-registry "Cache Optimization"
 
 # Create implementation plan
-/plan-create "Cache Optimization Implementation" \
+/design-docs:plan-create "Cache Optimization Implementation" \
   --module=effect-type-registry \
   --implements=effect-type-registry/cache-optimization.md
 ```
@@ -363,27 +363,27 @@ Fix: Use --type=feature|refactor|docs
 
 ```bash
 # Create plan before coding
-/plan-create "Observability Phase 2" \
+/design-docs:plan-create "Observability Phase 2" \
   --module=effect-type-registry \
   --implements=effect-type-registry/observability.md \
   --estimated-effort="1-2 weeks"
 
 # Review plan
-/plan-validate observability-phase-2
+/design-docs:plan-validate observability-phase-2
 
-# Start work (updates status and dates)
-/plan-update observability-phase-2 --status=in-progress
+# Start work: edit the plan's frontmatter directly
+# (set status: in-progress and started: <today> in the plan file)
 ```
 
 ### Multi-Plan Feature
 
 ```bash
 # Large feature split into phases
-/plan-create "Type Loading - Phase 1" \
+/design-docs:plan-create "Type Loading - Phase 1" \
   --name=type-loading-phase-1 \
   --module=effect-type-registry
 
-/plan-create "Type Loading - Phase 2" \
+/design-docs:plan-create "Type Loading - Phase 2" \
   --name=type-loading-phase-2 \
   --module=effect-type-registry \
   --related-plans=type-loading-phase-1
@@ -409,13 +409,13 @@ After creating plan, edit to add:
 
 ```bash
 # Create plan
-/plan-create "My Feature"
+/design-docs:plan-create "My Feature"
 
 # Edit to add details
 code .claude/plans/my-feature.md
 
 # Validate after editing
-/plan-validate my-feature
+/design-docs:plan-validate my-feature
 ```
 
 ### Link from Design Doc
@@ -437,10 +437,7 @@ This creates bidirectional linking for discovery.
 When ready to start work:
 
 ```bash
-# Update status to in-progress
-/plan-update my-feature --status=in-progress
-
-# This will:
+# Update status to in-progress: edit the plan's frontmatter directly
 # - Set status to "in-progress"
 # - Set started date to current date
 # - Update updated date
@@ -452,18 +449,18 @@ When ready to start work:
 
 ```bash
 # Phase 1
-/plan-create "Feature X - Phase 1" \
+/design-docs:plan-create "Feature X - Phase 1" \
   --name=feature-x-phase-1 \
   --module=my-module
 
 # Phase 2 (references phase 1)
-/plan-create "Feature X - Phase 2" \
+/design-docs:plan-create "Feature X - Phase 2" \
   --name=feature-x-phase-2 \
   --module=my-module \
   --related-plans=feature-x-phase-1
 
 # Phase 3 (references phase 2)
-/plan-create "Feature X - Phase 3" \
+/design-docs:plan-create "Feature X - Phase 3" \
   --name=feature-x-phase-3 \
   --module=my-module \
   --related-plans=feature-x-phase-2
@@ -472,13 +469,13 @@ When ready to start work:
 ### Create Plans for All Design Docs
 
 ```bash
-# List design docs without plans
-/design-list --no-plans
+# List design docs without plans: compare .claude/design/ contents
+# against the implements: frontmatter of files in .claude/plans/
 
 # Create plan for each
-/plan-create "Implement Feature A" \
+/design-docs:plan-create "Implement Feature A" \
   --implements=my-module/feature-a.md
-/plan-create "Implement Feature B" \
+/design-docs:plan-create "Implement Feature B" \
   --implements=my-module/feature-b.md
 ```
 
@@ -523,7 +520,7 @@ Use `--estimated-effort` to track planning accuracy:
 Always validate after creation:
 
 ```bash
-/plan-create "My Feature" && /plan-validate my-feature
+/design-docs:plan-create "My Feature" && /design-docs:plan-validate my-feature
 ```
 
 Catches issues early before committing.

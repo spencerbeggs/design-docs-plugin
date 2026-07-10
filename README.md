@@ -1,18 +1,18 @@
 # design-docs
 
-A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans and user-facing documentation. Injects structured context into every Claude session and provides 48 skills and 3 specialized agents for working with design docs end-to-end.
+A Claude Code plugin for managing design documentation, CLAUDE.md context files, implementation plans and user-facing documentation. Injects structured context into every Claude session and provides 50 skills and 3 specialized agents for working with design docs end-to-end.
 
 ## What's included
 
 * **2 lifecycle hooks** -- SessionStart injects philosophy-first design doc context into each session and sets up branch session tags; PreToolUse auto-approves writes to `.claude/design/` and `.claude/plans/` so agents never get blocked mid-update. Both configurable via `DESIGN_DOCS_CONTEXT_ENABLED`.
-* **48 skills across 6 categories** -- covering design doc creation, context file management, documentation generation, user-facing docs, implementation planning and branch/session workflows
+* **50 skills across 6 categories** -- covering design doc creation, context file management, documentation generation, user-facing docs, implementation planning and branch/session workflows
 * **3 specialized agents** -- for orchestrating complex multi-step documentation workflows
 
 ## Skill categories
 
-### design-* (16 skills)
+### design-* (18 skills)
 
-Skills for creating and managing design documents: initializing new design docs, updating existing ones, reviewing for completeness, extracting requirements and more.
+Skills for creating and managing design documents: initializing new design docs, updating existing ones, validating structure and frontmatter, checking cross-references, grooming a module end-to-end, splitting oversized docs and more.
 
 ### context-* (6 skills)
 
@@ -60,6 +60,11 @@ claude plugin add ./plugin
 | Environment Variable | Type | Default | Description |
 | --- | --- | --- | --- |
 | `DESIGN_DOCS_CONTEXT_ENABLED` | `"true"` \| `"false"` | `"true"` | Enable/disable context injection at session start |
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | `string` | unset | Optional PAT the session-start hook maps to `DESIGN_DOCS_GH_TOKEN` for GitHub operations in the finalize/review/merge-prep workflows |
+
+### GitHub authentication
+
+The workflow skills (`/design-docs:finalize`, `/design-docs:review`, `/design-docs:merge-prep`) call the `gh` CLI. No token setup is needed if you are already logged in with `gh auth login`. Authentication resolves in this order: `DESIGN_DOCS_GH_TOKEN` (set automatically from `GITHUB_PERSONAL_ACCESS_TOKEN` at session start), then `GH_TOKEN`, then `GITHUB_TOKEN`, then the credentials stored by `gh auth login`. The plugin scrubs stale token environment variables at each call site, so a leftover `GH_TOKEN` in your shell never overrides your keyring identity.
 
 ## Development
 

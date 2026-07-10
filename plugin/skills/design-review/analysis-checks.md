@@ -58,7 +58,7 @@ Identify stale or neglected documentation:
 
 - `last-synced: never` for current/complete docs
 - Impact: May be outdated with codebase
-- Recommendation: Run `/design-sync` to verify accuracy
+- Recommendation: Run `/design-docs:design-sync` to verify accuracy
 
 **Old Updates:**
 

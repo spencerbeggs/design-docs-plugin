@@ -2,7 +2,7 @@
 name: context-doc-agent
 description: Maintain CLAUDE.md context files. Use for reviewing, updating, validating, and optimizing LLM context documentation.
 skills: context-validate, context-audit, context-review, context-update, context-split, context-docs-style
-tools: Read, Grep, Glob, Edit, Write, Bash
+tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage
 color: pink
 hooks:
   PreToolUse:
@@ -102,7 +102,7 @@ effectiveness.
 ### Child CLAUDE.md Files
 
 - **Maximum words**: 1000
-- **Created via**: `/context-split` when parent exceeds limits
+- **Created via**: `/design-docs:context-split` when parent exceeds limits
 - **Loaded via**: `@` syntax from parent file
 - **Purpose**: Deep-dive into specific topics
 
@@ -127,7 +127,7 @@ This enables:
 
 ### Pointer Integrity (`refs.json`)
 
-A pointer's path resolving does not mean its "Load when" guidance still matches the target. After writing or confirming the `@` pointers in a context file, record their target hashes in one shot with `bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>` (run from the repo root) — it walks every pointer, hashes each target body via `ref-hash.sh` (frontmatter excluded, so timestamp bumps never count as drift), and upserts `.claude/design/refs.json`. `context-validate` and `context-audit` then compare the recorded hash against the current one to flag pointers whose target drifted after an in-place edit. See the context-update skill for the record format. Keep `refs.json` committed.
+A pointer's path resolving does not mean its "Load when" guidance still matches the target. After writing or confirming the `@` pointers in a context file, record their target hashes in one shot with `bash "${CLAUDE_PLUGIN_ROOT}/lib/refs-record.sh" <CLAUDE.md>` (run from the repo root) — it walks every pointer, hashes each target body via `ref-hash.sh` (frontmatter excluded, so timestamp bumps never count as drift), and upserts `.claude/design/refs.json`. `design-docs:context-validate` and `design-docs:context-audit` then compare the recorded hash against the current one to flag pointers whose target drifted after an in-place edit. See the `design-docs:context-update` skill for the record format. Keep `refs.json` committed.
 
 ## Common Workflows
 
@@ -143,9 +143,9 @@ Review, audit, and validate in one workflow:
 ```bash
 # Request: "Check quality of pkgs/effect-type-registry/CLAUDE.md"
 # The agent will:
-# 1. Run context-review for quality assessment
-# 2. Run context-audit for health scoring
-# 3. Run context-validate for structural checks
+# 1. Run design-docs:context-review for quality assessment
+# 2. Run design-docs:context-audit for health scoring
+# 3. Run design-docs:context-validate for structural checks
 # All skills share file data, no redundant reads
 ```
 
@@ -162,11 +162,11 @@ Identify and fix context file issues:
 ```bash
 # Request: "Optimize pkgs/my-package/CLAUDE.md if needed"
 # The agent will:
-# 1. Run context-audit to identify issues
-# 2. Run context-review for improvement suggestions
-# 3. If oversized, suggest context-split strategy
-# 4. Apply context-update with recommendations
-# 5. Re-validate with context-validate
+# 1. Run design-docs:context-audit to identify issues
+# 2. Run design-docs:context-review for improvement suggestions
+# 3. If oversized, suggest design-docs:context-split strategy
+# 4. Apply design-docs:context-update with recommendations
+# 5. Re-validate with design-docs:context-validate
 ```
 
 **Benefits:**
@@ -179,7 +179,7 @@ Identify and fix context file issues:
 
 Before committing CLAUDE.md changes:
 
-1. **Validate structure**: `/context-validate [file]`
+1. **Validate structure**: `/design-docs:context-validate [file]`
 2. **Check word count**: Ensure under limit
 3. **Fix any errors**: Address validation failures
 4. **Commit changes**: Once validation passes
@@ -188,38 +188,38 @@ Before committing CLAUDE.md changes:
 
 Periodic context file maintenance:
 
-1. **Audit all files**: `/context-audit`
+1. **Audit all files**: `/design-docs:context-audit`
 2. **Review critical issues**: Address word limits, broken pointers
-3. **Update as needed**: `/context-update [file]`
-4. **Re-validate**: `/context-audit` to verify improvements
+3. **Update as needed**: `/design-docs:context-update [file]`
+4. **Re-validate**: `/design-docs:context-audit` to verify improvements
 
 ### Optimize Oversized File
 
 When a CLAUDE.md file exceeds word limits:
 
-1. **Audit the file**: `/context-audit [file]`
-2. **Review for extraction opportunities**: `/context-review [file]`
-3. **Split if necessary**: `/context-split [file] --strategy=topic`
-4. **Validate result**: `/context-validate [parent]` and validate children
+1. **Audit the file**: `/design-docs:context-audit [file]`
+2. **Review for extraction opportunities**: `/design-docs:context-review [file]`
+3. **Split if necessary**: `/design-docs:context-split [file] --strategy=topic`
+4. **Validate result**: `/design-docs:context-validate [parent]` and validate children
 5. **Test loading**: Ensure `@` pointers work correctly
 
 ### Update After Code Changes
 
 After significant code changes:
 
-1. **Review context file**: `/context-review [file]`
-2. **Update outdated sections**: `/context-update [file]`
+1. **Review context file**: `/design-docs:context-review [file]`
+2. **Update outdated sections**: `/design-docs:context-update [file]`
 3. **Add design doc pointers**: If new systems documented
-4. **Validate changes**: `/context-validate [file]`
+4. **Validate changes**: `/design-docs:context-validate [file]`
 
 ### Pre-Release Context Audit
 
 Before a release:
 
-1. **Audit all context files**: `/context-audit --strict`
+1. **Audit all context files**: `/design-docs:context-audit --strict`
 2. **Fix critical issues**: Word limits, broken pointers
 3. **Update stale content**: Reflect current codebase state
-4. **Validate everything**: `/context-validate` all files
+4. **Validate everything**: `/design-docs:context-validate` all files
 
 ## Best Practices
 
@@ -272,17 +272,17 @@ See: `.claude/design/my-package/error-handling.md`
 - **Root CLAUDE.md**: 2000 words maximum
   - If approaching limit: Extract package-specific details to package
     CLAUDE.md files
-  - If exceeding: Use `/context-split --strategy=package`
+  - If exceeding: Use `/design-docs:context-split --strategy=package`
 - **Package CLAUDE.md**: 1000 words maximum
   - If approaching limit: Add more design doc pointers
-  - If exceeding: Use `/context-split --strategy=topic`
+  - If exceeding: Use `/design-docs:context-split --strategy=topic`
 
 ### Validation Frequency
 
-- **Before every commit**: `/context-validate [modified-files]`
-- **Weekly**: `/context-audit --strict`
-- **Before releases**: `/context-audit --strict`
-- **After major refactoring**: `/context-review` and `/context-update`
+- **Before every commit**: `/design-docs:context-validate [modified-files]`
+- **Weekly**: `/design-docs:context-audit --strict`
+- **Before releases**: `/design-docs:context-audit --strict`
+- **After major refactoring**: `/design-docs:context-review` and `/design-docs:context-update`
 
 ## Examples
 
@@ -290,7 +290,7 @@ See: `.claude/design/my-package/error-handling.md`
 
 ```bash
 # Quick validation
-/context-validate CLAUDE.md
+/design-docs:context-validate CLAUDE.md
 
 # Expected output if passing:
 # ✅ CLAUDE.md passes validation
@@ -303,13 +303,13 @@ See: `.claude/design/my-package/error-handling.md`
 
 ```bash
 # Audit finds file is too large
-/context-audit pkgs/my-package/CLAUDE.md
+/design-docs:context-audit pkgs/my-package/CLAUDE.md
 
 # Review suggests splitting
-/context-review pkgs/my-package/CLAUDE.md
+/design-docs:context-review pkgs/my-package/CLAUDE.md
 
 # Split by topic
-/context-split pkgs/my-package/CLAUDE.md --strategy=topic
+/design-docs:context-split pkgs/my-package/CLAUDE.md --strategy=topic
 
 # Result:
 # - pkgs/my-package/CLAUDE.md (now 920 words)
@@ -317,34 +317,34 @@ See: `.claude/design/my-package/error-handling.md`
 # - pkgs/my-package/CLAUDE.testing.md (480 words)
 
 # Validate results
-/context-validate pkgs/my-package/CLAUDE.md
+/design-docs:context-validate pkgs/my-package/CLAUDE.md
 ```
 
 ### Example 3: Update After Refactoring
 
 ```bash
 # After refactoring type loading system
-/context-review pkgs/my-module/CLAUDE.md
+/design-docs:context-review pkgs/my-module/CLAUDE.md
 
 # Update with new patterns
-/context-update pkgs/my-module/CLAUDE.md
+/design-docs:context-update pkgs/my-module/CLAUDE.md
 
 # Validate changes
-/context-validate pkgs/my-module/CLAUDE.md
+/design-docs:context-validate pkgs/my-module/CLAUDE.md
 ```
 
 ### Example 4: Pre-Release Audit
 
 ```bash
 # Strict audit of all context files
-/context-audit --strict
+/design-docs:context-audit --strict
 
 # Fix critical issues identified
-/context-update CLAUDE.md
-/context-split pkgs/oversized-package/CLAUDE.md
+/design-docs:context-update CLAUDE.md
+/design-docs:context-split pkgs/oversized-package/CLAUDE.md
 
 # Re-validate
-/context-audit --strict
+/design-docs:context-audit --strict
 ```
 
 ## Integration with Other Agents
@@ -377,7 +377,7 @@ Context files pass quality standards when:
 - ✅ No implementation details (extracted to design docs)
 - ✅ Markdown linting passes
 - ✅ Clear section structure
-- ✅ High token efficiency (assessed by `/context-audit`)
+- ✅ High token efficiency (assessed by `/design-docs:context-audit`)
 
 ## Success Criteria
 

@@ -4,7 +4,7 @@ disable-model-invocation: true
 argument-hint: "[readme-path]"
 ---
 
-# /user-docs-badges
+# /design-docs:user-docs-badges
 
 Generate or normalize the four standard badges at the top of a package README. Defaults to `./README.md`. Custom badges (CI status, codecov, downloads, social, sponsorship) are preserved.
 

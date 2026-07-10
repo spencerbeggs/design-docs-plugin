@@ -5,7 +5,7 @@
 ### Show All Plans (Summary)
 
 ```bash
-/plan-explore
+/design-docs:plan-explore
 ```
 
 **Output:**
@@ -66,13 +66,13 @@ Health Insights:
 ### Filter by Status
 
 ```bash
-/plan-explore --status=in-progress
+/design-docs:plan-explore --status=in-progress
 ```
 
 Shows only plans currently being worked on.
 
 ```bash
-/plan-explore --status=ready,in-progress
+/design-docs:plan-explore --status=ready,in-progress
 ```
 
 Shows plans that are ready to start or already in progress.
@@ -80,7 +80,7 @@ Shows plans that are ready to start or already in progress.
 ### Filter by Module
 
 ```bash
-/plan-explore effect-type-registry
+/design-docs:plan-explore effect-type-registry
 ```
 
 Shows all plans for the effect-type-registry module.
@@ -100,7 +100,7 @@ Found 3 plans:
 ### Filter by Design Doc
 
 ```bash
-/plan-explore --design-doc=effect-type-registry/observability.md
+/design-docs:plan-explore --design-doc=effect-type-registry/observability.md
 ```
 
 Shows all plans implementing the observability design doc.
@@ -108,7 +108,7 @@ Shows all plans implementing the observability design doc.
 ### Filter by Owner
 
 ```bash
-/plan-explore --owner="Spencer Beggs"
+/design-docs:plan-explore --owner="Spencer Beggs"
 ```
 
 Shows all plans owned by Spencer Beggs.
@@ -118,7 +118,7 @@ Shows all plans owned by Spencer Beggs.
 ### Find Stale Plans
 
 ```bash
-/plan-explore --stale
+/design-docs:plan-explore --stale
 ```
 
 Shows plans that haven't been updated in >30 days (default threshold).
@@ -145,7 +145,7 @@ Found 2 stale plans:
 ### Custom Staleness Threshold
 
 ```bash
-/plan-explore --stale --age-threshold=60
+/design-docs:plan-explore --stale --age-threshold=60
 ```
 
 Shows plans not updated in >60 days.
@@ -153,7 +153,7 @@ Shows plans not updated in >60 days.
 ### Find Orphaned Plans
 
 ```bash
-/plan-explore --orphans
+/design-docs:plan-explore --orphans
 ```
 
 Shows plans not linked to any design docs.
@@ -176,7 +176,7 @@ Found 1 orphaned plan:
 ### Find Blocked Plans
 
 ```bash
-/plan-explore --blocked
+/design-docs:plan-explore --blocked
 ```
 
 Shows all blocked plans with blocker details.
@@ -208,7 +208,7 @@ Found 2 blocked plans:
 ### Detailed Format
 
 ```bash
-/plan-explore --format=detailed
+/design-docs:plan-explore --format=detailed
 ```
 
 Shows full metadata for all plans:
@@ -242,7 +242,7 @@ Implementation Plans - Detailed View
 ### Timeline Format
 
 ```bash
-/plan-explore --format=timeline
+/design-docs:plan-explore --format=timeline
 ```
 
 Chronological view grouped by creation date:
@@ -266,7 +266,7 @@ Implementation Plans - Timeline View
 ### JSON Format
 
 ```bash
-/plan-explore --format=json
+/design-docs:plan-explore --format=json
 ```
 
 Machine-readable output:
@@ -306,7 +306,7 @@ Machine-readable output:
 ### Module + Status
 
 ```bash
-/plan-explore effect-type-registry --status=in-progress
+/design-docs:plan-explore effect-type-registry --status=in-progress
 ```
 
 Shows in-progress plans for effect-type-registry module.
@@ -314,7 +314,7 @@ Shows in-progress plans for effect-type-registry module.
 ### Status + Health Check
 
 ```bash
-/plan-explore --status=in-progress --stale
+/design-docs:plan-explore --status=in-progress --stale
 ```
 
 Shows in-progress plans that are stale.
@@ -322,7 +322,7 @@ Shows in-progress plans that are stale.
 ### Module + Format
 
 ```bash
-/plan-explore design-doc-system --format=timeline
+/design-docs:plan-explore design-doc-system --format=timeline
 ```
 
 Shows timeline for design-doc-system module.
@@ -333,64 +333,62 @@ Shows timeline for design-doc-system module.
 
 ```bash
 # Create new plan
-/plan-create "New Feature Implementation" --module=effect-type-registry
+/design-docs:plan-create "New Feature Implementation" --module=effect-type-registry
 
 # Verify it appears
-/plan-explore effect-type-registry
+/design-docs:plan-explore effect-type-registry
 ```
 
 ### Before Starting Work
 
 ```bash
 # Check what's ready to work on
-/plan-explore --status=ready
+/design-docs:plan-explore --status=ready
 
 # Check if anything is blocked
-/plan-explore --blocked
+/design-docs:plan-explore --blocked
 ```
 
 ### During Work Session
 
 ```bash
-# Update plan status
-/plan-update my-feature-plan --status=in-progress --progress=30
+# Update plan status: edit the plan's frontmatter directly
+# (set status: in-progress and progress: 30 in the plan file)
 
 # See updated status
-/plan-explore --status=in-progress
+/design-docs:plan-explore --status=in-progress
 ```
 
 ### Health Check Workflow
 
 ```bash
 # 1. Find all health issues
-/plan-explore --stale
-/plan-explore --orphans
-/plan-explore --blocked
+/design-docs:plan-explore --stale
+/design-docs:plan-explore --orphans
+/design-docs:plan-explore --blocked
 
-# 2. Fix stale plans
-/plan-update stale-plan --status=abandoned
+# 2. Fix stale plans: edit each plan's frontmatter (status: abandoned)
 
-# 3. Fix orphans
-/plan-update orphan-plan --implements=module/design-doc.md
+# 3. Fix orphans: edit each plan's frontmatter (implements: module/design-doc.md)
 
 # 4. Verify fixed
-/plan-explore --format=summary
+/design-docs:plan-explore --format=summary
 ```
 
 ### Pre-Release Audit
 
 ```bash
 # Check all plan health
-/plan-explore --format=detailed
+/design-docs:plan-explore --format=detailed
 
 # Focus on problematic plans
-/plan-explore --stale --age-threshold=14
+/design-docs:plan-explore --stale --age-threshold=14
 
 # Verify no blockers
-/plan-explore --blocked
+/design-docs:plan-explore --blocked
 
 # Get JSON for reporting
-/plan-explore --format=json > plan-report.json
+/design-docs:plan-explore --format=json > plan-report.json
 ```
 
 ## Edge Cases
@@ -398,7 +396,7 @@ Shows timeline for design-doc-system module.
 ### No Plans Exist
 
 ```bash
-/plan-explore
+/design-docs:plan-explore
 ```
 
 **Output:**
@@ -406,13 +404,13 @@ Shows timeline for design-doc-system module.
 ```text
 No plans found in .claude/plans/
 
-Suggestion: Create a plan with /plan-create
+Suggestion: Create a plan with /design-docs:plan-create
 ```
 
 ### No Plans Match Filters
 
 ```bash
-/plan-explore nonexistent-module
+/design-docs:plan-explore nonexistent-module
 ```
 
 **Output:**
@@ -429,13 +427,13 @@ Available modules:
 Try:
   - Remove filters
   - Check module name spelling
-  - Use /plan-list to see all plans
+  - Use /design-docs:plan-list to see all plans
 ```
 
 ### All Plans Healthy
 
 ```bash
-/plan-explore
+/design-docs:plan-explore
 ```
 
 **Output:**
@@ -465,7 +463,7 @@ Next Actions:
 
 ```bash
 # Show ready plans sorted by estimated effort
-/plan-explore --status=ready --format=detailed
+/design-docs:plan-explore --status=ready --format=detailed
 ```
 
 Helps prioritize next work based on effort estimates.
@@ -474,7 +472,7 @@ Helps prioritize next work based on effort estimates.
 
 ```bash
 # Show all active work with progress
-/plan-explore --status=in-progress --format=detailed
+/design-docs:plan-explore --status=in-progress --format=detailed
 ```
 
 See detailed progress breakdown including phases.
@@ -483,10 +481,10 @@ See detailed progress breakdown including phases.
 
 ```bash
 # Find blocked plans
-/plan-explore --blocked
+/design-docs:plan-explore --blocked
 
 # Check what's blocking them
-/plan-explore --format=detailed {blocking-plan-name}
+/design-docs:plan-explore --format=detailed {blocking-plan-name}
 ```
 
 Understand blocker chains.
@@ -495,11 +493,11 @@ Understand blocker chains.
 
 ```bash
 # Check module status
-/plan-explore effect-type-registry --format=summary
+/design-docs:plan-explore effect-type-registry --format=summary
 
 # Find problems in module
-/plan-explore effect-type-registry --stale
-/plan-explore effect-type-registry --orphans
+/design-docs:plan-explore effect-type-registry --stale
+/design-docs:plan-explore effect-type-registry --orphans
 ```
 
 Focused health check for specific module.
@@ -508,7 +506,7 @@ Focused health check for specific module.
 
 ```bash
 # See completed plans
-/plan-explore --status=completed --format=timeline
+/design-docs:plan-explore --status=completed --format=timeline
 ```
 
 Review what's been accomplished.

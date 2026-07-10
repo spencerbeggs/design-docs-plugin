@@ -29,19 +29,19 @@ This skill creates plan documents by:
 **Create basic plan:**
 
 ```bash
-/plan-create "Cache Optimization Implementation"
+/design-docs:plan-create "Cache Optimization Implementation"
 ```
 
 **Create plan with module:**
 
 ```bash
-/plan-create "Cache Optimization" --module=effect-type-registry
+/design-docs:plan-create "Cache Optimization" --module=effect-type-registry
 ```
 
 **Create plan with design doc link:**
 
 ```bash
-/plan-create "Observability Phase 2" \
+/design-docs:plan-create "Observability Phase 2" \
   --module=effect-type-registry \
   --implements=effect-type-registry/observability.md
 ```
@@ -49,7 +49,7 @@ This skill creates plan documents by:
 **Create refactoring plan:**
 
 ```bash
-/plan-create "Refactor Type Loading" --type=refactor
+/design-docs:plan-create "Refactor Type Loading" --type=refactor
 ```
 
 ## How It Works
@@ -169,7 +169,7 @@ Suggestion: Use a different name or update the existing plan
 
 ```bash
 # Simplest form - just a title
-/plan-create "My Feature Implementation"
+/design-docs:plan-create "My Feature Implementation"
 ```
 
 Creates:
@@ -182,7 +182,7 @@ Creates:
 ### Create Plan with Module
 
 ```bash
-/plan-create "Add Caching" --module=effect-type-registry
+/design-docs:plan-create "Add Caching" --module=effect-type-registry
 ```
 
 Links plan to module for organization and discovery.
@@ -190,7 +190,7 @@ Links plan to module for organization and discovery.
 ### Create Plan Linked to Design Doc
 
 ```bash
-/plan-create "Implement Observability" \
+/design-docs:plan-create "Implement Observability" \
   --module=effect-type-registry \
   --implements=effect-type-registry/observability.md
 ```
@@ -203,7 +203,7 @@ Creates bidirectional link:
 ### Create with Custom Name
 
 ```bash
-/plan-create "Phase 2: Advanced Features" \
+/design-docs:plan-create "Phase 2: Advanced Features" \
   --name=advanced-features-phase-2
 ```
 
@@ -212,7 +212,7 @@ Useful when title doesn't convert well to kebab-case.
 ### Create Refactoring Plan
 
 ```bash
-/plan-create "Refactor Type Loading System" --type=refactor
+/design-docs:plan-create "Refactor Type Loading System" --type=refactor
 ```
 
 Uses refactor template with architecture focus.
@@ -220,7 +220,7 @@ Uses refactor template with architecture focus.
 ### Create Documentation Plan
 
 ```bash
-/plan-create "RSPress API Documentation" --type=docs
+/design-docs:plan-create "RSPress API Documentation" --type=docs
 ```
 
 Uses docs template with writing phases.
@@ -228,7 +228,7 @@ Uses docs template with writing phases.
 ### Create with All Metadata
 
 ```bash
-/plan-create "Cache Optimization" \
+/design-docs:plan-create "Cache Optimization" \
   --module=effect-type-registry \
   --implements=effect-type-registry/cache-optimization.md \
   --owner=@spencerbeggs \
@@ -262,7 +262,7 @@ Created: {date}
 
 Options:
   1. Use a different name: --name=different-name
-  2. Update existing plan: /plan-update {name}
+  2. Update the existing plan by editing its frontmatter directly
   3. Archive old plan first: mv {path} {archive-path}
 ```
 
@@ -334,6 +334,5 @@ See [examples.md](./examples.md) for detailed usage examples.
 ## Related Skills
 
 - `plan-validate` - Validate plan structure
-- `plan-update` - Update plan status/progress
 - `plan-list` - List all plans
 - `design-init` - Create design docs

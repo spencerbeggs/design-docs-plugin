@@ -192,7 +192,7 @@ If module has no design docs yet:
 INFO: No design docs found for module '{module}'
 - Design docs path: {path}
 - This is normal for new modules
-- Run /design-init to create your first design doc
+- Run /design-docs:design-init to create your first design doc
 ```
 
 ### Invalid YAML

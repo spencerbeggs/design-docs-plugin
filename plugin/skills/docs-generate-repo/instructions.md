@@ -304,7 +304,7 @@ If module has no design docs:
 ```text
 Warning: No design docs found for module '{module}'
 Cannot generate repository documentation without design docs
-Consider creating design docs first with /design-init
+Consider creating design docs first with /design-docs:design-init
 ```
 
 ### Missing Module Configuration

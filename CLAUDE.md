@@ -89,6 +89,8 @@ design-docs-plugin/
 
 All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `pre-tool-use/allow-design-writes.sh` hook auto-approves Write/Edit/MultiEdit operations to `.claude/design/` and `.claude/plans/`.
 
+Set `GITHUB_PERSONAL_ACCESS_TOKEN` to give the workflow skills (`finalize`, `review`, `merge-prep`) a scoped `gh` token. It is optional — those skills fall back to `gh auth login` keyring credentials.
+
 ## Testing
 
 * **Framework**: Bun test runner (`bun:test`)

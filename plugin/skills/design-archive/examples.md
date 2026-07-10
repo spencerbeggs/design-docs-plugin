@@ -463,7 +463,7 @@ ERROR: Replacement document not found
 
 The replacement document does not exist. Please:
 
-1. Create the replacement document first using /design-init
+1. Create the replacement document first using /design-docs:design-init
 2. Or specify a different replacement
 3. Or use a different archival reason if no replacement exists
 

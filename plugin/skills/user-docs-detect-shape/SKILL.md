@@ -5,7 +5,7 @@ user-invocable: false
 
 # user-docs-detect-shape
 
-Detect the shape and metadata of the current repo so other user-docs skills and the `user-docs` agent can act correctly. This skill never writes files. It only reads.
+Detect the shape and metadata of the current repo so other user-docs skills and the `design-docs:user-docs` agent can act correctly. This skill never writes files. It only reads.
 
 ## Inputs
 

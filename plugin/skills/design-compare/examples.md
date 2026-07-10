@@ -11,7 +11,7 @@ Usage examples for comparing design document versions.
 **Execution:**
 
 ```bash
-/design-compare effect-type-registry observability.md --ref=main
+/design-docs:design-compare effect-type-registry observability.md --ref=main
 ```
 
 **Output:**
@@ -54,7 +54,7 @@ Usage examples for comparing design document versions.
 **Execution:**
 
 ```bash
-/design-compare module cache-optimization.md --from=v1.0.0 --to=v2.0.0
+/design-docs:design-compare module cache-optimization.md --from=v1.0.0 --to=v2.0.0
 ```
 
 **Output:**
@@ -70,7 +70,7 @@ Detailed comparison between two specific versions.
 **Execution:**
 
 ```bash
-/design-compare module architecture.md --ref=main --format=semantic
+/design-docs:design-compare module architecture.md --ref=main --format=semantic
 ```
 
 **Output:**

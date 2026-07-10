@@ -17,7 +17,7 @@ Complete examples of design-update skill usage in different scenarios.
 
 **Validation:**
 
-- Status "draft" requires completeness 21-60%
+- Status "draft" requires completeness 21-90%
 - Current completeness: 35% ✅
 - Match confirmed, proceed
 
@@ -47,7 +47,7 @@ updated: 2026-01-17  # was: 2026-01-10
 ## Next Steps
 
 1. Continue filling in sections to reach 60%+ for current status
-2. Run `/design-validate effect-type-registry` to check
+2. Run `/design-docs:design-validate effect-type-registry` to check
 ```
 
 ## Example 2: Update Completeness
@@ -89,17 +89,17 @@ updated: 2026-01-17
 
 ## Validation
 
-⚠️ Status/completeness mismatch
-- Status: draft (suggests 21-60%)
-- Completeness: 80% (suggests current)
+ℹ️ Status/completeness check
+- Status: draft
+- Completeness: 80% (within the 21-90% draft range)
 
 ## Recommendations
 
-Update status to 'current' to match 80% completeness:
-/design-update effect-type-registry observability.md --status=current
+If the documented design is implemented in code, update status to 'current'. If this is a pre-implementation design (code not yet written), keep 'draft' — high completeness alone does not justify promotion:
+/design-docs:design-update effect-type-registry observability.md --status=current
 
 Or mark as ready for review:
-/design-update effect-type-registry observability.md --status=needs-review
+/design-docs:design-update effect-type-registry observability.md --status=needs-review
 ```
 
 ## Example 3: Mark as Synced
@@ -246,7 +246,7 @@ updated: 2026-01-17
 ## Next Steps
 
 1. Document is now in 'current' status at 90% complete
-2. Run `/design-validate effect-type-registry` to confirm
+2. Run `/design-docs:design-validate effect-type-registry` to confirm
 3. Consider adding to CLAUDE.md if frequently referenced
 ```
 
@@ -295,7 +295,7 @@ Consider adding reciprocal reference:
 - Creates bidirectional navigation
 
 Command:
-/design-update effect-type-registry performance.md --add-related=observability.md
+/design-docs:design-update effect-type-registry performance.md --add-related=observability.md
 ```
 
 ## Example 7: Smart Completeness Suggestion
@@ -346,12 +346,12 @@ You've updated cache-optimization.md by adding Implementation Details section.
 
 Update completeness to 70% and status to 'current':
 
-/design-update effect-type-registry cache-optimization.md \
+/design-docs:design-update effect-type-registry cache-optimization.md \
   --completeness=70 \
   --status=current
 
 Or use estimated value automatically:
-/design-update effect-type-registry cache-optimization.md --auto-estimate
+/design-docs:design-update effect-type-registry cache-optimization.md --auto-estimate
 ```
 
 ## Example 8: Archive Document
@@ -418,7 +418,7 @@ updated: 2026-01-17
 
 1. Consider removing from CLAUDE.md active references
 2. Update any links to point to new-architecture.md instead
-3. Run `/design-validate rspress-plugin-api-extractor` to check
+3. Run `/design-docs:design-validate rspress-plugin-api-extractor` to check
 ```
 
 ## Example 9: Fix Status/Completeness Mismatch
@@ -459,7 +459,7 @@ Content analysis confirms 75% is accurate:
 
 Update status to match completeness:
 
-/design-update rspress-plugin-api-extractor type-loading-vfs.md \
+/design-docs:design-update rspress-plugin-api-extractor type-loading-vfs.md \
   --status=current
 
 This will:

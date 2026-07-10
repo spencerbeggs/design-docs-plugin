@@ -9,7 +9,7 @@ doc changes.
 
 ```bash
 # Parse command line arguments
-# Usage: /docs-sync <module> [--level=<1|2|3>] [--dry-run]
+# Usage: /design-docs:docs-sync <module> [--level=<1|2|3>] [--dry-run]
 ```
 
 Parameters:
@@ -488,7 +488,7 @@ Would update the following files:
    - Add new diagram reference
 
 No files written (dry-run mode)
-To apply changes, run: /docs-sync effect-type-registry
+To apply changes, run: /design-docs:docs-sync effect-type-registry
 ```
 
 ## Error Handling
@@ -540,14 +540,14 @@ Fix errors before committing
 - Uses `.claude/design/design.config.json` for configuration
 - Reads design docs from `designDocsPath`
 - Updates files in `userDocs` paths
-- May invoke `user-docs-create-readme` for full README regeneration
-- May invoke `user-docs-review` for validation
+- May invoke `design-docs:user-docs-create-readme` for full README regeneration
+- May invoke `design-docs:user-docs-review` for validation
 - Respects quality standards for each level
 
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Full README regeneration
-- `/docs-generate-repo` - Full repo docs regeneration
-- `/docs-generate-site` - Full site docs regeneration
+- `/design-docs:docs-generate-repo` - Full repo docs regeneration
+- `/design-docs:docs-generate-site` - Full site docs regeneration
 - `/design-docs:user-docs-review` - Validate sync quality
-- `/design-sync` - Sync design docs with code (reverse direction)
+- `/design-docs:design-sync` - Sync design docs with code (reverse direction)

@@ -27,19 +27,19 @@ This skill manages configuration by:
 **Validate current config:**
 
 ```bash
-/design-config validate
+/design-docs:design-config validate
 ```
 
 **Add new module:**
 
 ```bash
-/design-config add-module my-package
+/design-docs:design-config add-module my-package
 ```
 
 **Update quality standards:**
 
 ```bash
-/design-config update-quality --context.rootMaxWords=2500
+/design-docs:design-config update-quality --context.rootMaxWords=2500
 ```
 
 ## Configuration File
@@ -154,7 +154,6 @@ and follows the JSON schema at:
   "userDocs": {
     "level1": {
       "targetWordCount": [200, 500],
-      "maxLineLength": 80,
       "requireSections": ["Features", "Installation", "Usage"]
     }
   },
@@ -305,7 +304,7 @@ Adds a new module definition to the configuration.
 **Example:**
 
 ```bash
-/design-config add-module effect-type-registry \
+/design-docs:design-config add-module effect-type-registry \
   --path=pkgs/effect-type-registry \
   --categories=architecture,performance,observability
 ```
@@ -326,7 +325,7 @@ Updates quality standards for design docs, user docs, or context files.
 **Example:**
 
 ```bash
-/design-config update-quality \
+/design-docs:design-config update-quality \
   --designDocs.requireTOC=false \
   --context.rootMaxWords=2000
 ```
@@ -348,7 +347,7 @@ Updates an existing module definition.
 **Example:**
 
 ```bash
-/design-config update-module effect-type-registry \
+/design-docs:design-config update-module effect-type-registry \
   --add-category=testing \
   --siteDocs=website/docs/en/packages/effect-type-registry
 ```
@@ -369,8 +368,8 @@ Manages the list of enabled skills.
 **Example:**
 
 ```bash
-/design-config enable-skill design-prune design-export
-/design-config disable-skill design-archive
+/design-docs:design-config enable-skill design-prune design-export
+/design-docs:design-config disable-skill design-archive
 ```
 
 ## Schema Reference
@@ -432,10 +431,7 @@ The complete JSON schema is located at:
 
 **Categories:** Must be one of the valid category enums
 
-**Line lengths:**
-
-- `userDocs.level1.maxLineLength`: 80-120
-- `userDocs.level2.maxLineLength`: 80-150
+**Line lengths:** there is no line-length setting. The wrapping policy is fixed: each paragraph and list item occupies a single source line and the renderer wraps (markdownlint MD013 stays disabled intentionally). `design-validate` warns on hard-wrapped prose.
 
 **Context word counts:**
 
@@ -447,7 +443,7 @@ The complete JSON schema is located at:
 ### Initialize New Project
 
 ```bash
-/design-config init \
+/design-docs:design-config init \
   --name=my-project \
   --type=monorepo \
   --maintainer="Your Name"
@@ -456,7 +452,7 @@ The complete JSON schema is located at:
 ### Add Package to Monorepo
 
 ```bash
-/design-config add-module my-package \
+/design-docs:design-config add-module my-package \
   --path=packages/my-package \
   --categories=architecture,performance
 ```
@@ -464,7 +460,7 @@ The complete JSON schema is located at:
 ### Update Quality Standards Example
 
 ```bash
-/design-config update-quality \
+/design-docs:design-config update-quality \
   --designDocs.requireTOC=false \
   --context.rootMaxWords=2500
 ```
@@ -472,13 +468,13 @@ The complete JSON schema is located at:
 ### Enable New Skills
 
 ```bash
-/design-config enable-skill design-prune design-export
+/design-docs:design-config enable-skill design-prune design-export
 ```
 
 ### Validate After Manual Edit
 
 ```bash
-/design-config validate
+/design-docs:design-config validate
 ```
 
 ## Error Handling
@@ -520,17 +516,17 @@ ERROR: Module already exists
 Module: effect-type-registry
 
 To update existing module, use:
-/design-config update-module effect-type-registry
+/design-docs:design-config update-module effect-type-registry
 ```
 
 ## Integration
 
 Works with all design documentation skills:
 
-- `/design-init` - Uses config for module paths and categories
-- `/design-validate` - Uses config for quality standards
-- `/design-sync` - Uses config for module definitions
-- `/design-audit` - Uses config for quality checks
+- `/design-docs:design-init` - Uses config for module paths and categories
+- `/design-docs:design-validate` - Uses config for quality standards
+- `/design-docs:design-sync` - Uses config for module definitions
+- `/design-docs:design-audit` - Uses config for quality checks
 - All skills - Read config for paths and settings
 
 ## Success Criteria

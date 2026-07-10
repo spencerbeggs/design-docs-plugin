@@ -10,11 +10,11 @@ Extract module and format preferences from user request.
 
 **Parameter parsing examples:**
 
-- `/design-link` → module: `all`, format: `mermaid`
-- `/design-link effect-type-registry` → module: `effect-type-registry`,
+- `/design-docs:design-link` → module: `all`, format: `mermaid`
+- `/design-docs:design-link effect-type-registry` → module: `effect-type-registry`,
   format: `mermaid`
-- `/design-link --format=json` → module: `all`, format: `json`
-- `/design-link rspress-plugin --orphans` → module: `rspress-plugin`,
+- `/design-docs:design-link --format=json` → module: `all`, format: `json`
+- `/design-docs:design-link rspress-plugin --orphans` → module: `rspress-plugin`,
   orphans: `true`
 
 ### 2. Load Configuration

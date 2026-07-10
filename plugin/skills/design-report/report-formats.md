@@ -496,7 +496,7 @@ Categorized issues with severity levels:
           "effect-type-registry/type-system.md",
           "design-doc-system/implementation-status.md"
         ],
-        "fix": "Run /design-sync to verify accuracy",
+        "fix": "Run /design-docs:design-sync to verify accuracy",
         "priority": 1
       },
       {
@@ -890,14 +890,14 @@ Choose format based on use case:
 
 ```bash
 # Generate and save markdown report
-/design-report > design-status-2026-01-17.md
+/design-docs:design-report > design-status-2026-01-17.md
 ```
 
 ### JSON to Dashboard
 
 ```bash
 # Generate JSON and pipe to dashboard
-/design-report --format=json | jq '.' | \
+/design-docs:design-report --format=json | jq '.' | \
   curl -X POST https://dashboard/api/reports -d @-
 ```
 
@@ -905,6 +905,6 @@ Choose format based on use case:
 
 ```bash
 # Generate HTML report for email
-/design-report --format=html > report.html
+/design-docs:design-report --format=html > report.html
 # Attach report.html to email
 ```

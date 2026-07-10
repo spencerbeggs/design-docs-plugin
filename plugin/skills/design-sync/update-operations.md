@@ -385,7 +385,7 @@ If significant content added, consider updating `completeness`.
 **Command example:**
 
 ```text
-/design-sync effect-type-registry --check-only
+/design-docs:design-sync effect-type-registry --check-only
 ```
 
 ### Mode 2: Auto-Safe
@@ -401,7 +401,7 @@ If significant content added, consider updating `completeness`.
 **Command example:**
 
 ```text
-/design-sync effect-type-registry --auto-update
+/design-docs:design-sync effect-type-registry --auto-update
 ```
 
 ### Mode 3: Interactive
@@ -417,7 +417,7 @@ If significant content added, consider updating `completeness`.
 **Command example:**
 
 ```text
-/design-sync effect-type-registry --interactive
+/design-docs:design-sync effect-type-registry --interactive
 ```
 
 ### Mode 4: Full-Auto (Risky)
@@ -433,7 +433,7 @@ If significant content added, consider updating `completeness`.
 **Command example:**
 
 ```text
-/design-sync effect-type-registry --full-auto
+/design-docs:design-sync effect-type-registry --full-auto
 ```
 
 ## Update Templates
@@ -623,7 +623,7 @@ Check YAML frontmatter is valid:
 
 ```bash
 # Use design-validate to check structure
-/design-validate {module} {doc}
+/design-docs:design-validate {module} {doc}
 ```
 
 ### Verify 3: Cross-References

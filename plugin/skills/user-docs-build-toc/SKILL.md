@@ -5,7 +5,7 @@ user-invocable: false
 
 # user-docs-build-toc
 
-Generate a markdown bulleted-list TOC for a `docs/` folder. Used by `/user-docs-create-docs`, `/user-docs-add-page`, `/user-docs-review`, and `/user-docs-create-readme`.
+Generate a markdown bulleted-list TOC for a `docs/` folder. Used by `/design-docs:user-docs-create-docs`, `/design-docs:user-docs-add-page`, `/design-docs:user-docs-review`, and `/design-docs:user-docs-create-readme`.
 
 ## Inputs
 

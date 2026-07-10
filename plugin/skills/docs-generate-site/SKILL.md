@@ -30,20 +30,20 @@ site content by:
 **Generate RSPress site docs:**
 
 ```bash
-/docs-generate-site effect-type-registry --framework=rspress
+/design-docs:docs-generate-site effect-type-registry --framework=rspress
 ```
 
 **Include API docs integration:**
 
 ```bash
-/docs-generate-site rspress-plugin-api-extractor --framework=rspress \
+/design-docs:docs-generate-site rspress-plugin-api-extractor --framework=rspress \
   --api-docs=./docs/en/api
 ```
 
 **Preview without writing:**
 
 ```bash
-/docs-generate-site website --framework=rspress --dry-run
+/design-docs:docs-generate-site website --framework=rspress --dry-run
 ```
 
 ## How It Works
@@ -183,6 +183,6 @@ Generated site documentation is successful when:
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Generate Level 1 README
-- `/docs-generate-repo` - Generate Level 2 repository docs
+- `/design-docs:docs-generate-repo` - Generate Level 2 repository docs
 - `/rspress-page` - Create individual RSPress pages
-- `/docs-sync` - Sync docs with changes
+- `/design-docs:docs-sync` - Sync docs with changes

@@ -419,7 +419,7 @@ Current/complete docs that have never synced:
 6. implementation-status.md (completeness: 90%, age: 2 days)
 7. architecture-proposal.md (completeness: 95%, age: 2 days)
 
-**Recommendation:** Run `/design-sync all` to verify accuracy
+**Recommendation:** Run `/design-docs:design-sync all` to verify accuracy
 
 ### Recently Synced - 13 docs (65%)
 

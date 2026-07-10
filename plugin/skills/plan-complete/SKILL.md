@@ -28,19 +28,19 @@ this skill:
 **Complete a plan:**
 
 ```bash
-/plan-complete plan-design-linking-phase-1
+/design-docs:plan-complete plan-design-linking-phase-1
 ```
 
 **With custom outcome:**
 
 ```bash
-/plan-complete cache-optimization --outcome=partial
+/design-docs:plan-complete cache-optimization --outcome=partial
 ```
 
 **Dry run (preview changes):**
 
 ```bash
-/plan-complete subagent-integration --dry-run
+/design-docs:plan-complete subagent-integration --dry-run
 ```
 
 ## Parameters
@@ -201,10 +201,10 @@ Continue anyway? (y/n)
 
 Works well with:
 
-- `/plan-validate` - Validate before completing
-- `/design-sync` - Sync design docs before completion
-- `/design-review` - Review updated docs
-- `/plan-list` - Find completed plans
+- `/design-docs:plan-validate` - Validate before completing
+- `/design-docs:design-sync` - Sync design docs before completion
+- `/design-docs:design-review` - Review updated docs
+- `/design-docs:plan-list` - Find completed plans
 
 ## Success Criteria
 

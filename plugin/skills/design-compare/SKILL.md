@@ -23,19 +23,19 @@ comprehensive comparison reports with metrics and highlights.
 **Compare with main branch:**
 
 ```bash
-/design-compare observability.md --ref=main
+/design-docs:design-compare observability.md --ref=main
 ```
 
 **Compare two commits:**
 
 ```bash
-/design-compare doc.md --from=abc123 --to=def456
+/design-docs:design-compare doc.md --from=abc123 --to=def456
 ```
 
 **Semantic comparison:**
 
 ```bash
-/design-compare doc.md --ref=v1.0.0 --format=semantic
+/design-docs:design-compare doc.md --ref=v1.0.0 --format=semantic
 ```
 
 ## Parameters
@@ -159,10 +159,10 @@ The document is identical in both versions.
 
 Works well with:
 
-- `/design-review` - Review documents before/after changes
-- `/design-validate` - Validate both versions
-- `/design-sync` - Understand sync evolution over time
-- `/design-update` - See update history
+- `/design-docs:design-review` - Review documents before/after changes
+- `/design-docs:design-validate` - Validate both versions
+- `/design-docs:design-sync` - Understand sync evolution over time
+- `/design-docs:design-update` - See update history
 
 ## Success Criteria
 

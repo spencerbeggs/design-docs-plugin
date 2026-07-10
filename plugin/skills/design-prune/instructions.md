@@ -11,9 +11,9 @@ Extract module and pruning options from user request.
 
 **Parameter parsing examples:**
 
-- `/design-prune effect-type-registry` → module: `effect-type-registry`
-- `/design-prune module --aggressive` → aggressive pruning mode
-- `/design-prune module observability.md --dry-run` → test run only
+- `/design-docs:design-prune effect-type-registry` → module: `effect-type-registry`
+- `/design-docs:design-prune module --aggressive` → aggressive pruning mode
+- `/design-docs:design-prune module observability.md --dry-run` → test run only
 
 ### 2. Load Configuration
 
@@ -295,7 +295,7 @@ Create summary of actions taken:
 
 1. Review preserved historical sections
 2. Consider archiving if no longer needed
-3. Re-run /design-validate to confirm
+3. Re-run /design-docs:design-validate to confirm
 ```
 
 ## Pruning Strategies

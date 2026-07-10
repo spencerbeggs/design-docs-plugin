@@ -44,19 +44,19 @@ This skill reviews package.json by:
 **Review a module's package.json:**
 
 ```bash
-/docs-review-package my-package
+/design-docs:docs-review-package my-package
 ```
 
 **Review with dependency update check:**
 
 ```bash
-/docs-review-package my-package --check-updates
+/design-docs:docs-review-package my-package --check-updates
 ```
 
 **Review all packages in monorepo:**
 
 ```bash
-/docs-review-package --all
+/design-docs:docs-review-package --all
 ```
 
 ## How It Works
@@ -196,10 +196,10 @@ A package.json review is successful when:
 - Reads `package.json` from module path
 - Optionally queries npm registry for version info
 - Reports findings (does not auto-fix versions)
-- Uses user-docs agent for review
+- Uses the `design-docs:user-docs` agent for review
 
 ## Related Skills
 
 - `/design-docs:user-docs-create-readme` - Generate package README
-- `/docs-generate-contributing` - Generate CONTRIBUTING.md
-- `/docs-sync` - Sync docs with package.json changes
+- `/design-docs:docs-generate-contributing` - Generate CONTRIBUTING.md
+- `/design-docs:docs-sync` - Sync docs with package.json changes

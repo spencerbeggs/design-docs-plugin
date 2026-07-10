@@ -525,7 +525,7 @@ get_cached_metadata() {
 ```text
 No plans found in {directory}
 
-Suggestion: Create a plan with /plan-create
+Suggestion: Create a plan with /design-docs:plan-create
 ```
 
 **Invalid filter values:**
@@ -556,5 +556,5 @@ No plans found matching filters:
 Try:
   - Remove some filters
   - Check module name spelling
-  - Use /plan-list to see all plans
+  - Use /design-docs:plan-list to see all plans
 ```

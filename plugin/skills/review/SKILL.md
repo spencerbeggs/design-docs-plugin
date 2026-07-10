@@ -16,17 +16,18 @@ Designed for iterative review cycles where small fix commits are preferred.
 
 ## GitHub API operations
 
-Several steps call `gh-pr-review.sh` to perform GitHub operations (resolving
-threads, minimizing stale comments). This requires `DESIGN_DOCS_GH_TOKEN` to be
-set. The session-start hook maps `GITHUB_PERSONAL_ACCESS_TOKEN` →
-`DESIGN_DOCS_GH_TOKEN` at the start of every session — if you have a PAT
-configured, it is already available. The plugin uses a namespaced variable so it
-does not override the user's own `GH_TOKEN` if they have one set for unrelated
-purposes; `gh-pr-review.sh` translates the namespaced value into `GH_TOKEN` at
-each `gh` call site.
+Several steps call `gh-pr-review.sh` to perform GitHub operations (resolving threads, minimizing stale comments). Authentication resolves in this order: `DESIGN_DOCS_GH_TOKEN` (the session-start hook maps `GITHUB_PERSONAL_ACCESS_TOKEN` → `DESIGN_DOCS_GH_TOKEN` at session start), then `GH_TOKEN`, then the `gh` keyring credentials from `gh auth login`. The plugin uses a namespaced variable so it does not override the user's own `GH_TOKEN`; every `gh` call site injects the resolved token — or an empty `GH_TOKEN=` scrub when none is set, which lets `gh` fall back to its keyring.
 
-If `DESIGN_DOCS_GH_TOKEN` is not set, all `gh-pr-review.sh` calls are skipped
-gracefully; the code-change workflow still runs normally.
+An unset `DESIGN_DOCS_GH_TOKEN` is therefore normal and NOT worth reporting when keyring auth exists. Probe once and reuse the result:
+
+```bash
+GH_AUTH_OK=false
+if [ -n "${DESIGN_DOCS_GH_TOKEN:-}" ] || GH_TOKEN='' GITHUB_TOKEN='' gh auth status &>/dev/null; then
+  GH_AUTH_OK=true
+fi
+```
+
+Only if `GH_AUTH_OK` is `false` are the `gh-pr-review.sh` calls skipped gracefully (the code-change workflow still runs normally); mention it once in the final summary, not per step.
 
 Local agents never call `approve-pr`. Approval is left to the cloud reviewer
 after it confirms the push resolves all outstanding issues.
@@ -59,14 +60,14 @@ Store this value for use in Step 7.5.
 If a PR number was provided as an argument, use it directly:
 
 ```bash
-GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
   gh pr view $PR_NUMBER --json number,url,title,headRefName
 ```
 
 If no PR number, auto-detect from the current branch:
 
 ```bash
-GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
   gh pr view --json number,url,title,headRefName
 ```
 
@@ -87,7 +88,7 @@ summary comments from previous pushes clutter the thread and make it harder
 to see what is still open. This step runs before triage so the filtered
 comment list reflects current state only.
 
-**Skip this entire step if `DESIGN_DOCS_GH_TOKEN` is not set.**
+**Skip this entire step only if `GH_AUTH_OK` is `false` (no token and no `gh` keyring auth).**
 
 ### 1.5.1 Resolve context
 
@@ -117,7 +118,7 @@ are now outdated. Pass `DESIGN_DOCS_GH_TOKEN` (not `GH_TOKEN`) so the script
 resolves the plugin-scoped token rather than the user's shell token:
 
 ```bash
-APP_BOT_NAME="$BOT_NAME" DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+APP_BOT_NAME="$BOT_NAME" DESIGN_DOCS_GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" \
   GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
   bash "$SCRIPT" minimize-old-summaries "$PR_NUMBER" "$CURRENT_SHA"
 ```
@@ -135,9 +136,9 @@ comments). Inject the plugin token and disable the pager on every `gh`
 invocation:
 
 ```bash
-GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
   gh api repos/{owner}/{repo}/pulls/{number}/comments --paginate
-GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" GH_PAGER=cat \
+GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" GH_PAGER=cat \
   gh api repos/{owner}/{repo}/issues/{number}/comments --paginate
 ```
 
@@ -232,7 +233,7 @@ changes needed), then legitimate fixes by severity.
 
 ### 4.1 Already-Fixed Comments
 
-For each already-fixed comment (requires `DESIGN_DOCS_GH_TOKEN`):
+For each already-fixed comment (requires GitHub auth, i.e. `GH_AUTH_OK`):
 
 1. Confirm one more time by reading the current code
 2. Post a reply explaining the current state:
@@ -240,19 +241,18 @@ For each already-fixed comment (requires `DESIGN_DOCS_GH_TOKEN`):
 3. Resolve the thread:
 
    ```bash
-   DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+   DESIGN_DOCS_GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" \
      GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
      bash "$SCRIPT" resolve-thread "$COMMENT_ID" "$PR_NUMBER" "$CURRENT_SHA"
    ```
 
 4. Report: `[already-fixed] [file:line] — Resolved: [brief description]`
 
-If `DESIGN_DOCS_GH_TOKEN` is not set, skip the GitHub call and report that the
-thread could not be resolved but the issue is confirmed fixed in code.
+If `GH_AUTH_OK` is `false`, skip the GitHub call and report that the thread could not be resolved but the issue is confirmed fixed in code.
 
 ### 4.2 Invalid Comments
 
-For each invalid comment (requires `DESIGN_DOCS_GH_TOKEN`):
+For each invalid comment (requires GitHub auth, i.e. `GH_AUTH_OK`):
 
 1. Read the referenced code and understand what the reviewer misidentified
 2. Post a reply explaining why the comment is incorrect and what the code
@@ -263,7 +263,7 @@ For each invalid comment (requires `DESIGN_DOCS_GH_TOKEN`):
 3. Resolve the thread:
 
    ```bash
-   DESIGN_DOCS_GH_TOKEN="$DESIGN_DOCS_GH_TOKEN" \
+   DESIGN_DOCS_GH_TOKEN="${DESIGN_DOCS_GH_TOKEN:-}" \
      GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
      bash "$SCRIPT" resolve-thread "$COMMENT_ID" "$PR_NUMBER" "$CURRENT_SHA"
    ```
@@ -347,8 +347,7 @@ Scan the files changed in step 4 for architecture-impacting changes:
 - Changed data flows (new dependencies, modified API boundaries)
 - New or removed modules/files
 
-If architecture-impacting changes are found, run design-sync and
-context-update for the affected modules only:
+If architecture-impacting changes are found, run `design-docs:design-sync` and `design-docs:context-update` for the affected modules only:
 
 ```text
 /design-docs:design-sync [affected-module]

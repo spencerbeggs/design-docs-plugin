@@ -4,7 +4,7 @@ disable-model-invocation: true
 argument-hint: "[path]"
 ---
 
-# /user-docs-create-docs
+# /design-docs:user-docs-create-docs
 
 Scaffold a `docs/` folder for the package at `$ARGUMENTS` (defaults to current working directory).
 

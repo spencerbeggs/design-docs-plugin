@@ -10,13 +10,13 @@ Extract module, format, and focus from user request.
 
 **Parameter parsing examples:**
 
-- `/design-report` → module: `all`, format: `markdown`, focus: `all`
-- `/design-report effect-type-registry` → module: `effect-type-registry`,
+- `/design-docs:design-report` → module: `all`, format: `markdown`, focus: `all`
+- `/design-docs:design-report effect-type-registry` → module: `effect-type-registry`,
   format: `markdown`, focus: `all`
-- `/design-report --format=json` → module: `all`, format: `json`, focus: `all`
-- `/design-report --focus=health` → module: `all`, format: `markdown`,
+- `/design-docs:design-report --format=json` → module: `all`, format: `json`, focus: `all`
+- `/design-docs:design-report --focus=health` → module: `all`, format: `markdown`,
   focus: `health`
-- `/design-report module --include-archived` → include archived docs
+- `/design-docs:design-report module --include-archived` → include archived docs
 
 ### 2. Load Configuration
 

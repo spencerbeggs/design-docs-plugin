@@ -389,7 +389,7 @@ WARNING: Pointer may be stale (content drift)
 - Meaning: the link resolves, but the doc's content changed since the
   pointer was recorded — the "Load when" guidance may no longer match.
 - Fix: re-verify the pointer's "Load when" line against the current doc,
-  then re-record the hash in .claude/design/refs.json (the context-doc-agent
+  then re-record the hash in .claude/design/refs.json (the design-docs:context-doc-agent
   does this when it confirms the pointer).
 ```
 
@@ -669,11 +669,11 @@ A valid CLAUDE.md file has:
 
 Works well with:
 
-- `/context-review` - Fix issues before validation
-- `/context-update` - Update files based on validation
-- `/context-split` - Split overlimit files
-- `/design-validate` - Ensure referenced design docs are valid
-- `/design-review` - Check design doc health
+- `/design-docs:context-review` - Fix issues before validation
+- `/design-docs:context-update` - Update files based on validation
+- `/design-docs:context-split` - Split overlimit files
+- `/design-docs:design-validate` - Ensure referenced design docs are valid
+- `/design-docs:design-review` - Check design doc health
 
 ## CI/CD Integration
 

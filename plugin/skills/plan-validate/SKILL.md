@@ -28,19 +28,19 @@ This skill validates plan documents by:
 **Validate specific plan:**
 
 ```bash
-/plan-validate plan-design-linking-phase-1
+/design-docs:plan-validate plan-design-linking-phase-1
 ```
 
 **Validate all plans:**
 
 ```bash
-/plan-validate --all
+/design-docs:plan-validate --all
 ```
 
 **Validate with strict mode:**
 
 ```bash
-/plan-validate plan-design-linking-phase-1 --strict
+/design-docs:plan-validate plan-design-linking-phase-1 --strict
 ```
 
 ## How It Works
@@ -146,28 +146,28 @@ Warnings (1):
 
 ```bash
 # Check plan before committing
-/plan-validate my-feature-plan
+/design-docs:plan-validate my-feature-plan
 ```
 
 ### Validate All Plans
 
 ```bash
 # Check entire plan directory
-/plan-validate --all
+/design-docs:plan-validate --all
 ```
 
 ### Fix Common Issues
 
 ```bash
 # Auto-fix when possible (updates dates, formats fields)
-/plan-validate my-feature-plan --fix
+/design-docs:plan-validate my-feature-plan --fix
 ```
 
 ### Strict Validation
 
 ```bash
 # Additional quality checks
-/plan-validate my-feature-plan --strict
+/design-docs:plan-validate my-feature-plan --strict
 ```
 
 Strict mode adds:

@@ -25,19 +25,19 @@ This skill initializes new design documentation files by:
 **Basic usage:**
 
 ```bash
-/design-init effect-type-registry cache-optimization
+/design-docs:design-init effect-type-registry cache-optimization
 ```
 
 **With explicit category:**
 
 ```bash
-/design-init rspress-plugin-api-extractor component-lifecycle --category=architecture
+/design-docs:design-init rspress-plugin-api-extractor component-lifecycle --category=architecture
 ```
 
 **Specify template:**
 
 ```bash
-/design-init website deployment --template=default
+/design-docs:design-init website deployment --template=default
 ```
 
 ## Parameters
@@ -114,6 +114,6 @@ See [examples.md](examples.md) for:
 
 Use this skill in combination with:
 
-- `/design-validate` - Validate after creation
-- `/design-update` - Update newly created docs
-- `/design-review` - Review doc quality
+- `/design-docs:design-validate` - Validate after creation
+- `/design-docs:design-update` - Update newly created docs
+- `/design-docs:design-review` - Review doc quality

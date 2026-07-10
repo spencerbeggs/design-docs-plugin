@@ -335,7 +335,7 @@ For each issue found, provide:
 ```markdown
 1. [CRITICAL] Root CLAUDE.md exceeds limit (2600/2000 words)
    - File: CLAUDE.md
-   - Fix: Use /context-split to split into child files
+   - Fix: Use /design-docs:context-split to split into child files
    - Impact: Reduces token usage, improves efficiency
 
 2. [HIGH] Missing design doc pointer for architecture
@@ -417,10 +417,10 @@ Generate comprehensive report in markdown format:
 
 ## Related Skills
 
-- `/context-update` - Update files based on findings
-- `/context-split` - Split files exceeding limits
-- `/context-validate` - Re-validate after changes
-- `/context-review` - Review specific quality aspects
+- `/design-docs:context-update` - Update files based on findings
+- `/design-docs:context-split` - Split files exceeding limits
+- `/design-docs:context-validate` - Re-validate after changes
+- `/design-docs:context-review` - Review specific quality aspects
 
 ## Next Steps
 
