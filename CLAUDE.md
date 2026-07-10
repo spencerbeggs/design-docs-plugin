@@ -60,6 +60,8 @@ design-docs-plugin/
 ├── docs/
 ├── lib/
 │   └── configs/                 # commitlint, lint-staged, markdownlint
+├── design-docs.schema.json      # Published JSON Schema for design.config.json
+├── plan-frontmatter.schema.json # Published JSON Schema for plan frontmatter
 ├── CLAUDE.md                    # This file
 ├── README.md
 ├── CONTRIBUTING.md
@@ -87,7 +89,7 @@ design-docs-plugin/
 
 ## Configuration
 
-All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `pre-tool-use/allow-design-writes.sh` hook auto-approves Write/Edit/MultiEdit operations to `.claude/design/` and `.claude/plans/`.
+All hooks respect `DESIGN_DOCS_CONTEXT_ENABLED` environment variable. Set to `false` to disable all hook behavior. The `pre-tool-use/allow-design-writes.sh` hook auto-approves Write/Edit/MultiEdit operations to `.claude/design/`, `.claude/plans/`, and any `CLAUDE.md` file.
 
 Set `GITHUB_PERSONAL_ACCESS_TOKEN` to give the workflow skills (`finalize`, `review`, `merge-prep`) a scoped `gh` token. It is optional — those skills fall back to `gh auth login` keyring credentials.
 
@@ -128,11 +130,8 @@ Plugins are distributed via sparse git cloning from a marketplace repository. On
 
 ## Design Documentation
 
-For detailed architecture:
-
-* Plugin architecture → `@./.claude/design/design-docs-plugin/plugin-architecture.md`
-
-Load when modifying hooks, skills, agents, or the distribution mechanism.
+* Plugin architecture → `@./.claude/design/design-docs-plugin/plugin-architecture.md` — load when modifying hooks, skills, agents, or the distribution mechanism.
+* System model vs. observed reality → `@./.claude/design/design-docs-plugin/system-model-vs-observed.md` — load when brainstorming or planning the plugin's next iteration; a five-repo field study of how the system behaves in practice (draft: diagnosis and direction inventory, no committed decisions).
 
 ## Dependencies
 

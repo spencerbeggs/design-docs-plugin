@@ -2,6 +2,8 @@
 
 This is the distributable plugin directory. Everything here ships to end users via git-subdir sparse cloning. Keep it minimal -- no tests, no dev tooling.
 
+Note: `claude plugin validate --strict` warns that this CLAUDE.md is not loaded as project context. That is accepted and intentional — this file is maintainer documentation for people (and agents) working on the plugin source, not runtime context for consumers; runtime guidance ships via skills and hooks.
+
 ## Structure
 
 * `.claude-plugin/plugin.json` -- Plugin manifest (name, version, author)
@@ -34,7 +36,7 @@ Injects design documentation system context into new sessions. Fires on all Sess
 
 ### pre-tool-use/allow-design-writes.sh (PreToolUse)
 
-Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.claude/plans/` directories. Prevents repeated permission prompts when agents update documentation. Requires `jq`.
+Auto-approves Write/Edit/MultiEdit operations targeting `.claude/design/` and `.claude/plans/` directories, plus any `CLAUDE.md` file (a deliberate trust expansion so `design-groom` and the doc agents can update context files unprompted). Prevents repeated permission prompts when agents update documentation. Requires `jq`. This plugin-level registration in `hooks/hooks.json` is the sole auto-approval mechanism — agent frontmatter cannot declare hooks (plugin agents drop a `hooks` field at load).
 
 ## Key Skills
 
@@ -97,9 +99,9 @@ User-invocable only (`disable-model-invocation: true`). The `.claude/handoffs/` 
 
 1. Create `agents/{name}.md` with YAML frontmatter and system prompt
 1. Add the agent file path to `.claude-plugin/plugin.json` agents array
-1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `color`, `hooks`, `maxTurns`, `memory`, `effort`, `isolation`. Use `color` for the transcript badge (red/pink/blue used by the three doc agents); use `hooks` to declare per-agent PreToolUse approvals (all three doc agents auto-approve Write/Edit on design dirs)
+1. Supported frontmatter: `name`, `description`, `tools`, `disallowedTools`, `model`, `skills`, `color`, `maxTurns`, `memory`, `effort`, `isolation`. Use `color` for the transcript badge (red/pink/blue used by the three doc agents)
 1. Include `SendMessage` in `tools:` so the agent can report back when an orchestration skill dispatches it as a teammate
-1. Note: plugin agents ignore `mcpServers` and `permissionMode` fields
+1. Note: plugin agents ignore `hooks`, `mcpServers`, and `permissionMode` fields — they are dropped at load time. Auto-approval for doc writes comes from the plugin-level PreToolUse registration in `hooks/hooks.json`, never from agent frontmatter
 1. Each doc agent should also list its matching `*-docs-style` skill in `skills:` so the style rule auto-loads
 
 ## Adding Commands

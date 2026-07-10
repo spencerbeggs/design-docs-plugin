@@ -1,5 +1,5 @@
 {
-	"$schema": "../../plugin/skills/design-config/json-schemas/current.json",
+	"$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
 	"version": "1.0.0",
 	"project": {
 		"name": "spencerbeggs/design-docs-plugin",
@@ -55,12 +55,12 @@
 			"context-review",
 			"context-update",
 			"context-split",
-			"docs-generate-readme",
+			"user-docs-create-readme",
 			"docs-generate-repo",
 			"docs-generate-site",
 			"docs-generate-contributing",
 			"docs-generate-security",
-			"docs-review",
+			"user-docs-review",
 			"docs-review-package",
 			"docs-sync",
 			"docs-update",
@@ -148,22 +148,22 @@
 			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"],
 			"file": "plugin/agents/context-doc-agent.md"
 		},
-		"docs-gen-agent": {
+		"user-docs": {
 			"enabled": true,
 			"description": "Generate user-facing documentation from design docs",
 			"skills": [
-				"docs-generate-readme",
+				"user-docs-create-readme",
 				"docs-generate-contributing",
 				"docs-generate-security",
 				"docs-generate-repo",
 				"docs-generate-site",
 				"docs-sync",
-				"docs-review",
+				"user-docs-review",
 				"docs-review-package",
 				"docs-update"
 			],
 			"tools": ["Read", "Grep", "Glob", "Edit", "Write"],
-			"file": "plugin/agents/docs-gen-agent.md"
+			"file": "plugin/agents/user-docs.md"
 		}
 	}
 }

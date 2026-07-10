@@ -1,7 +1,7 @@
 ---
 name: plan-explore
 description: Explore implementation plans, status, and relationships. Provides comprehensive plan ecosystem navigation with filtering, health analysis, and actionable recommendations.
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash(bash *), Bash(jq *)
 context: fork
 agent: design-doc-agent
 ---
@@ -29,6 +29,16 @@ The plan-explore skill enables agents to:
 - Health analysis (staleness, orphans, blockers, schedule)
 - Smart recommendations for next actions
 - Fast metadata caching (5-minute TTL)
+
+## Implementation Script
+
+The entire exploration workflow — filtering, health analysis, and every output format — is implemented by a deterministic script that ships with this skill. Run it instead of re-implementing the logic with ad-hoc Bash or Grep:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/skills/plan-explore/scripts/explore-plans.sh" [module] [options]
+```
+
+The slash-command invocations below map directly onto the script's arguments (e.g. `/design-docs:plan-explore --stale` runs `explore-plans.sh --stale`). Use `--help` for the full option list.
 
 ## Quick Start
 

@@ -1,7 +1,7 @@
 ---
 name: design-compare
 description: Compare doc versions across git history. Use when reviewing changes, tracking evolution, or understanding modifications.
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash(git *), Bash(diff *), Bash(cat *), Bash(sed *), Bash(grep *)
 context: fork
 agent: design-doc-agent
 ---

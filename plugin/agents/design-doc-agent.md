@@ -4,12 +4,6 @@ description: Maintain internal design documentation and implementation plans. Us
 skills: design-docs-style, design-validate, design-init, design-update, design-sync, design-prune, design-split, design-review, design-audit, design-search, design-index, design-export, design-compare, design-link, design-report, design-archive, design-config, plan-validate, plan-create, plan-list, plan-explore, plan-complete
 tools: Read, Grep, Glob, Edit, Write, Bash, SendMessage
 color: red
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/allow-design-writes.sh"
 ---
 
 # Design Documentation Agent

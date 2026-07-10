@@ -6,7 +6,13 @@ import { dirname, join } from "node:path";
 const SCRIPT_PATH = join(import.meta.dir, "../../plugin/lib/refs-record.sh");
 
 function run(cwd: string, args: string[]) {
-	const proc = Bun.spawnSync(["bash", SCRIPT_PATH, ...args], { cwd });
+	// Pin the project root to the fixture repo: the script resolves it via
+	// DESIGN_DOCS_PROJECT_DIR/CLAUDE_PROJECT_DIR before falling back to cwd,
+	// and the real session's CLAUDE_PROJECT_DIR would otherwise leak in.
+	const proc = Bun.spawnSync(["bash", SCRIPT_PATH, ...args], {
+		cwd,
+		env: { ...process.env, DESIGN_DOCS_PROJECT_DIR: cwd, CLAUDE_PROJECT_DIR: cwd },
+	});
 	return {
 		exitCode: proc.exitCode,
 		stdout: proc.stdout.toString(),

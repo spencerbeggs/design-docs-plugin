@@ -2,7 +2,7 @@
 name: plan-list
 description: List and filter plan documents. Use when exploring plans, checking
   status, finding plans by module, or reviewing plan health.
-allowed-tools: Read, Bash
+allowed-tools: Read, Bash(ls *)
 context: fork
 agent: design-doc-agent
 ---
@@ -394,8 +394,8 @@ See [examples.md](./examples.md) for detailed usage examples.
 
 ## Related Skills
 
-- `plan-validate` - Validate plan structure
-- `plan-create` - Create new plans
-- `plan-update` - Update plan status/progress
-- `plan-explore` - Comprehensive plan exploration (Phase 2)
-- `design-list` - List design docs
+- `design-docs:plan-validate` - Validate plan structure
+- `design-docs:plan-create` - Create new plans
+- `design-docs:plan-complete` - Complete a plan and persist knowledge to design docs
+- `design-docs:plan-explore` - Comprehensive plan exploration
+- `design-docs:design-index` - Generate a design-doc table of contents

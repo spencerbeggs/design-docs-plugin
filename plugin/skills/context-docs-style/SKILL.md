@@ -49,9 +49,13 @@ A context file that exceeds ~1000 words for the root or ~500 words for a package
 
 ## No artificial line breaks
 
-Each paragraph and each list item occupies a single source line. The renderer handles wrapping. Do not insert hard line breaks inside a sentence or bullet point. If you encounter a pre-existing violation of this rule, you MUST fix it when you edit the file for other reasons, but do not add new violations.
+This rule is configurable via `quality.context.hardWrap` in `.claude/design/design.config.json`: `forbid` (the default when the key or config file is absent) or `allow`.
 
-Wrong:
+**When `forbid`:** each paragraph and each list item occupies a single source line. The renderer handles wrapping. Do not insert hard line breaks inside a sentence or bullet point. If you encounter a pre-existing violation of this rule, you MUST fix it when you edit the file for other reasons, but do not add new violations.
+
+**When `allow`:** hard-wrapped prose is an accepted convention in this repo. Do not flag it and do not unwrap it. Enforce consistency instead: match the wrapping style the file and its sibling context files already use, and never churn a file from one style to the other.
+
+Wrong under `forbid`:
 
 ```markdown
 This is a paragraph that has an artificial line break in the 
@@ -60,7 +64,7 @@ middle of a sentence, which is against the style rules.
   that continues on a second source line.
 ```
 
-Right:
+Right under `forbid`:
 
 ```markdown
 This paragraph occupies a single source line, with no artificial breaks. The renderer wraps it appropriately.

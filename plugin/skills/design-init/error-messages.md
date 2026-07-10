@@ -65,10 +65,10 @@ Overwrite? This will replace the existing file.
 
 ```text
 Warning: Template not found:
-.claude/skills/design-init/templates/{category}.template.md
+${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/{category}.template.md
 
 Falling back to default template:
-.claude/skills/design-init/templates/design-doc.template.md
+${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/design-doc.template.md
 ```
 
 **Action:** Use default template, continue with warning
@@ -168,7 +168,7 @@ Check permissions and try again.
 
 ```text
 Error: Failed to read template:
-.claude/skills/design-init/templates/{category}.template.md
+${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/{category}.template.md
 
 Check file exists and has read permissions.
 ```

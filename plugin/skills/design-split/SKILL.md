@@ -1,7 +1,7 @@
 ---
 name: design-split
 description: Split an oversized design doc into atomic, cross-referenced pieces. Use when a design doc covers more than one unrelated subsystem or has grown far larger than its peers in the same module.
-allowed-tools: Read, Write, Edit, Glob, Bash
+allowed-tools: Read, Write, Edit, Glob
 context: fork
 agent: design-doc-agent
 ---

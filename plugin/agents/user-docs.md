@@ -4,12 +4,6 @@ description: User-facing documentation expert. Delegate when writing or refactor
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill, TaskCreate, TaskUpdate, TaskList, TaskGet, SendMessage
 skills: docs-generate-contributing, docs-generate-repo, docs-generate-security, docs-generate-site, docs-review-package, docs-sync, docs-update, user-docs-add-page, user-docs-badges, user-docs-build-badges, user-docs-build-toc, user-docs-create-docs, user-docs-create-readme, user-docs-detect-shape, user-docs-humanize, user-docs-review, user-docs-style
 color: blue
-hooks:
-  PreToolUse:
-    - matcher: "Write|Edit"
-      hooks:
-        - type: command
-          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/allow-design-writes.sh"
 ---
 
 # User Documentation Agent

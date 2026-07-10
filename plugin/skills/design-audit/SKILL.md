@@ -1,7 +1,7 @@
 ---
 name: design-audit
 description: Comprehensive health audit for design documentation. Use when performing thorough quality checks, preparing for releases, or ensuring documentation compliance.
-allowed-tools: Read, Glob, Grep, Bash
+allowed-tools: Read, Glob, Grep, Bash(bash *), Bash(jq *)
 context: fork
 agent: design-doc-agent
 ---
@@ -64,6 +64,19 @@ High-level audit process:
 11. **Provide recommendations** prioritized by impact and effort
 
 For detailed implementation steps, see supporting documentation below.
+
+## Workflow Scripts
+
+Four deterministic scripts ship with this skill for the recurring audit workflows. Prefer them over re-deriving the checks by hand:
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-audit/scripts/maintenance-workflow.sh"   # validate all docs, then flag stale last-synced dates (>30 days)
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-audit/scripts/quality-workflow.sh"       # validate, then report completeness and status distributions
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-audit/scripts/release-workflow.sh"       # validate, then flag stub-status and low-completeness docs for release
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-audit/scripts/generate-validation-report.sh" <results-file>  # wrap validation output in a markdown report
+```
+
+Each workflow script runs the canonical validator (`design-validate/scripts/validate.sh`) first and stops on validation errors.
 
 ## Supporting Documentation
 

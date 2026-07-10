@@ -162,12 +162,14 @@ extract_headings() {
 
 # GitHub's heading-anchor algorithm: lowercase, drop everything that is not a
 # letter, digit, space, or hyphen (this is what strips `@`, backticks, `.`,
-# `/`, `(`, `)`, `:`, `,`, etc.), then turn whitespace runs into hyphens.
+# `/`, `(`, `)`, `:`, `,`, etc.), then turn each space into a hyphen — one
+# per character, not one per run: "A × B" strips the glyph, leaves two
+# spaces, and GitHub renders the anchor with two hyphens (a--b).
 slugify_heading() {
 	local text="$1" slug
 	slug="$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')"
 	slug="$(printf '%s' "$slug" | sed -E 's/[^a-z0-9 -]//g')"
-	slug="$(printf '%s' "$slug" | sed -E 's/[[:space:]]+/-/g')"
+	slug="$(printf '%s' "$slug" | sed -E 's/[[:space:]]/-/g')"
 	printf '%s' "$slug"
 }
 
@@ -230,14 +232,22 @@ discover_modules() {
 ALL_MODULES="$(discover_modules)"
 
 NODES=""
+# List a module's docs recursively (docs may live in subdirectories, e.g.
+# packages/*.md), skipping _archive trees. Emits repo-root-relative paths.
+module_docs() {
+	local module="$1"
+	[ -d "$DESIGN_ROOT/$module" ] || return 0
+	find "$DESIGN_ROOT/$module" -name _archive -prune -o -type f -name '*.md' -print |
+		sort |
+		sed "s|^$DESIGN_ROOT/|${DESIGN_REL}/|"
+}
+
 add_nodes_for_module() {
-	local module="$1" file base
-	for file in "$DESIGN_ROOT/$module"/*.md; do
-		[ -f "$file" ] || continue
-		base="$(basename "$file")"
-		[ "$base" = "design.config.json" ] && continue
-		NODES+="${DESIGN_REL}/${module}/${base}"$'\n'
-	done
+	local module="$1" doc
+	while IFS= read -r doc; do
+		[ -n "$doc" ] || continue
+		NODES+="${doc}"$'\n'
+	done < <(module_docs "$module")
 }
 
 while IFS= read -r module; do
@@ -317,12 +327,10 @@ while IFS= read -r module; do
 	if [ "$MODULE_ARG" != "all" ] && [ "$MODULE_ARG" != "$module" ]; then
 		continue
 	fi
-	for file in "$DESIGN_ROOT/$module"/*.md; do
-		[ -f "$file" ] || continue
-		base="$(basename "$file")"
-		[ "$base" = "design.config.json" ] && continue
-		collect_for_doc "${DESIGN_REL}/${module}/${base}"
-	done
+	while IFS= read -r doc; do
+		[ -n "$doc" ] || continue
+		collect_for_doc "$doc"
+	done < <(module_docs "$module")
 done <<<"$ALL_MODULES"
 
 # Dedupe.

@@ -80,9 +80,9 @@ patterns.
 **Template selection:**
 
 1. Check for category-specific template:
-   `.claude/skills/design-init/templates/{category}.template.md`
+   `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/{category}.template.md`
 2. Fall back to default:
-   `.claude/skills/design-init/templates/design-doc.template.md`
+   `${CLAUDE_PLUGIN_ROOT}/skills/design-init/templates/design-doc.template.md`
 
 **Ask user if ambiguous:**
 

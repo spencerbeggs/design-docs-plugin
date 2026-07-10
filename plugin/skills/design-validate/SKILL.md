@@ -1,7 +1,7 @@
 ---
 name: design-validate
 description: Validate design doc structure and frontmatter. Use when checking design docs for compliance, ensuring proper formatting, or verifying metadata before commits.
-allowed-tools: Read, Glob, Bash
+allowed-tools: Read, Glob, Bash(bash *)
 context: fork
 agent: design-doc-agent
 ---
@@ -208,10 +208,10 @@ This skill integrates with:
 
 ### Standalone Script
 
-A standalone bash validation script is available at:
+A standalone bash validation script ships with the plugin:
 
 ```bash
-.claude/skills/design-validate/scripts/validate.sh [module|all]
+bash "${CLAUDE_PLUGIN_ROOT}/skills/design-validate/scripts/validate.sh" [module|all]
 ```
 
 This script can be:

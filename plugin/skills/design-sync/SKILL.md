@@ -1,7 +1,7 @@
 ---
 name: design-sync
 description: Sync design docs with codebase state. Use when verifying documentation accuracy, after code changes, or when last-synced is stale.
-allowed-tools: Read, Glob, Grep, Edit, Bash
+allowed-tools: Read, Glob, Grep, Edit, Bash(grep *), Bash(jq *), Bash(git *), Bash(wc *), Bash(find *), Bash(ls *), Bash(test *), Bash(awk *), Bash(markdownlint-cli2 *)
 context: fork
 agent: design-doc-agent
 ---
