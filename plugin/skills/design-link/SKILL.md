@@ -23,8 +23,9 @@ bash "${CLAUDE_PLUGIN_ROOT}/skills/design-link/scripts/link.sh" [module|all] [--
 ```
 
 The script discovers docs, parses each doc's `related`/`dependencies`
-frontmatter and in-content `.md` links, then reports the reference list, broken
-links, orphaned docs, and bidirectional vs one-way pairs. Default scope is
+frontmatter and every in-content relative link (not only `.md` ones), then
+reports the reference list, broken links, orphaned docs, and bidirectional vs
+one-way pairs. Default scope is
 `all`; default format is `text`. Present the script output, then add the
 recommendations described below if the user wants them.
 
@@ -77,8 +78,9 @@ The script performs the graph generation deterministically:
 2. **Load design.config.json** to identify target modules (falls back to
    listing subdirectories of `.claude/design/`)
 3. **Find all design documents** across modules
-4. **Parse references** from frontmatter (`related`, `dependencies`) and
-   in-content `.md` links
+4. **Parse references** from frontmatter (`related`, `dependencies`) and every
+   in-content relative link, whatever its file type — links to source files,
+   READMEs and configs are checked, not just links between design docs
 5. **Build the graph** with nodes (documents) and edges (references)
 6. **Analyze** for orphans, broken references, and bidirectional vs one-way
    pairs
@@ -161,13 +163,22 @@ design doc.
 
 ### Broken References
 
-```text
-WARNING: Broken references detected in {doc}
-- {broken-path-1}
-- {broken-path-2}
+A reference is broken when its target does not exist. This covers frontmatter `related` / `dependencies` entries, in-content links to other design docs, and in-content links that resolve *outside* the design tree — source files, READMEs, configs. That last group matters most: the style guide tells authors to point at real source paths, so a checker that skipped them left the most style-compliant docs the least validated.
 
-Fix: Remove reference from frontmatter or create the missing document
+Content-link failures carry the source line, and each occurrence is reported separately — the same dead link twice in one doc is two findings, not one.
+
+The renderer emits one global section, not a block per document:
+
+```text
+## Broken References
+
+- {doc}:{line} → {resolved-target} (target missing)
+- {doc} → {resolved-target} (target missing)        # from frontmatter, no line
 ```
+
+Fix by correcting the path, creating the missing file, or removing the reference.
+
+The reported target is the path the link *actually resolves to*, not the path as written. A link with too few `../` segments to escape `.claude/` shows up as `.claude/packages/...` — which is the fastest way to see what went wrong.
 
 ## Integration
 

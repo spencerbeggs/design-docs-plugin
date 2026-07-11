@@ -4,14 +4,14 @@
 		{
 			"source": "CLAUDE.md",
 			"target": ".claude/design/design-docs-plugin/plugin-architecture.md",
-			"hash": "bab56abecd3d6240f82e45e16576cc716dd415fd0f462f287aca01042baa513b",
-			"recordedAt": "2026-07-10"
+			"hash": "349d8b3d92448dc2bf21c2ee42713a530fc93b45ea944fe172335ca55cec456b",
+			"recordedAt": "2026-07-11"
 		},
 		{
 			"source": "CLAUDE.md",
 			"target": ".claude/design/design-docs-plugin/system-model-vs-observed.md",
-			"hash": "6d1ee613fd8c3ca8bebb486f4e0498fa4833ba877c14e1f46d2c78dd514201fe",
-			"recordedAt": "2026-07-10"
+			"hash": "0d57f37ef092c086edc28fe248856c9a22bfe723a8a634ea50ae7eb4e41e2187",
+			"recordedAt": "2026-07-11"
 		}
 	]
 }

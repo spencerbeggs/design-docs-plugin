@@ -378,3 +378,218 @@ describe("design-link link.sh", () => {
 		expect(stdout).toContain("- Broken anchors: 0");
 	});
 });
+
+describe("design-link out-of-tree reference checking", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-link-outside-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod" } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function docWithBody(body: string[]): string {
+		return ["---", "status: current", "completeness: 80", "related: []", "---", "# A", "", ...body, ""].join("\n");
+	}
+
+	test("flags a broken link to a source file outside the design tree", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [build](../../../src/missing.ts)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 1");
+		expect(stdout).toContain("src/missing.ts (target missing)");
+	});
+
+	test("does not flag a link to a source file that exists", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/index.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [entry](../../../src/index.ts)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("flags a broken README link that under-escapes the .claude directory", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("packages/pkg/README.md", "# Pkg\n");
+		// Three `../` from mod/ lands in .claude/packages/... — one level short.
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [README](../../packages/pkg/README.md)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 1");
+		expect(stdout).toContain(".claude/packages/pkg/README.md (target missing)");
+	});
+
+	test("does not flag http(s) links", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [docs](https://example.com/x.ts)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("reports each occurrence of a repeated broken link, not just the first", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody(["First [gone](./gone.md).", "", "Later, again [gone](./gone.md)."]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 2");
+	});
+
+	test("includes the source line number for a broken content link", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [gone](./gone.md)."]));
+
+		const { stdout } = run(repo, ["all", "--format=json"]);
+		const parsed = JSON.parse(stdout) as { broken: { from: string; to: string; line: number }[] };
+		expect(parsed.broken).toHaveLength(1);
+		expect(parsed.broken[0]?.line).toBe(8);
+	});
+});
+
+describe("design-link markdown destination parsing", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-link-dest-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod" } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function docWithBody(body: string[]): string {
+		return ["---", "status: current", "completeness: 80", "related: []", "---", "# A", "", ...body, ""].join("\n");
+	}
+
+	// A checker that invents broken links is worse than one that misses them.
+	test("strips a link title and does not invent a broken reference", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/index.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(['See [entry](../../../src/index.ts "The entry point").']));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("strips a single-quoted link title", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/index.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [entry](../../../src/index.ts 'entry')."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("treats an angle-bracket-wrapped URL as external, not a relative path", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [site](<https://example.com/x>)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("unwraps an angle-bracket relative destination", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/weird name.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [w](<../../../src/weird name.ts>)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("preserves balanced parentheses inside a destination", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/foo(bar).ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [p](../../../src/foo(bar).ts)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("still flags a genuinely missing target that carries a title", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(['See [gone](../../../src/gone.ts "Missing").']));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 1");
+		expect(stdout).toContain("src/gone.ts (target missing)");
+	});
+});
+
+describe("design-link JSON escaping", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-link-json-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	// A path containing `"` used to be interpolated straight into a JSON string
+	// template, producing an invalid document that jq rejected -- which the
+	// `|| true` guard then silently turned into an empty list.
+	test("emits valid JSON when a broken target contains a double quote", () => {
+		writeFileAt(
+			".claude/design/design.config.json",
+			JSON.stringify({
+				version: "1.0.0",
+				modules: { mod: { path: "mod" } },
+				quality: { designDocs: { requireFrontmatter: true } },
+			}),
+		);
+		writeFileAt(
+			".claude/design/mod/a.md",
+			["---", "status: current", "completeness: 80", "related: []", "---", "# A", "", 'See [q](./we"ird.md).', ""].join(
+				"\n",
+			),
+		);
+
+		const { stdout } = run(repo, ["all", "--format=json"]);
+		const parsed = JSON.parse(stdout) as { broken: { to: string }[]; summary: { broken: number } };
+		expect(parsed.summary.broken).toBe(1);
+		expect(parsed.broken[0]?.to).toContain('we"ird.md');
+	});
+});

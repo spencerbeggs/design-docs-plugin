@@ -126,12 +126,71 @@ extract_fm_list() {
 	' | sed -E "s/^[\"']//; s/[\"']$//"
 }
 
-# Print in-content markdown links to .md files (anchors stripped, http(s) skipped).
+# Print in-content markdown links as `line<TAB>ref`.
+#
+# Every link target is emitted, not just `.md` ones. The design-doc style guide
+# tells authors to point at real source paths, and restricting extraction to
+# `.md` meant those links -- the ones the style guide asks for -- were never
+# checked for existence at all.
+#
+# The destination is *parsed*, not just regex-sliced, because a checker that
+# invents broken links is worse than one that misses them. CommonMark allows
+# forms a naive `\]\([^)]+\)` match mangles into paths that exist nowhere:
+#
+#   [x](./x.md "title")          -> title must be stripped, else the ref is `./x.md "title"`
+#   [x](<./weird name.md>)       -> angle-bracket form must be unwrapped
+#   [x](foo(bar).md)             -> balanced parens belong to the destination
+#
+# Each of those would otherwise be reported as a missing file.
+#
+# Skipped: absolute URLs (any `scheme:` prefix, incl. http/https/mailto),
+# protocol-relative `//host`, and bare `#anchor` links (anchors are validated
+# separately against heading slugs by check_anchor_refs).
 extract_content_links() {
 	local file="$1"
-	grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null |
-		sed -E 's/^\]\(//; s/\)$//' |
-		grep -v '://' || true
+	awk '
+		{
+			line = $0
+			pos = 1
+			while ((idx = index(substr(line, pos), "](")) > 0) {
+				start = pos + idx + 1        # first char of the destination
+				i = start
+				depth = 1
+				dest = ""
+				# Walk to the destination-closing paren, tracking nesting so
+				# `foo(bar).md` survives intact.
+				while (i <= length(line)) {
+					c = substr(line, i, 1)
+					if (c == "(") depth++
+					else if (c == ")") { depth--; if (depth == 0) break }
+					dest = dest c
+					i++
+				}
+				pos = i + 1
+				if (depth != 0) continue     # unterminated link — ignore
+
+				# Strip a trailing title, double- or single-quoted.
+				# \047 is the POSIX octal escape for a single quote; \x27 is an
+				# awk extension that stricter implementations (mawk, the default
+				# awk on Debian/Ubuntu) need not honor -- and a missed match here
+				# leaves the title glued to the path, which reports as a broken
+				# link. The quote cannot be written literally: the whole awk
+				# program is inside a single-quoted shell string.
+				sub(/[[:space:]]+"[^"]*"[[:space:]]*$/, "", dest)
+				sub(/[[:space:]]+\047[^\047]*\047[[:space:]]*$/, "", dest)
+				# Trim surrounding whitespace.
+				gsub(/^[[:space:]]+|[[:space:]]+$/, "", dest)
+				# Unwrap the <...> destination form.
+				if (dest ~ /^<.*>$/) dest = substr(dest, 2, length(dest) - 2)
+
+				if (dest == "") continue
+				if (dest ~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/) continue   # scheme: (http, mailto, …)
+				if (dest ~ /^\/\//) continue                       # protocol-relative
+				if (dest ~ /^#/) continue                          # bare anchor
+				print NR "\t" dest
+			}
+		}
+	' "$file" 2>/dev/null || true
 }
 
 fm_field() {
@@ -261,34 +320,52 @@ is_node() { printf '%s' "$NODES" | grep -Fxq "$1"; }
 
 # EDGES lines: from<TAB>to<TAB>type
 EDGES=""
-# BROKEN lines: from<TAB>intended-target
+# BROKEN lines: from<TAB>intended-target<TAB>line ("0" when the ref came from
+# frontmatter, which has no meaningful link line). Carrying the line makes two
+# occurrences of the same broken link in one doc two distinct records -- they
+# used to collapse under `sort -u`, so fixing "the" broken link could silently
+# leave a second copy of it behind.
 BROKEN=""
 # BROKEN_ANCHORS lines: from<TAB>display-target(empty for same-file)<TAB>anchor
 BROKEN_ANCHORS=""
 
 collect_for_doc() {
-	local src="$1" docdir ref resolved
+	local src="$1" docdir r line
 	docdir="$(dirname "$src")"
 
-	add_refs() {
-		local type="$1"
-		local r
-		while IFS= read -r r; do
-			[ -n "$r" ] || continue
-			resolved="$(resolve_ref "$docdir" "$r")"
-			[ -n "$resolved" ] || continue
-			[[ "$resolved" == "$src" ]] && continue # self-link
-			if is_node "$resolved"; then
-				EDGES+="${src}	${resolved}	${type}"$'\n'
-			elif [[ "$resolved" == "${DESIGN_REL}/"* && "$resolved" == *.md ]]; then
-				BROKEN+="${src}	${resolved}"$'\n'
-			fi
-		done
+	add_ref() { # type line ref
+		local type="$1" line="$2" ref="$3" resolved
+		resolved="$(resolve_ref "$docdir" "$ref")"
+		[ -n "$resolved" ] || return 0
+		[[ "$resolved" == "$src" ]] && return 0 # self-link
+		if is_node "$resolved"; then
+			EDGES+="${src}	${resolved}	${type}"$'\n'
+		elif [[ "$resolved" == "${DESIGN_REL}/"* && "$resolved" == *.md ]]; then
+			# In-tree .md target that is not a known doc.
+			BROKEN+="${src}	${resolved}	${line}"$'\n'
+		elif [[ "$ref" != /* ]] && [ ! -e "$PROJECT_DIR/$resolved" ]; then
+			# A relative link resolving OUTSIDE the design tree -- source files,
+			# READMEs, configs. These were previously not checked at all, so
+			# whether a dead link was caught depended only on where its path
+			# happened to land, which no author can reason about.
+			BROKEN+="${src}	${resolved}	${line}"$'\n'
+		fi
 	}
 
-	add_refs related < <(extract_fm_list "$PROJECT_DIR/$src" related)
-	add_refs dependency < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
-	add_refs content-link < <(extract_content_links "$PROJECT_DIR/$src")
+	while IFS= read -r r; do
+		[ -n "$r" ] || continue
+		add_ref related 0 "$r"
+	done < <(extract_fm_list "$PROJECT_DIR/$src" related)
+
+	while IFS= read -r r; do
+		[ -n "$r" ] || continue
+		add_ref dependency 0 "$r"
+	done < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
+
+	while IFS=$'\t' read -r line r; do
+		[ -n "$r" ] || continue
+		add_ref content-link "$line" "$r"
+	done < <(extract_content_links "$PROJECT_DIR/$src")
 
 	check_anchor_refs "$src" "$docdir"
 }
@@ -441,9 +518,13 @@ emit_text() {
 	if [ -z "$BROKEN" ]; then
 		echo "_None._"
 	else
-		while IFS=$'\t' read -r from to; do
+		while IFS=$'\t' read -r from to line; do
 			[ -n "$from" ] || continue
-			echo "- ${from} → ${to} (target missing)"
+			if [ -n "$line" ] && [ "$line" != "0" ]; then
+				echo "- ${from}:${line} → ${to} (target missing)"
+			else
+				echo "- ${from} → ${to} (target missing)"
+			fi
 		done <<<"$BROKEN"
 	fi
 	echo ""
@@ -486,18 +567,24 @@ emit_json() {
 	# list — e.g. no broken references), and without the guard that
 	# non-zero status propagates through the pipe and `set -e` would abort
 	# the whole script even though jq already produced a valid `[]`.
+	#
+	# The record arrays are built by `jq` splitting raw TSV rather than by `awk`
+	# interpolating into a JSON string template. A path may legitimately contain
+	# `"` or `\`, and hand-built JSON would emit an invalid document that `jq`
+	# then rejects -- which the `|| true` guard above would silently turn into an
+	# empty list. Escaping is jq's job, so let jq do it.
 	local nodes_json edges_json broken_json broken_anchors_json orphans_json
 	nodes_json="$(printf '%s' "$SCOPE_NODES" | grep -v '^$' | json_array || true)"
 	orphans_json="$(printf '%s' "$ORPHANS" | grep -v '^$' | json_array || true)"
 	edges_json="$(printf '%s' "$EDGES" | grep -v '^$' |
-		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"type\":\"%s\"}\n", $1, $2, $3}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 3))
+			| map({from: .[0], to: .[1], type: .[2]})' || true)"
 	broken_json="$(printf '%s' "$BROKEN" | grep -v '^$' |
-		awk -F'\t' 'NF>=2 {printf "{\"from\":\"%s\",\"to\":\"%s\"}\n", $1, $2}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 2))
+			| map({from: .[0], to: .[1], line: ((.[2] // "0") | tonumber)})' || true)"
 	broken_anchors_json="$(printf '%s' "$BROKEN_ANCHORS" | grep -v '^$' |
-		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"anchor\":\"%s\"}\n", $1, $2, $3}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 3))
+			| map({from: .[0], to: .[1], anchor: .[2]})' || true)"
 	jq -n \
 		--arg scope "$MODULE_ARG" \
 		--argjson nodes "$nodes_json" \
