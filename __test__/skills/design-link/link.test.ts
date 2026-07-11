@@ -466,3 +466,130 @@ describe("design-link out-of-tree reference checking", () => {
 		expect(parsed.broken[0]?.line).toBe(8);
 	});
 });
+
+describe("design-link markdown destination parsing", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-link-dest-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod" } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function docWithBody(body: string[]): string {
+		return ["---", "status: current", "completeness: 80", "related: []", "---", "# A", "", ...body, ""].join("\n");
+	}
+
+	// A checker that invents broken links is worse than one that misses them.
+	test("strips a link title and does not invent a broken reference", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/index.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(['See [entry](../../../src/index.ts "The entry point").']));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("strips a single-quoted link title", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/index.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [entry](../../../src/index.ts 'entry')."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("treats an angle-bracket-wrapped URL as external, not a relative path", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [site](<https://example.com/x>)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("unwraps an angle-bracket relative destination", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/weird name.ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [w](<../../../src/weird name.ts>)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("preserves balanced parentheses inside a destination", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/foo(bar).ts", "export const a = 1;\n");
+		writeFileAt(".claude/design/mod/a.md", docWithBody(["See [p](../../../src/foo(bar).ts)."]));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 0");
+	});
+
+	test("still flags a genuinely missing target that carries a title", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", docWithBody(['See [gone](../../../src/gone.ts "Missing").']));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("- Broken references: 1");
+		expect(stdout).toContain("src/gone.ts (target missing)");
+	});
+});
+
+describe("design-link JSON escaping", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-link-json-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	// A path containing `"` used to be interpolated straight into a JSON string
+	// template, producing an invalid document that jq rejected -- which the
+	// `|| true` guard then silently turned into an empty list.
+	test("emits valid JSON when a broken target contains a double quote", () => {
+		writeFileAt(
+			".claude/design/design.config.json",
+			JSON.stringify({
+				version: "1.0.0",
+				modules: { mod: { path: "mod" } },
+				quality: { designDocs: { requireFrontmatter: true } },
+			}),
+		);
+		writeFileAt(
+			".claude/design/mod/a.md",
+			["---", "status: current", "completeness: 80", "related: []", "---", "# A", "", 'See [q](./we"ird.md).', ""].join(
+				"\n",
+			),
+		);
+
+		const { stdout } = run(repo, ["all", "--format=json"]);
+		const parsed = JSON.parse(stdout) as { broken: { to: string }[]; summary: { broken: number } };
+		expect(parsed.summary.broken).toBe(1);
+		expect(parsed.broken[0]?.to).toContain('we"ird.md');
+	});
+});

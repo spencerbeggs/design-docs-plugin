@@ -133,19 +133,58 @@ extract_fm_list() {
 # `.md` meant those links -- the ones the style guide asks for -- were never
 # checked for existence at all.
 #
+# The destination is *parsed*, not just regex-sliced, because a checker that
+# invents broken links is worse than one that misses them. CommonMark allows
+# forms a naive `\]\([^)]+\)` match mangles into paths that exist nowhere:
+#
+#   [x](./x.md "title")          -> title must be stripped, else the ref is `./x.md "title"`
+#   [x](<./weird name.md>)       -> angle-bracket form must be unwrapped
+#   [x](foo(bar).md)             -> balanced parens belong to the destination
+#
+# Each of those would otherwise be reported as a missing file.
+#
 # Skipped: absolute URLs (any `scheme:` prefix, incl. http/https/mailto),
 # protocol-relative `//host`, and bare `#anchor` links (anchors are validated
 # separately against heading slugs by check_anchor_refs).
 extract_content_links() {
 	local file="$1"
-	grep -noE '\]\([^)]+\)' "$file" 2>/dev/null |
-		sed -E 's/^([0-9]+):\]\(/\1\t/; s/\)$//' |
-		awk -F'\t' '
-			NF >= 2 && $2 != "" &&
-			$2 !~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/ &&
-			$2 !~ /^\/\// &&
-			$2 !~ /^#/ { print $1 "\t" $2 }
-		' || true
+	awk '
+		{
+			line = $0
+			pos = 1
+			while ((idx = index(substr(line, pos), "](")) > 0) {
+				start = pos + idx + 1        # first char of the destination
+				i = start
+				depth = 1
+				dest = ""
+				# Walk to the destination-closing paren, tracking nesting so
+				# `foo(bar).md` survives intact.
+				while (i <= length(line)) {
+					c = substr(line, i, 1)
+					if (c == "(") depth++
+					else if (c == ")") { depth--; if (depth == 0) break }
+					dest = dest c
+					i++
+				}
+				pos = i + 1
+				if (depth != 0) continue     # unterminated link — ignore
+
+				# Strip a trailing title: "..." or (...) or ...
+				sub(/[[:space:]]+"[^"]*"[[:space:]]*$/, "", dest)
+				sub(/[[:space:]]+\x27[^\x27]*\x27[[:space:]]*$/, "", dest)
+				# Trim surrounding whitespace.
+				gsub(/^[[:space:]]+|[[:space:]]+$/, "", dest)
+				# Unwrap the <...> destination form.
+				if (dest ~ /^<.*>$/) dest = substr(dest, 2, length(dest) - 2)
+
+				if (dest == "") continue
+				if (dest ~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/) continue   # scheme: (http, mailto, …)
+				if (dest ~ /^\/\//) continue                       # protocol-relative
+				if (dest ~ /^#/) continue                          # bare anchor
+				print NR "\t" dest
+			}
+		}
+	' "$file" 2>/dev/null || true
 }
 
 fm_field() {
@@ -522,18 +561,24 @@ emit_json() {
 	# list — e.g. no broken references), and without the guard that
 	# non-zero status propagates through the pipe and `set -e` would abort
 	# the whole script even though jq already produced a valid `[]`.
+	#
+	# The record arrays are built by `jq` splitting raw TSV rather than by `awk`
+	# interpolating into a JSON string template. A path may legitimately contain
+	# `"` or `\`, and hand-built JSON would emit an invalid document that `jq`
+	# then rejects -- which the `|| true` guard above would silently turn into an
+	# empty list. Escaping is jq's job, so let jq do it.
 	local nodes_json edges_json broken_json broken_anchors_json orphans_json
 	nodes_json="$(printf '%s' "$SCOPE_NODES" | grep -v '^$' | json_array || true)"
 	orphans_json="$(printf '%s' "$ORPHANS" | grep -v '^$' | json_array || true)"
 	edges_json="$(printf '%s' "$EDGES" | grep -v '^$' |
-		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"type\":\"%s\"}\n", $1, $2, $3}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 3))
+			| map({from: .[0], to: .[1], type: .[2]})' || true)"
 	broken_json="$(printf '%s' "$BROKEN" | grep -v '^$' |
-		awk -F'\t' 'NF>=2 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"line\":%s}\n", $1, $2, ($3 == "" ? 0 : $3)}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 2))
+			| map({from: .[0], to: .[1], line: ((.[2] // "0") | tonumber)})' || true)"
 	broken_anchors_json="$(printf '%s' "$BROKEN_ANCHORS" | grep -v '^$' |
-		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"anchor\":\"%s\"}\n", $1, $2, $3}' |
-		jq -s . || true)"
+		jq -R -s 'split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 3))
+			| map({from: .[0], to: .[1], anchor: .[2]})' || true)"
 	jq -n \
 		--arg scope "$MODULE_ARG" \
 		--argjson nodes "$nodes_json" \

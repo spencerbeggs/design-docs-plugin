@@ -441,7 +441,8 @@ describe("validate.sh subdirectory recursion", () => {
 		writeFileAt(".claude/design/mod/packages/nested.md", doc("Nested"));
 		writeFileAt(".claude/design/mod/packages/deep/deeper.md", doc("Deeper"));
 
-		const { stdout } = run(repo);
+		const { exitCode, stdout } = run(repo);
+		expect(exitCode).toBe(0);
 		expect(stdout).toContain("**Files validated:** 3");
 		expect(stdout).toContain("packages/nested.md");
 		expect(stdout).toContain("packages/deep/deeper.md");
