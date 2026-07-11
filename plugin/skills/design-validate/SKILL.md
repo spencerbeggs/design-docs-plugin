@@ -15,7 +15,7 @@ Validates design documentation files for structure, frontmatter, and quality com
 This skill validates design documentation by:
 
 1. Reading the design configuration
-2. Finding design docs for the specified module
+2. Finding design docs for the specified module, recursing through nested subdirectories (`<module>/packages/*.md` and deeper) and skipping `_archive/`
 3. Validating YAML frontmatter structure and values
 4. Checking for required sections
 5. Validating cross-references and links
@@ -80,7 +80,7 @@ Use Glob to find design docs, then for each file:
 **Cross-Reference Validation:**
 
 - Check paths in `related` array exist
-- Check paths in `dependencies` array exist
+- Check paths in `dependencies` array exist (when the field is present — it is optional)
 - Check paths in `implementation-plans` array exist (if present)
 - Validate bidirectional plan-design links
 - Validate internal markdown links

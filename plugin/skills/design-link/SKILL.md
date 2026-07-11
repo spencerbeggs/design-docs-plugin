@@ -161,13 +161,19 @@ design doc.
 
 ### Broken References
 
+A reference is broken when its target does not exist. This covers frontmatter `related` / `dependencies` entries, in-content links to other design docs, and in-content links that resolve *outside* the design tree — source files, READMEs, configs. That last group matters most: the style guide tells authors to point at real source paths, so a checker that skipped them left the most style-compliant docs the least validated.
+
+Content-link failures carry the source line, and each occurrence is reported separately — the same dead link twice in one doc is two findings, not one.
+
 ```text
 WARNING: Broken references detected in {doc}
-- {broken-path-1}
-- {broken-path-2}
+- {doc}:{line} → {resolved-target} (target missing)
+- {doc} → {resolved-target} (target missing)        # from frontmatter, no line
 
-Fix: Remove reference from frontmatter or create the missing document
+Fix: Correct the path, create the missing file, or remove the reference
 ```
+
+The reported target is the path the link *actually resolves to*, not the path as written. A link with too few `../` segments to escape `.claude/` shows up as `.claude/packages/...` — which is the fastest way to see what went wrong.
 
 ## Integration
 

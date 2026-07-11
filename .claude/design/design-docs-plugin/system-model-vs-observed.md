@@ -3,8 +3,8 @@ status: draft
 module: design-docs-plugin
 category: meta
 created: 2026-07-10
-updated: 2026-07-10
-last-synced: 2026-07-10
+updated: 2026-07-11
+last-synced: 2026-07-11
 completeness: 90
 related: [plugin-architecture.md]
 dependencies: []
@@ -26,6 +26,10 @@ A field study of how the design-docs system is supposed to work, and how it actu
 ## Methodology
 
 Five parallel read-only audit agents examined five repos on 2026-07-10, chosen to span the size spectrum: `vitest-bats` (small, 11 source files), `rspress-plugin-api-extractor` (mid-size pnpm monorepo), `effected` (active migration monorepo, 17 design docs), `vitest-agent` (mature multi-package monorepo, 18 design docs), and `savvy-web/systems` (largest: 21 docs across 15 module dirs, 14 CLAUDE.md files). Each agent performed: inventory with frontmatter analysis, git-log freshness comparison of docs vs. the source they describe, at least five concrete claim verifications against source with file:line evidence, refs.json hash recomputation via the plugin's own `ref-hash.sh`, CLAUDE.md pointer and command verification, and structural assessment. Roughly 45 spot-checks and 100+ pointer/hash verifications total.
+
+### Errata: the instruments were partly broken (added 2026-07-11)
+
+Follow-up work on the `effected` corpus found that two of the tools this study leaned on were defective at the time it ran. `design-validate` did not recurse into module subdirectories, so on effected it validated 7 of 22 docs and exited clean — a partial pass that looked exactly like a complete one — and it aborted the whole run silently on the first doc lacking frontmatter. `design-link`'s broken-reference check only fired for links that happened to resolve inside `.claude/design/` and end in `.md`, so whether a dead link was caught depended on where its path landed. Both are fixed (issues #62, #63). The consequence for reading this document: the study's "design doc content accuracy is high everywhere" finding rests on manual agent spot-checks, which stand, but any impression that the *automated* checks corroborated them does not. It also sharpens Failure 1 — the problem is not only that nobody fires the verification skills, but that when they were fired they could under-report without saying so. **A tool that silently covers less than it claims is a worse failure than one that is loudly wrong**, and any enforcement direction in Part IV inherits that hazard: wiring a validator into CI is worth nothing if the validator can pass by skipping.
 
 ## Part I: The Envisioned Model
 
@@ -151,6 +155,8 @@ A sharp sub-finding from vitest-bats: **the most recently edited context file wa
 **3. Verification asymmetry across layers.** Instrumentation is inversely proportional to traffic. Design docs (loaded on demand, occasionally) have four verification skills and freshness metadata. CLAUDE.md (loaded *every session*) has structural validation only — no freshness metadata, no claim verification, no example linting. Plans (loaded when resuming work — the highest-stakes moment) have a validator that never runs. The layer most likely to mislead an agent is the least checked.
 
 **4. Prose-to-prose, never prose-to-source.** The one automated integrity check (refs.json) compares documentation to documentation. A doc can pass every existing check while being flat wrong about the code — as systems' bundler doc demonstrated (clean refs, two hard-WRONG claims about its own shipped file paths). `design-sync` *can* check claims against source, but it's a manual skill (see root cause 1), and nothing lightweight runs continuously.
+
+*Partially addressed since (2026-07-11):* fixing #63 gave `design-link` a real prose-to-source check — every relative link in a doc body is now existence-checked wherever it resolves, so a doc pointing at a source file that has moved or been deleted is caught. That covers *linked* paths only, not paths merely asserted in prose (the bundler doc's failure mode), so direction B's "path/export assertion lint" remains open. The narrower fix is a useful precedent for it: existence-checking is cheap, needs no LLM and is exactly the kind of check that can run continuously.
 
 **5. Lifecycle events don't close loops.** Merging a PR is the moment plan status becomes wrong, doc `last-synced` starts aging, and completed plans should retire — and it is precisely the moment where no plugin machinery runs. `finalize` covers the authoring side of branch-end; nothing covers the *consequence* side (reconciling plans and metadata against what just became true).
 

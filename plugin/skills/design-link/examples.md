@@ -494,7 +494,7 @@ This is normal for new modules.
 **Execution:**
 
 1. Build graph
-2. Detect broken references (docs that no longer exist)
+2. Detect broken references — frontmatter entries, links to other design docs, and links resolving outside the design tree (source files, READMEs, configs)
 3. Report with recommendations
 
 **Output:**

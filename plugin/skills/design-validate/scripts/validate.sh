@@ -126,11 +126,14 @@ validate_file() {
 	local file_errors=0
 	local file_warnings=0
 
-	# Extract frontmatter (between first two --- markers)
+	# Extract frontmatter (between first two --- markers).
+	# `|| true`: under `set -e` + `set -o pipefail`, grep finding no `---` at all
+	# exits 1 and would abort the entire run -- so a doc with no frontmatter used
+	# to kill validation mid-report instead of being reported as the error it is.
 	local fm_start
 	local fm_end
-	fm_start=$(grep -n "^---$" "$file" | head -1 | cut -d: -f1)
-	fm_end=$(grep -n "^---$" "$file" | head -2 | tail -1 | cut -d: -f1)
+	fm_start=$(grep -n "^---$" "$file" | head -1 | cut -d: -f1 || true)
+	fm_end=$(grep -n "^---$" "$file" | head -2 | tail -1 | cut -d: -f1 || true)
 
 	if [ -z "$fm_start" ] || [ -z "$fm_end" ] || [ "$fm_start" -ge "$fm_end" ]; then
 		echo "  - ❌ ERROR: Missing or invalid frontmatter structure"
@@ -142,8 +145,11 @@ validate_file() {
 	local fm
 	fm=$(sed -n "${fm_start},${fm_end}p" "$file")
 
-	# Check required fields
-	local required_fields=("status" "module" "category" "created" "updated" "last-synced" "completeness" "related" "dependencies")
+	# Check required fields. `dependencies` is deliberately absent: it is an
+	# optional field (see frontmatter-rules.md). Requiring it made every doc
+	# not scaffolded from a template permanently red for a reason no author
+	# could act on, which taught readers to skip the whole report.
+	local required_fields=("status" "module" "category" "created" "updated" "last-synced" "completeness" "related")
 	for field in "${required_fields[@]}"; do
 		if ! echo "$fm" | grep -q "^${field}:"; then
 			echo "  - ❌ ERROR: Missing required field '${field}'"
@@ -354,11 +360,17 @@ while IFS= read -r module; do
 	echo "## $module"
 	echo ""
 	CATEGORIES=$(categories_for_module "$module")
-	for file in "$DESIGN_ROOT/$module"/*.md; do
+	# Recurse: modules nest their docs (e.g. <module>/packages/*.md), and a flat
+	# glob silently skipped every one of them -- a clean run was indistinguishable
+	# from a run that never looked. `_archive` is pruned, matching design-link.
+	while IFS= read -r file; do
+		[ -n "$file" ] || continue
 		[ -f "$file" ] || continue
-		echo "- **$(basename "$file")**"
+		# Label by path relative to the module dir so nested docs are
+		# distinguishable from same-named top-level ones.
+		echo "- **${file#"$DESIGN_ROOT/$module/"}**"
 		validate_file "$file" "$module" "$CATEGORIES"
-	done
+	done < <(find "$DESIGN_ROOT/$module" -name _archive -prune -o -type f -name '*.md' -print | sort)
 	echo ""
 done <<< "$MODULES"
 

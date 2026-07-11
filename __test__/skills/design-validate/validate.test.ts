@@ -388,3 +388,236 @@ describe("validate.sh hard-wrapped prose detection", () => {
 		expect(stdout).not.toContain("Hard-wrapped prose detected");
 	});
 });
+
+describe("validate.sh subdirectory recursion", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-validate-recurse-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod", categories: ["architecture"] } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function doc(title: string): string {
+		return [
+			"---",
+			"status: current",
+			"module: mod",
+			"category: architecture",
+			"created: 2026-01-01",
+			"updated: 2026-01-01",
+			"last-synced: 2026-01-01",
+			"completeness: 80",
+			"related: []",
+			"---",
+			`# ${title}`,
+			"",
+			"## Overview",
+			"",
+			"Body.",
+			"",
+		].join("\n");
+	}
+
+	test("validates docs nested in subdirectories", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/top.md", doc("Top"));
+		writeFileAt(".claude/design/mod/packages/nested.md", doc("Nested"));
+		writeFileAt(".claude/design/mod/packages/deep/deeper.md", doc("Deeper"));
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("**Files validated:** 3");
+		expect(stdout).toContain("packages/nested.md");
+		expect(stdout).toContain("packages/deep/deeper.md");
+	});
+
+	test("surfaces errors that live only in a nested doc", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/top.md", doc("Top"));
+		writeFileAt(".claude/design/mod/packages/broken.md", "# No frontmatter\n");
+
+		const { exitCode, stdout } = run(repo);
+		expect(stdout).toContain("Missing or invalid frontmatter structure");
+		expect(exitCode).toBe(1);
+	});
+
+	test("skips _archive subdirectories", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/top.md", doc("Top"));
+		writeFileAt(".claude/design/mod/_archive/old.md", "# Archived, no frontmatter\n");
+
+		const { exitCode, stdout } = run(repo);
+		expect(stdout).toContain("**Files validated:** 1");
+		expect(exitCode).toBe(0);
+	});
+});
+
+describe("validate.sh optional dependencies field", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-validate-deps-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod", categories: ["architecture"] } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function doc(extra: string[]): string {
+		return [
+			"---",
+			"status: current",
+			"module: mod",
+			"category: architecture",
+			"created: 2026-01-01",
+			"updated: 2026-01-01",
+			"last-synced: 2026-01-01",
+			"completeness: 80",
+			"related: []",
+			...extra,
+			"---",
+			"# Doc",
+			"",
+			"## Overview",
+			"",
+			"Body.",
+			"",
+		].join("\n");
+	}
+
+	test("a doc without a dependencies field is valid", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", doc([]));
+
+		const { exitCode, stdout } = run(repo);
+		expect(stdout).not.toContain("Missing required field 'dependencies'");
+		expect(stdout).toContain("**Errors:** 0");
+		expect(exitCode).toBe(0);
+	});
+
+	test("a doc that still declares dependencies is equally valid", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", doc(["dependencies: []"]));
+
+		const { exitCode, stdout } = run(repo);
+		expect(stdout).toContain("**Errors:** 0");
+		expect(exitCode).toBe(0);
+	});
+
+	test("still errors on a genuinely missing required field", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a.md", doc([]).replace("module: mod\n", ""));
+
+		const { exitCode, stdout } = run(repo);
+		expect(stdout).toContain("Missing required field 'module'");
+		expect(exitCode).toBe(1);
+	});
+});
+
+describe("validate.sh does not abort on a frontmatter-less doc", () => {
+	let repo: string;
+
+	beforeEach(() => {
+		repo = mkdtempSync(join(tmpdir(), "design-validate-abort-"));
+	});
+
+	afterEach(() => {
+		rmSync(repo, { recursive: true, force: true });
+	});
+
+	function writeFileAt(rel: string, content: string): void {
+		const path = join(repo, rel);
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, content);
+	}
+
+	function config(): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			modules: { mod: { path: "mod", categories: ["architecture"] } },
+			quality: { designDocs: { requireFrontmatter: true } },
+		});
+	}
+
+	function validDoc(title: string): string {
+		return [
+			"---",
+			"status: current",
+			"module: mod",
+			"category: architecture",
+			"created: 2026-01-01",
+			"updated: 2026-01-01",
+			"last-synced: 2026-01-01",
+			"completeness: 80",
+			"related: []",
+			"---",
+			`# ${title}`,
+			"",
+			"## Overview",
+			"",
+			"Body.",
+			"",
+		].join("\n");
+	}
+
+	// Regression: `grep -n "^---$"` finding nothing exits 1, and under
+	// `set -e` + `set -o pipefail` that killed the whole run mid-report --
+	// so a single frontmatter-less doc silently truncated validation of every
+	// doc sorted after it. The report looked like it had finished.
+	test("keeps validating docs sorted after a frontmatter-less one", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/a-no-frontmatter.md", "# Plain markdown, no frontmatter\n");
+		writeFileAt(".claude/design/mod/z-later.md", validDoc("Later"));
+
+		const { exitCode, stdout } = run(repo);
+		// The bad doc is reported...
+		expect(stdout).toContain("Missing or invalid frontmatter structure");
+		// ...and the run did not stop there.
+		expect(stdout).toContain("z-later.md");
+		expect(stdout).toContain("**Files validated:** 2");
+		// The summary block itself must still be emitted (it was lost on abort).
+		expect(stdout).toContain("## Summary");
+		expect(exitCode).toBe(1);
+	});
+
+	test("a frontmatter-less doc is an error, not a crash", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(".claude/design/mod/only.md", "# No frontmatter at all\n");
+
+		const { exitCode, stdout, stderr } = run(repo);
+		expect(stdout).toContain("**Errors:** 1");
+		expect(stdout).toContain("❌ **FAIL**");
+		expect(stderr).toBe("");
+		expect(exitCode).toBe(1);
+	});
+});

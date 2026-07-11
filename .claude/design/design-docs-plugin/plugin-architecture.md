@@ -3,8 +3,8 @@ status: current
 module: design-docs-plugin
 category: architecture
 created: 2026-03-24
-updated: 2026-07-10
-last-synced: 2026-07-10
+updated: 2026-07-11
+last-synced: 2026-07-11
 completeness: 95
 related: [system-model-vs-observed.md]
 dependencies: []
@@ -535,11 +535,15 @@ Each agent dispatch carries the running file-modification list forward but no ot
 }
 ```
 
-`design-validate` derives its recommended-section warnings from `quality.designDocs.minSections`: when a `design.config.json` exists, an omitted or empty `minSections` means no recommended sections are required; the built-in `Overview` / `Current State` / `Rationale` default applies only when no config file exists at all. Heading matches are case-insensitive, so sentence-case headings satisfy title-case entries. The script also warns on hard-wrapped prose — one WARNING per offending paragraph, capped at 5 per file — enforcing the one-source-line-per-paragraph style (markdownlint MD013 stays disabled intentionally). `plugin/skills/design-validate/scripts/validate.sh` is the single canonical validator (the earlier duplicate pair `validate-all-docs.sh` / `validate-design-doc.sh` was deleted); design-audit's three workflow scripts (`maintenance-workflow.sh`, `quality-workflow.sh`, `release-workflow.sh`) invoke it with the `all` argument rather than carrying their own copies. design-audit's four scripts and plan-explore's `explore-plans.sh` are documented in their own SKILL.md files.
+`design-validate` derives its recommended-section warnings from `quality.designDocs.minSections`: when a `design.config.json` exists, an omitted or empty `minSections` means no recommended sections are required; the built-in `Overview` / `Current State` / `Rationale` default applies only when no config file exists at all. Heading matches are case-insensitive, so sentence-case headings satisfy title-case entries. The script also warns on hard-wrapped prose — one WARNING per offending paragraph, capped at 5 per file — enforcing the one-source-line-per-paragraph style (markdownlint MD013 stays disabled intentionally). It discovers docs recursively under the module directory while pruning `_archive` trees, matching `design-link`: the earlier flat glob silently skipped every doc in a subdirectory, so a run that validated a third of a corpus was indistinguishable from a clean full run (issue #62). `plugin/skills/design-validate/scripts/validate.sh` is the single canonical validator (the earlier duplicate pair `validate-all-docs.sh` / `validate-design-doc.sh` was deleted); design-audit's three workflow scripts (`maintenance-workflow.sh`, `quality-workflow.sh`, `release-workflow.sh`) invoke it with the `all` argument rather than carrying their own copies. design-audit's four scripts and plan-explore's `explore-plans.sh` are documented in their own SKILL.md files.
+
+**Silent-partial validation is the failure mode to design against.** Both #62 and a companion bug (a bare `grep` command substitution under `set -e` aborting the whole run on the first frontmatter-less doc) produced the same shape: the validator stopped covering the corpus without saying so. A validator that under-reports is worse than one that is merely wrong, because its clean exit is read as a guarantee. Any change to doc discovery or the per-file loop must preserve the invariant that every non-archived `.md` under the module dir is either validated or explicitly reported as skipped.
 
 For context files the wrapping policy is configurable via `quality.context.hardWrap` (`"forbid"`, the default, or `"allow"`): `context-docs-style` consults it, and under `"allow"` it enforces per-file wrapping consistency instead of forbidding hard wraps outright — accommodating repos with an entrenched hard-wrap convention.
 
-`design-link` is likewise backed by a deterministic script, `plugin/skills/design-link/scripts/link.sh`. It discovers module docs recursively — docs in module subdirectories such as `packages/*.md` are graph nodes — while pruning `_archive` trees, and its heading slugger matches GitHub's anchor algorithm by turning each space into a hyphen individually, preserving consecutive hyphens (e.g. "API Extractor × Effect class factories" → `api-extractor--effect-class-factories`).
+`design-link` is likewise backed by a deterministic script, `plugin/skills/design-link/scripts/link.sh`. It discovers module docs recursively — docs in module subdirectories such as `packages/*.md` are graph nodes — while pruning `_archive` trees, and its heading slugger matches GitHub's anchor algorithm by turning each space into a hyphen individually, preserving consecutive hyphens (e.g. "API Extractor × Effect class factories" → `api-extractor--effect-class-factories`). Its broken-reference check covers **every relative link in a doc body, not just links to other design docs** — links to source paths are extracted and existence-checked like any other, each occurrence reported separately with its line number. This matters because the design-doc style rule tells authors to point at source paths rather than re-document them, so a check that only understood doc-to-doc `.md` links left the most style-compliant docs the least verified (issue #63).
+
+**Known issue — the linker is subprocess-bound (#65).** `link.sh` runs roughly 45s on a 22-doc corpus: it forks a `grep` per reference in `is_node`, a subshell per `resolve_ref`, and re-parses a doc's heading slugs for every anchor reference instead of memoizing them, for 1,600+ process spawns on 22 docs. This is a hard constraint on where design-link can be used — it is fine as a user-invoked skill and unfit for a hook or a per-commit gate until the fork-per-reference pattern is replaced. It also bounds the cost of the "hook-driven index/validate" directions inventoried in [system-model-vs-observed.md](./system-model-vs-observed.md).
 
 **Design Doc Frontmatter:**
 
@@ -552,8 +556,10 @@ updated: YYYY-MM-DD
 last-synced: never | YYYY-MM-DD
 completeness: 0-100
 related: string[]
-dependencies: string[]
+dependencies: string[]   # OPTIONAL — every other field is required
 ```
+
+`dependencies` is the sole optional field, and deliberately so. It was required until 0.9.x, which meant every doc not scaffolded from a plugin template — the common case in repos that adopted the system by hand — failed validation with an error the author could not act on and that never went away. A permanently-red validator does not get fixed; it gets ignored, and it takes the validator's genuine findings down with it. Templates still scaffold the field because declaring dependencies is worth doing, but a doc without one is not invalid. See `plugin/skills/design-validate/frontmatter-rules.md` for the field contract; that file, not this doc, is authoritative on per-field rules.
 
 **SKILL.md Frontmatter:**
 

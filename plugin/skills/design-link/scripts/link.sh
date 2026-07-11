@@ -126,12 +126,26 @@ extract_fm_list() {
 	' | sed -E "s/^[\"']//; s/[\"']$//"
 }
 
-# Print in-content markdown links to .md files (anchors stripped, http(s) skipped).
+# Print in-content markdown links as `line<TAB>ref`.
+#
+# Every link target is emitted, not just `.md` ones. The design-doc style guide
+# tells authors to point at real source paths, and restricting extraction to
+# `.md` meant those links -- the ones the style guide asks for -- were never
+# checked for existence at all.
+#
+# Skipped: absolute URLs (any `scheme:` prefix, incl. http/https/mailto),
+# protocol-relative `//host`, and bare `#anchor` links (anchors are validated
+# separately against heading slugs by check_anchor_refs).
 extract_content_links() {
 	local file="$1"
-	grep -oE '\]\([^)]+\.md[^)]*\)' "$file" 2>/dev/null |
-		sed -E 's/^\]\(//; s/\)$//' |
-		grep -v '://' || true
+	grep -noE '\]\([^)]+\)' "$file" 2>/dev/null |
+		sed -E 's/^([0-9]+):\]\(/\1\t/; s/\)$//' |
+		awk -F'\t' '
+			NF >= 2 && $2 != "" &&
+			$2 !~ /^[a-zA-Z][a-zA-Z0-9+.-]*:/ &&
+			$2 !~ /^\/\// &&
+			$2 !~ /^#/ { print $1 "\t" $2 }
+		' || true
 }
 
 fm_field() {
@@ -261,34 +275,52 @@ is_node() { printf '%s' "$NODES" | grep -Fxq "$1"; }
 
 # EDGES lines: from<TAB>to<TAB>type
 EDGES=""
-# BROKEN lines: from<TAB>intended-target
+# BROKEN lines: from<TAB>intended-target<TAB>line ("0" when the ref came from
+# frontmatter, which has no meaningful link line). Carrying the line makes two
+# occurrences of the same broken link in one doc two distinct records -- they
+# used to collapse under `sort -u`, so fixing "the" broken link could silently
+# leave a second copy of it behind.
 BROKEN=""
 # BROKEN_ANCHORS lines: from<TAB>display-target(empty for same-file)<TAB>anchor
 BROKEN_ANCHORS=""
 
 collect_for_doc() {
-	local src="$1" docdir ref resolved
+	local src="$1" docdir r line
 	docdir="$(dirname "$src")"
 
-	add_refs() {
-		local type="$1"
-		local r
-		while IFS= read -r r; do
-			[ -n "$r" ] || continue
-			resolved="$(resolve_ref "$docdir" "$r")"
-			[ -n "$resolved" ] || continue
-			[[ "$resolved" == "$src" ]] && continue # self-link
-			if is_node "$resolved"; then
-				EDGES+="${src}	${resolved}	${type}"$'\n'
-			elif [[ "$resolved" == "${DESIGN_REL}/"* && "$resolved" == *.md ]]; then
-				BROKEN+="${src}	${resolved}"$'\n'
-			fi
-		done
+	add_ref() { # type line ref
+		local type="$1" line="$2" ref="$3" resolved
+		resolved="$(resolve_ref "$docdir" "$ref")"
+		[ -n "$resolved" ] || return 0
+		[[ "$resolved" == "$src" ]] && return 0 # self-link
+		if is_node "$resolved"; then
+			EDGES+="${src}	${resolved}	${type}"$'\n'
+		elif [[ "$resolved" == "${DESIGN_REL}/"* && "$resolved" == *.md ]]; then
+			# In-tree .md target that is not a known doc.
+			BROKEN+="${src}	${resolved}	${line}"$'\n'
+		elif [[ "$ref" != /* ]] && [ ! -e "$PROJECT_DIR/$resolved" ]; then
+			# A relative link resolving OUTSIDE the design tree -- source files,
+			# READMEs, configs. These were previously not checked at all, so
+			# whether a dead link was caught depended only on where its path
+			# happened to land, which no author can reason about.
+			BROKEN+="${src}	${resolved}	${line}"$'\n'
+		fi
 	}
 
-	add_refs related < <(extract_fm_list "$PROJECT_DIR/$src" related)
-	add_refs dependency < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
-	add_refs content-link < <(extract_content_links "$PROJECT_DIR/$src")
+	while IFS= read -r r; do
+		[ -n "$r" ] || continue
+		add_ref related 0 "$r"
+	done < <(extract_fm_list "$PROJECT_DIR/$src" related)
+
+	while IFS= read -r r; do
+		[ -n "$r" ] || continue
+		add_ref dependency 0 "$r"
+	done < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
+
+	while IFS=$'\t' read -r line r; do
+		[ -n "$r" ] || continue
+		add_ref content-link "$line" "$r"
+	done < <(extract_content_links "$PROJECT_DIR/$src")
 
 	check_anchor_refs "$src" "$docdir"
 }
@@ -441,9 +473,13 @@ emit_text() {
 	if [ -z "$BROKEN" ]; then
 		echo "_None._"
 	else
-		while IFS=$'\t' read -r from to; do
+		while IFS=$'\t' read -r from to line; do
 			[ -n "$from" ] || continue
-			echo "- ${from} → ${to} (target missing)"
+			if [ -n "$line" ] && [ "$line" != "0" ]; then
+				echo "- ${from}:${line} → ${to} (target missing)"
+			else
+				echo "- ${from} → ${to} (target missing)"
+			fi
 		done <<<"$BROKEN"
 	fi
 	echo ""
@@ -493,7 +529,7 @@ emit_json() {
 		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"type\":\"%s\"}\n", $1, $2, $3}' |
 		jq -s . || true)"
 	broken_json="$(printf '%s' "$BROKEN" | grep -v '^$' |
-		awk -F'\t' 'NF>=2 {printf "{\"from\":\"%s\",\"to\":\"%s\"}\n", $1, $2}' |
+		awk -F'\t' 'NF>=2 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"line\":%s}\n", $1, $2, ($3 == "" ? 0 : $3)}' |
 		jq -s . || true)"
 	broken_anchors_json="$(printf '%s' "$BROKEN_ANCHORS" | grep -v '^$' |
 		awk -F'\t' 'NF>=3 {printf "{\"from\":\"%s\",\"to\":\"%s\",\"anchor\":\"%s\"}\n", $1, $2, $3}' |
