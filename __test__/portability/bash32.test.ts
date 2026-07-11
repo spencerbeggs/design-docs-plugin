@@ -61,15 +61,26 @@ describe("bash 3.2 portability of shipped scripts", () => {
 	// Bash's own ANSI-C quoting ($'\x1e') is a different construct and is fine on
 	// bash 3.2, so those segments are stripped before the check rather than
 	// flagged.
+	//
+	// ANSI-C strings are stripped BEFORE comments, not after. A `#` can appear
+	// inside a $'...' string, and stripping comments first would truncate the
+	// line at it -- discarding any real `\x` escape that followed and letting it
+	// through unflagged. A guard that fails open is worse than no guard.
+	//
+	// The character class excludes `\` so the alternation is unambiguous: a
+	// backslash can only match `\\.`, never the negated class. The ambiguous
+	// form is the classic backtracking shape CodeQL flags.
 	for (const script of scripts) {
 		test(`${script} avoids non-POSIX awk hex escapes`, () => {
 			const lines = readFileSync(join(PLUGIN_DIR, script), "utf8").split("\n");
 			const hits: string[] = [];
 			lines.forEach((line, i) => {
 				const code = line
-					.replace(/(^|\s)#.*$/, "") // strip comments
-					.replace(/\$'(\\.|[^'])*'/g, ""); // strip bash ANSI-C quoting
-				if (/\\x[0-9a-fA-F]{2}/.test(code)) {
+					.replace(/\$'(?:\\.|[^'\\])*'/g, "") // strip bash ANSI-C quoting
+					.replace(/(^|\s)#.*$/, ""); // strip comments
+				// awk accepts one OR two hex digits after \x, so `\x1` is just as
+				// non-POSIX as `\x1e`.
+				if (/\\x[0-9a-fA-F]{1,2}/.test(code)) {
 					hits.push(`${script}:${i + 1} non-POSIX awk hex escape: ${line.trim()}`);
 				}
 			});
