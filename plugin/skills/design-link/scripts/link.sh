@@ -169,9 +169,15 @@ extract_content_links() {
 				pos = i + 1
 				if (depth != 0) continue     # unterminated link — ignore
 
-				# Strip a trailing title: "..." or (...) or ...
+				# Strip a trailing title, double- or single-quoted.
+				# \047 is the POSIX octal escape for a single quote; \x27 is an
+				# awk extension that stricter implementations (mawk, the default
+				# awk on Debian/Ubuntu) need not honor -- and a missed match here
+				# leaves the title glued to the path, which reports as a broken
+				# link. The quote cannot be written literally: the whole awk
+				# program is inside a single-quoted shell string.
 				sub(/[[:space:]]+"[^"]*"[[:space:]]*$/, "", dest)
-				sub(/[[:space:]]+\x27[^\x27]*\x27[[:space:]]*$/, "", dest)
+				sub(/[[:space:]]+\047[^\047]*\047[[:space:]]*$/, "", dest)
 				# Trim surrounding whitespace.
 				gsub(/^[[:space:]]+|[[:space:]]+$/, "", dest)
 				# Unwrap the <...> destination form.

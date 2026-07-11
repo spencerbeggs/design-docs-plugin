@@ -52,6 +52,31 @@ describe("bash 3.2 portability of shipped scripts", () => {
 		});
 	}
 
+	// The shipped scripts also embed awk programs, and `awk` is mawk on Debian /
+	// Ubuntu. `\x` hex escapes are an awk extension mawk need not honor, so a
+	// regex relying on one can silently fail to match there — which for the link
+	// checker means a title stays glued to the path and reports as a broken link.
+	// POSIX octal (\047) is the portable spelling.
+	//
+	// Bash's own ANSI-C quoting ($'\x1e') is a different construct and is fine on
+	// bash 3.2, so those segments are stripped before the check rather than
+	// flagged.
+	for (const script of scripts) {
+		test(`${script} avoids non-POSIX awk hex escapes`, () => {
+			const lines = readFileSync(join(PLUGIN_DIR, script), "utf8").split("\n");
+			const hits: string[] = [];
+			lines.forEach((line, i) => {
+				const code = line
+					.replace(/(^|\s)#.*$/, "") // strip comments
+					.replace(/\$'(\\.|[^'])*'/g, ""); // strip bash ANSI-C quoting
+				if (/\\x[0-9a-fA-F]{2}/.test(code)) {
+					hits.push(`${script}:${i + 1} non-POSIX awk hex escape: ${line.trim()}`);
+				}
+			});
+			expect(hits).toEqual([]);
+		});
+	}
+
 	for (const script of scripts) {
 		test(`${script} parses under /bin/bash 3.2 when available`, () => {
 			// bash -n catches syntax-level incompatibilities the regexes miss.
