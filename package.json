@@ -16,7 +16,7 @@
 		"lint:md:fix": "markdownlint-cli2  --config './lib/configs/.markdownlint-cli2.jsonc' --fix",
 		"prepare": "husky",
 		"test": "bun test",
-		"typecheck": "tsgo --noEmit",
+		"typecheck": "tsc",
 		"validate": "claude plugin validate plugin"
 	},
 	"devDependencies": {
