@@ -20,7 +20,8 @@
 		"validate": "claude plugin validate plugin"
 	},
 	"devDependencies": {
-		"@savvy-web/silk": "^2.2.4"
+		"@savvy-web/pnpm-plugin-silk": "^0.23.0",
+		"@savvy-web/silk": "^2.4.1"
 	},
 	"packageManager": "bun@1.3.14",
 	"engines": {
@@ -40,5 +41,6 @@
 			"version": "1.3.14",
 			"onFail": "ignore"
 		}
-	}
+	},
+	"trustedDependencies": ["@parcel/watcher"]
 }
