@@ -426,6 +426,28 @@ describe("design-link out-of-tree reference checking", () => {
 		expect(stdout).toContain("- Broken references: 0");
 	});
 
+	test("treats a link to an existing directory as present, and keeps classifying later refs", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt("src/thing/f.txt", "x\n");
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody([
+				"See [thing](../../../src/thing).",
+				"Also [real](../../../src/thing/f.txt) and [dead](../../../src/nope.txt).",
+			]),
+		);
+
+		const { stdout, stderr } = run(repo);
+		// The directory target exists, so only the genuinely dead link counts.
+		expect(stdout).toContain("- Broken references: 1");
+		expect(stdout).toContain("src/nope.txt (target missing)");
+		expect(stdout).not.toContain("src/thing (target missing)");
+		// Probing a directory with awk's getline is fatal under the BWK awk on
+		// macOS: it aborted the run mid-stream, dropping every later reference
+		// while still exiting 0. A silent partial run must not recur.
+		expect(stderr).not.toContain("i/o error");
+	});
+
 	test("flags a broken README link that under-escapes the .claude directory", () => {
 		writeFileAt(".claude/design/design.config.json", config());
 		writeFileAt("packages/pkg/README.md", "# Pkg\n");

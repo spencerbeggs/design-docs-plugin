@@ -346,14 +346,6 @@ classify_refs() {
 			return normalize_path(docdir "/" ref)
 		}
 
-		# True when path can be opened for reading, without spawning a
-		# process: getline returns -1 when the file cannot be opened.
-		function file_exists(path,    line, rc) {
-			rc = (getline line < path)
-			close(path)
-			return rc >= 0
-		}
-
 		# Populate has_slug[file, slug] for every heading in file, applying
 		# GitHubs -1, -2, duplicate-suffix behavior, exactly once per file no
 		# matter how many anchor references target it. Mirrors the old bash
@@ -426,13 +418,23 @@ classify_refs() {
 				substr(resolved, length(resolved) - 2) == ".md") {
 				# In-tree .md target that is not a known doc.
 				print "BROKEN", src, resolved, line
-			} else if (substr(ref, 1, 1) != "/" && !file_exists(project_dir "/" resolved)) {
+			} else if (substr(ref, 1, 1) != "/") {
 				# A relative link resolving OUTSIDE the design tree -- source
 				# files, READMEs, configs. These were previously not checked
 				# at all, so whether a dead link was caught depended only on
 				# where its path happened to land, which no author can
 				# reason about.
-				print "BROKEN", src, resolved, line
+				#
+				# Existence is decided by the caller, not here: awk has no
+				# stat, and probing with `getline < path` is not merely
+				# inaccurate on a directory target but FATAL under the BWK
+				# awk that ships as /usr/bin/awk on macOS -- it aborts the
+				# whole program mid-stream, so one link to a directory would
+				# silently drop every later reference from the report while
+				# still exiting 0. The caller re-tests with the `[ -e ]`
+				# shell builtin, which costs no fork and treats a directory
+				# as the existing path it is.
+				print "CANDIDATE", src, resolved, line
 			}
 		}
 
@@ -470,6 +472,10 @@ while IFS=$'\t' read -r tag a b c; do
 		EDGE) EDGES+="${a}	${b}	${c}"$'\n' ;;
 		BROKEN) BROKEN+="${a}	${b}	${c}"$'\n' ;;
 		ANCHOR) BROKEN_ANCHORS+="${a}	${b}	${c}"$'\n' ;;
+		# Out-of-tree target awk deliberately left undecided: `[ -e ]` is a
+		# builtin, so testing here is free and, unlike awk's getline, it
+		# counts a directory as present instead of aborting the run.
+		CANDIDATE) [ -e "$PROJECT_DIR/$b" ] || BROKEN+="${a}	${b}	${c}"$'\n' ;;
 	esac
 done <<<"$(printf '%s' "$REFS" | grep -v '^$' | classify_refs || true)"
 

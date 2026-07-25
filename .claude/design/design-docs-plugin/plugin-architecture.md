@@ -547,6 +547,8 @@ For context files the wrapping policy is configurable via `quality.context.hardW
 
 The node list reaches awk as a file argument read via the `FNR==NR` idiom, never through `-v`. This is load-bearing for portability, not a stylistic choice: macOS ships the BWK "one true awk" as `/usr/bin/awk`, which rejects `-v name=value` when the value contains a literal newline, so passing the newline-delimited node list that way fails on a stock Mac while working under gawk and mawk. The failure is silent in effect — classification simply finds zero references — so any future awk work here must keep multi-line data out of `-v`.
 
+Relatedly, **the awk pass never tests whether a path exists.** awk has no `stat`, and the obvious substitute — probing with `getline < path` — is not merely inaccurate on a directory target but fatal under that same BWK awk: it aborts the program mid-stream. A single content link pointing at a directory therefore dropped every reference after it from the report while the script still exited 0, which is the silent-partial failure mode above wearing a different hat. Out-of-tree targets are emitted as undecided `CANDIDATE` records and existence-tested by the caller with the `[ -e ]` shell builtin, which costs no fork and counts a directory as the path it is. The rule this leaves behind: a hot loop may move into awk, but filesystem questions stay in the shell.
+
 **Design Doc Frontmatter:**
 
 ```yaml
