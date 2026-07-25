@@ -1,5 +1,27 @@
 # design-docs-plugin
 
+## 0.10.1
+
+### Bug Fixes
+
+* `design-validate` now reports the true number of hard-wrapped lines in a document. The detector capped its counter at five warnings per file and stopped counting there, so a document hard-wrapped end to end was indistinguishable from one with five bad lines — a 533-line doc that needed reflowing throughout reported the same "5" as a doc needing five edits, and readers scoped their fix to the five lines shown. Line-level detail is still capped at five to keep the report readable, but the count is now uncapped and a trailing `N hard-wrapped lines total, first 5 shown` summary fires whenever the cap is exceeded. The aggregate `**Warnings:**` tally reflects the true total as well, since the caller folds the same counter into it.
+
+  This also resolves the companion report that wrapped list-item continuations were never flagged. They were in fact detected all along — the detector's block-marker heuristic treats an indented continuation under a list item exactly like a wrapped paragraph, while correctly skipping nested list items, fenced code, tables, and block quotes. What actually happened is that paragraph-level wraps earlier in the file exhausted the five-warning budget before any list-item wrap could print, so the list warnings were starved rather than missing. Making the total visible surfaces them. [#76][#76]
+
+### Performance
+
+* `design-link` classifies references in a single `awk` pass instead of forking per reference. The checker was subprocess-bound: it forked a `grep` per reference to test node-set membership, a subshell per path resolution, and re-parsed a target document's heading slugs once per anchor link pointing at it — upwards of 1,600 process spawns on a 22-document corpus, scaling with reference count rather than corpus size. A link checker only catches link rot if people are willing to run it, and at roughly 45 seconds it had stopped being something anyone ran casually.
+
+  Collection now extracts raw reference records only, and one `awk` invocation classifies the whole corpus — path resolution, node membership, and the heading-anchor pipeline included, with heading slugs memoized per target file. Associative arrays are available inside the awk program regardless of the bash 3.2 constraint that governs shipped scripts. A synthetic 22-document corpus went from 29.6s to 2.0s, with byte-identical output. Detection semantics and report format are unchanged.
+
+  The node list is passed to `awk` as a file argument rather than through `-v`, because the BWK awk that ships as `/usr/bin/awk` on macOS rejects a `-v` value containing a newline — which would have silently classified zero references on a stock Mac. [#76][#76]
+
+### Patch Changes
+
+Thanks to [@spencerbeggs](https://github.com/spencerbeggs) for their contributions!
+
+[#76]: https://github.com/spencerbeggs/design-docs-plugin/pull/76
+
 ## 0.10.0
 
 ### Features
