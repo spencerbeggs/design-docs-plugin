@@ -387,6 +387,98 @@ describe("validate.sh hard-wrapped prose detection", () => {
 		const { stdout } = run(repo);
 		expect(stdout).not.toContain("Hard-wrapped prose detected");
 	});
+
+	test("a numbered list item with a continuation line warns", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody(["## Overview", "", "1. First item wraps", "   across a second indented line.", ""]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).toContain("Hard-wrapped prose detected");
+	});
+
+	test("a nested list item under a wrapped parent is not itself flagged", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody(["## Overview", "", "- Parent item", "  - Nested item", "  - Another nested item", ""]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).not.toContain("Hard-wrapped prose detected");
+	});
+
+	test("a fenced code block inside a list item never warns", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody([
+				"## Overview",
+				"",
+				"- Item with a code sample",
+				"  ```text",
+				"  this looks like it wraps",
+				"  onto a second line but it is code",
+				"  ```",
+				"",
+			]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).not.toContain("Hard-wrapped prose detected");
+	});
+
+	test("a table nested inside a list item never warns", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody([
+				"## Overview",
+				"",
+				"- Item with a table",
+				"  | Col A | Col B |",
+				"  | --- | --- |",
+				"  | val1 | val2 |",
+				"",
+			]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).not.toContain("Hard-wrapped prose detected");
+	});
+
+	test("a block quote nested inside a list item never warns", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		writeFileAt(
+			".claude/design/mod/a.md",
+			docWithBody(["## Overview", "", "- Item with a quote", "  > First quoted line", "  > Second quoted line", ""]),
+		);
+
+		const { stdout } = run(repo);
+		expect(stdout).not.toContain("Hard-wrapped prose detected");
+	});
+
+	test("more than HARD_WRAP_MAX_WARNINGS hard-wrapped paragraphs reports the full total, capped detail", () => {
+		writeFileAt(".claude/design/design.config.json", config());
+		const bodyLines: string[] = ["## Overview", ""];
+		for (let i = 0; i < 7; i++) {
+			bodyLines.push(`Paragraph ${i} first line wraps`, `onto a second line, number ${i}.`, "");
+		}
+		writeFileAt(".claude/design/mod/a.md", docWithBody(bodyLines));
+
+		const { stdout } = run(repo);
+		// Only the first 5 line-level warnings are shown in detail...
+		const lineWarnings = stdout.match(/Hard-wrapped prose detected/g) ?? [];
+		expect(lineWarnings.length).toBe(5);
+		// ...but the true total (7) is surfaced via a summary line, and the cap
+		// isn't allowed to silently hide the extent of the wrapping.
+		expect(stdout).toContain("7 hard-wrapped lines total, first 5 shown");
+		// The aggregate Warnings tally reflects the true total too, not just
+		// the capped detail count.
+		expect(stdout).toContain("**Warnings:** 7");
+	});
 });
 
 describe("validate.sh subdirectory recursion", () => {

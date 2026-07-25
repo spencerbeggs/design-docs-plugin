@@ -51,37 +51,6 @@ esac
 
 # --- helpers ---------------------------------------------------------------
 
-# Lexically normalize a path: drop '.' segments, collapse '..', no leading './'.
-# Pure string work — the target need not exist (so missing links still resolve
-# to a comparable path for broken-link reporting).
-normalize_path() {
-	local path="$1" part
-	local -a out=()
-	local IFS=/
-	for part in $path; do
-		case "$part" in
-			'' | .) ;;
-			..) [ ${#out[@]} -gt 0 ] && unset 'out[${#out[@]}-1]' ;;
-			*) out+=("$part") ;;
-		esac
-	done
-	printf '%s' "${out[*]}"
-}
-
-# Resolve a reference written inside a doc to a repo-root-relative path.
-resolve_ref() {
-	local docdir="$1" ref="$2"
-	ref="${ref%%#*}"                                  # strip anchor
-	ref="${ref#"${ref%%[![:space:]]*}"}"              # ltrim
-	ref="${ref%"${ref##*[![:space:]]}"}"              # rtrim
-	[ -z "$ref" ] && return 0
-	if [[ "$ref" == /* ]]; then
-		normalize_path "${ref#/}"
-		return 0
-	fi
-	normalize_path "$docdir/$ref"
-}
-
 # Print each item of a frontmatter list key (related / dependencies). Handles
 # the block form (`key:` then `  - item` lines), the inline empty form
 # (`key: []`), and the inline list form (`key: [a, b]`).
@@ -144,8 +113,9 @@ extract_fm_list() {
 # Each of those would otherwise be reported as a missing file.
 #
 # Skipped: absolute URLs (any `scheme:` prefix, incl. http/https/mailto),
-# protocol-relative `//host`, and bare `#anchor` links (anchors are validated
-# separately against heading slugs by check_anchor_refs).
+# protocol-relative `//host`, and bare `#anchor` links (anchors are extracted
+# separately by extract_anchor_refs and validated against heading slugs in
+# classify_refs).
 extract_content_links() {
 	local file="$1"
 	awk '
@@ -200,68 +170,15 @@ fm_field() {
 }
 
 # --- heading anchors ---------------------------------------------------------
-
-# Print each ATX heading's rendered text, one per line, skipping fenced code
-# blocks so headings that appear inside ``` fences aren't mistaken for real
-# headings.
-extract_headings() {
-	local file="$1"
-	awk '
-		/^```/ { fence = !fence; next }
-		fence { next }
-		/^#+[[:space:]]/ {
-			line = $0
-			sub(/^#+[[:space:]]+/, "", line)
-			sub(/[[:space:]]+#+[[:space:]]*$/, "", line)
-			sub(/[[:space:]]+$/, "", line)
-			print line
-		}
-	' "$file"
-}
-
-# GitHub's heading-anchor algorithm: lowercase, drop everything that is not a
-# letter, digit, space, or hyphen (this is what strips `@`, backticks, `.`,
-# `/`, `(`, `)`, `:`, `,`, etc.), then turn each space into a hyphen — one
-# per character, not one per run: "A × B" strips the glyph, leaves two
-# spaces, and GitHub renders the anchor with two hyphens (a--b).
-slugify_heading() {
-	local text="$1" slug
-	slug="$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]')"
-	slug="$(printf '%s' "$slug" | sed -E 's/[^a-z0-9 -]//g')"
-	slug="$(printf '%s' "$slug" | sed -E 's/[[:space:]]/-/g')"
-	printf '%s' "$slug"
-}
-
-# All heading slugs for a file, in document order, with GitHub's -1, -2, …
-# duplicate-suffix behavior applied.
-heading_slugs() {
-	local file="$1" heading base slug count
-	local seen=$'\x1e'
-	while IFS= read -r heading; do
-		[ -n "$heading" ] || continue
-		base="$(slugify_heading "$heading")"
-		slug="$base"
-		count=1
-		while [[ "$seen" == *$'\x1e'"$slug"$'\x1e'* ]]; do
-			slug="${base}-${count}"
-			count=$((count + 1))
-		done
-		seen+="${slug}"$'\x1e'
-		printf '%s\n' "$slug"
-	done < <(extract_headings "$file")
-}
-
-file_has_anchor() { # file anchor
-	local file="$1" anchor="$2" slugs
-	[ -f "$file" ] || return 1
-	# Capture into a variable first and match via a here-string, not a live
-	# pipe: `grep -q` exits as soon as it finds a match, and under
-	# `pipefail` a SIGPIPE-killed upstream producer (heading_slugs) would
-	# otherwise make the whole pipeline look like a failed lookup even
-	# though the anchor matched.
-	slugs="$(heading_slugs "$file")"
-	grep -Fxq "$anchor" <<<"$slugs"
-}
+#
+# Heading extraction, GitHub slugification, and the anchor membership test
+# itself used to be separate bash functions (extract_headings, slugify_heading,
+# heading_slugs, file_has_anchor) called once per anchor *reference*. On a
+# corpus where 279 anchor links concentrate on a handful of popular targets,
+# that re-derived the same file's full heading list dozens of times. The logic
+# now lives inside classify_refs' compute_slugs()/has_anchor(), which memoize
+# per target file (awk has real associative arrays, so the memo needs no
+# bash-3.2 workaround) — see the awk program below for the ported algorithm.
 
 # Print raw `](...)` link targets that contain a '#', anchor intact (matches
 # both same-file `(#anchor)` links and cross-file `(path.md#anchor)` links).
@@ -314,87 +231,43 @@ while IFS= read -r module; do
 	add_nodes_for_module "$module"
 done <<<"$ALL_MODULES"
 
-is_node() { printf '%s' "$NODES" | grep -Fxq "$1"; }
-
-# --- collect edges and broken references -----------------------------------
-
-# EDGES lines: from<TAB>to<TAB>type
-EDGES=""
-# BROKEN lines: from<TAB>intended-target<TAB>line ("0" when the ref came from
-# frontmatter, which has no meaningful link line). Carrying the line makes two
-# occurrences of the same broken link in one doc two distinct records -- they
-# used to collapse under `sort -u`, so fixing "the" broken link could silently
-# leave a second copy of it behind.
-BROKEN=""
-# BROKEN_ANCHORS lines: from<TAB>display-target(empty for same-file)<TAB>anchor
-BROKEN_ANCHORS=""
+# --- collect raw references (no resolution/classification here) ------------
+#
+# Per-reference work used to fork a subshell for resolve_ref and a grep for
+# is_node membership -- 418 content links + 279 anchor links meant 1,600+
+# process spawns on a 22-doc corpus (#65). Collection now only *extracts* raw
+# reference records (still O(docs) subprocess work, same as before); all
+# resolution, node-membership, and anchor-slug classification happens in one
+# awk invocation (classify_refs, below) that runs once over every record.
+#
+# REFS lines: src<TAB>docdir<TAB>type<TAB>line<TAB>ref
+#   type is one of: related, dependency, content-link, anchor
+#   line is "0" for frontmatter/anchor records (no meaningful link line)
+#   ref carries the anchor intact for `anchor` records (path#anchor / #anchor)
+REFS=""
 
 collect_for_doc() {
 	local src="$1" docdir r line
 	docdir="$(dirname "$src")"
 
-	add_ref() { # type line ref
-		local type="$1" line="$2" ref="$3" resolved
-		resolved="$(resolve_ref "$docdir" "$ref")"
-		[ -n "$resolved" ] || return 0
-		[[ "$resolved" == "$src" ]] && return 0 # self-link
-		if is_node "$resolved"; then
-			EDGES+="${src}	${resolved}	${type}"$'\n'
-		elif [[ "$resolved" == "${DESIGN_REL}/"* && "$resolved" == *.md ]]; then
-			# In-tree .md target that is not a known doc.
-			BROKEN+="${src}	${resolved}	${line}"$'\n'
-		elif [[ "$ref" != /* ]] && [ ! -e "$PROJECT_DIR/$resolved" ]; then
-			# A relative link resolving OUTSIDE the design tree -- source files,
-			# READMEs, configs. These were previously not checked at all, so
-			# whether a dead link was caught depended only on where its path
-			# happened to land, which no author can reason about.
-			BROKEN+="${src}	${resolved}	${line}"$'\n'
-		fi
-	}
-
 	while IFS= read -r r; do
 		[ -n "$r" ] || continue
-		add_ref related 0 "$r"
+		REFS+="${src}	${docdir}	related	0	${r}"$'\n'
 	done < <(extract_fm_list "$PROJECT_DIR/$src" related)
 
 	while IFS= read -r r; do
 		[ -n "$r" ] || continue
-		add_ref dependency 0 "$r"
+		REFS+="${src}	${docdir}	dependency	0	${r}"$'\n'
 	done < <(extract_fm_list "$PROJECT_DIR/$src" dependencies)
 
 	while IFS=$'\t' read -r line r; do
 		[ -n "$r" ] || continue
-		add_ref content-link "$line" "$r"
+		REFS+="${src}	${docdir}	content-link	${line}	${r}"$'\n'
 	done < <(extract_content_links "$PROJECT_DIR/$src")
 
-	check_anchor_refs "$src" "$docdir"
-}
-
-# Validate every `#anchor` / `path.md#anchor` link in a doc against the real
-# heading slugs of its target file (same doc for bare `#anchor` links).
-#
-# `to` is always populated (never left empty) even for same-file anchors —
-# tab is an IFS-whitespace character, so a genuinely empty field between two
-# tabs gets squeezed away by bash's field splitting on read, shifting every
-# field after it. Same-file links are detected downstream by `to == from`.
-check_anchor_refs() {
-	local src="$1" docdir="$2" raw path anchor target target_file
-	while IFS= read -r raw; do
-		[ -n "$raw" ] || continue
-		path="${raw%%#*}"
-		anchor="${raw#*#}"
-		[ -n "$anchor" ] || continue
-		if [ -z "$path" ]; then
-			target="$src"
-		else
-			target="$(resolve_ref "$docdir" "$path")"
-			[ -n "$target" ] || continue
-			is_node "$target" || continue # file-existence already reported via BROKEN
-		fi
-		target_file="$PROJECT_DIR/$target"
-		if ! file_has_anchor "$target_file" "$anchor"; then
-			BROKEN_ANCHORS+="${src}	${target}	${anchor}"$'\n'
-		fi
+	while IFS= read -r r; do
+		[ -n "$r" ] || continue
+		REFS+="${src}	${docdir}	anchor	0	${r}"$'\n'
 	done < <(extract_anchor_refs "$PROJECT_DIR/$src")
 }
 
@@ -409,6 +282,202 @@ while IFS= read -r module; do
 		collect_for_doc "$doc"
 	done < <(module_docs "$module")
 done <<<"$ALL_MODULES"
+
+# --- classify every reference in one awk pass -------------------------------
+#
+# Ports resolve_ref/normalize_path (path resolution), node-set membership,
+# and the heading-anchor pipeline (extract_headings/slugify_heading/
+# heading_slugs/file_has_anchor) into a single awk program, because awk's
+# associative arrays give O(1) node-membership and per-file slug memoization
+# natively -- the bash-3.2 constraint that forced the old grep-per-reference
+# and re-parse-per-reference patterns doesn't apply inside the awk program.
+#
+# Emits tagged TSV lines on stdout:
+#   EDGE<TAB>from<TAB>to<TAB>type
+#   BROKEN<TAB>from<TAB>target<TAB>line
+#   ANCHOR<TAB>from<TAB>target<TAB>anchor
+#
+# The node set is passed as a FILE argument, not a `-v` string, and read via
+# the classic `FNR==NR` two-file idiom: macOS's /usr/bin/awk (the "one true
+# awk") rejects a `-v name=value` whose value contains a literal newline
+# ("awk: newline in string ..."), and NODES is a newline-delimited list.
+classify_refs() {
+	local nodes_file
+	nodes_file="$(mktemp "${TMPDIR:-/tmp}/design-link-nodes.XXXXXX")"
+	printf '%s\n' "$NODES" >"$nodes_file"
+	awk -v project_dir="$PROJECT_DIR" -v design_rel="$DESIGN_REL" '
+		BEGIN { FS = "\t"; OFS = "\t" }
+
+		# First file argument (nodes_file): one node path per line.
+		FNR == NR {
+			if ($0 != "") node[$0] = 1
+			next
+		}
+
+		# Lexically normalize a path: drop "." segments, collapse "..", no
+		# leading "./". Pure string work -- the target need not exist (so
+		# missing links still resolve to a comparable path for broken-link
+		# reporting). Mirrors the old bash normalize_path().
+		function normalize_path(path,    parts, i, n, out, depth, result) {
+			n = split(path, parts, "/")
+			depth = 0
+			for (i = 1; i <= n; i++) {
+				if (parts[i] == "" || parts[i] == ".") continue
+				if (parts[i] == "..") {
+					if (depth > 0) depth--
+					continue
+				}
+				depth++
+				out[depth] = parts[i]
+			}
+			result = ""
+			for (i = 1; i <= depth; i++) result = (result == "") ? out[i] : result "/" out[i]
+			return result
+		}
+
+		# Resolve a reference written inside a doc to a repo-root-relative
+		# path. Mirrors the old bash resolve_ref().
+		function resolve_ref(docdir, ref,    hashpos) {
+			hashpos = index(ref, "#")
+			if (hashpos > 0) ref = substr(ref, 1, hashpos - 1)
+			gsub(/^[[:space:]]+|[[:space:]]+$/, "", ref)
+			if (ref == "") return ""
+			if (substr(ref, 1, 1) == "/") return normalize_path(substr(ref, 2))
+			return normalize_path(docdir "/" ref)
+		}
+
+		# Populate has_slug[file, slug] for every heading in file, applying
+		# GitHubs -1, -2, duplicate-suffix behavior, exactly once per file no
+		# matter how many anchor references target it. Mirrors the old bash
+		# extract_headings/slugify_heading/heading_slugs trio.
+		function compute_slugs(file,    line, fence, heading, base, slug, count) {
+			if (file in slugs_done) return
+			slugs_done[file] = 1
+			fence = 0
+			while ((getline line < file) > 0) {
+				if (line ~ /^```/) { fence = !fence; continue }
+				if (fence) continue
+				if (line ~ /^#+[[:space:]]/) {
+					heading = line
+					sub(/^#+[[:space:]]+/, "", heading)
+					sub(/[[:space:]]+#+[[:space:]]*$/, "", heading)
+					sub(/[[:space:]]+$/, "", heading)
+					# GitHub heading-anchor algorithm: lowercase, drop
+					# everything that is not a letter/digit/space/hyphen,
+					# then turn each space into a hyphen -- one per
+					# character, not one per run.
+					base = tolower(heading)
+					gsub(/[^a-z0-9 -]/, "", base)
+					gsub(/ /, "-", base)
+					slug = base
+					count = 1
+					while ((file, slug) in has_slug) {
+						slug = base "-" count
+						count++
+					}
+					has_slug[file, slug] = 1
+				}
+			}
+			close(file)
+		}
+
+		function has_anchor(file, anchor) {
+			compute_slugs(file)
+			return ((file, anchor) in has_slug)
+		}
+
+		# type == "anchor": raw ref carries the anchor intact (path#anchor or
+		# bare #anchor). Validates against the target files real headings.
+		function classify_anchor(src, docdir, ref,    hashpos, path, anchor, target, target_file) {
+			hashpos = index(ref, "#")
+			path = (hashpos > 0) ? substr(ref, 1, hashpos - 1) : ref
+			anchor = (hashpos > 0) ? substr(ref, hashpos + 1) : ""
+			if (anchor == "") return
+			if (path == "") {
+				target = src
+			} else {
+				target = resolve_ref(docdir, path)
+				if (target == "") return
+				if (!(target in node)) return # file-existence already reported via BROKEN
+			}
+			target_file = project_dir "/" target
+			if (!has_anchor(target_file, anchor)) print "ANCHOR", src, target, anchor
+		}
+
+		# type in {related, dependency, content-link}.
+		function classify_edge(src, docdir, type, line, ref,    resolved, design_prefix) {
+			resolved = resolve_ref(docdir, ref)
+			if (resolved == "") return
+			if (resolved == src) return # self-link
+			if (resolved in node) {
+				print "EDGE", src, resolved, type
+				return
+			}
+			design_prefix = design_rel "/"
+			if (substr(resolved, 1, length(design_prefix)) == design_prefix && \
+				substr(resolved, length(resolved) - 2) == ".md") {
+				# In-tree .md target that is not a known doc.
+				print "BROKEN", src, resolved, line
+			} else if (substr(ref, 1, 1) != "/") {
+				# A relative link resolving OUTSIDE the design tree -- source
+				# files, READMEs, configs. These were previously not checked
+				# at all, so whether a dead link was caught depended only on
+				# where its path happened to land, which no author can
+				# reason about.
+				#
+				# Existence is decided by the caller, not here: awk has no
+				# stat, and probing with `getline < path` is not merely
+				# inaccurate on a directory target but FATAL under the BWK
+				# awk that ships as /usr/bin/awk on macOS -- it aborts the
+				# whole program mid-stream, so one link to a directory would
+				# silently drop every later reference from the report while
+				# still exiting 0. The caller re-tests with the `[ -e ]`
+				# shell builtin, which costs no fork and treats a directory
+				# as the existing path it is.
+				print "CANDIDATE", src, resolved, line
+			}
+		}
+
+		{
+			src = $1; docdir = $2; type = $3; line = $4; ref = $5
+			if (type == "anchor") classify_anchor(src, docdir, ref)
+			else classify_edge(src, docdir, type, line, ref)
+		}
+	' "$nodes_file" -
+	rm -f "$nodes_file"
+}
+
+# EDGES lines: from<TAB>to<TAB>type
+EDGES=""
+# BROKEN lines: from<TAB>intended-target<TAB>line ("0" when the ref came from
+# frontmatter, which has no meaningful link line). Carrying the line makes two
+# occurrences of the same broken link in one doc two distinct records -- they
+# used to collapse under `sort -u`, so fixing "the" broken link could silently
+# leave a second copy of it behind.
+BROKEN=""
+# BROKEN_ANCHORS lines: from<TAB>display-target(empty for same-file)<TAB>anchor
+#
+# `to` is always populated (never left empty) even for same-file anchors --
+# tab is an IFS-whitespace character, so a genuinely empty field between two
+# tabs gets squeezed away by bash's field splitting on read, shifting every
+# field after it. Same-file links are detected downstream by `to == from`.
+BROKEN_ANCHORS=""
+
+# Distribute the tagged awk output into the three record streams. This loop
+# runs in-process (here-string, not a pipe), so it costs zero forks no matter
+# how many references were classified.
+while IFS=$'\t' read -r tag a b c; do
+	[ -n "$tag" ] || continue
+	case "$tag" in
+		EDGE) EDGES+="${a}	${b}	${c}"$'\n' ;;
+		BROKEN) BROKEN+="${a}	${b}	${c}"$'\n' ;;
+		ANCHOR) BROKEN_ANCHORS+="${a}	${b}	${c}"$'\n' ;;
+		# Out-of-tree target awk deliberately left undecided: `[ -e ]` is a
+		# builtin, so testing here is free and, unlike awk's getline, it
+		# counts a directory as present instead of aborting the run.
+		CANDIDATE) [ -e "$PROJECT_DIR/$b" ] || BROKEN+="${a}	${b}	${c}"$'\n' ;;
+	esac
+done <<<"$(printf '%s' "$REFS" | grep -v '^$' | classify_refs || true)"
 
 # Dedupe.
 EDGES="$(printf '%s' "$EDGES" | grep -v '^$' | sort -u || true)"
