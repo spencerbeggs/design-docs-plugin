@@ -58,11 +58,21 @@ echo ""
 # warns UNLESS it itself starts a new block (heading `#`, list marker
 # `-`/`*`/`+`/`N.`, blockquote `>`, or table `|`) -- that covers list items
 # and headings that legitimately follow one another without a blank line.
+# This is intentionally block-marker-based rather than list-aware: a wrapped
+# list-item continuation (an indented line following a list item that is not
+# itself a new list item, code fence, table row, or blockquote) trips the
+# exact same "non-blank line follows non-blank line, and isn't a block
+# start" signal as a wrapped plain paragraph, so list contexts are covered
+# for free without a separate code path.
+#
 # Emits at most one warning per offending paragraph (suppressed until the
-# next blank line or block-start line) and caps total warnings per file at
-# HARD_WRAP_MAX_WARNINGS to avoid flooding the report. Sets the global
-# HARD_WRAP_COUNT to the number of warnings emitted so the caller can fold
-# it into WARNINGS / file_warnings.
+# next blank line or block-start line). Line-level detail is capped at
+# HARD_WRAP_MAX_WARNINGS per file to avoid flooding the report, but the
+# TRUE total is still counted: when the cap is hit, a trailing summary
+# warning reports the full count so a document that is hard-wrapped
+# end-to-end doesn't look identical to one with a handful of bad lines.
+# Sets the global HARD_WRAP_COUNT to the true (uncapped) total number of
+# warnings so the caller can fold it into WARNINGS / file_warnings.
 HARD_WRAP_MAX_WARNINGS=5
 
 check_hard_wrapped_prose() {
@@ -104,9 +114,10 @@ check_hard_wrapped_prose() {
 			is_block_start=1
 		fi
 
-		if [ "$prev_nonblank" -ne 0 ] && [ "$is_block_start" -eq 0 ] && [ "$warned_this_paragraph" -eq 0 ] &&
-			[ "$HARD_WRAP_COUNT" -lt "$HARD_WRAP_MAX_WARNINGS" ]; then
-			echo "  - ⚠️  WARNING: Hard-wrapped prose detected (line ${lineno}): paragraphs must occupy a single source line"
+		if [ "$prev_nonblank" -ne 0 ] && [ "$is_block_start" -eq 0 ] && [ "$warned_this_paragraph" -eq 0 ]; then
+			if [ "$HARD_WRAP_COUNT" -lt "$HARD_WRAP_MAX_WARNINGS" ]; then
+				echo "  - ⚠️  WARNING: Hard-wrapped prose detected (line ${lineno}): paragraphs must occupy a single source line"
+			fi
 			HARD_WRAP_COUNT=$((HARD_WRAP_COUNT + 1))
 			warned_this_paragraph=1
 		fi
@@ -114,6 +125,10 @@ check_hard_wrapped_prose() {
 		[ "$is_block_start" -eq 1 ] && warned_this_paragraph=0
 		prev_nonblank=$lineno
 	done < <(tail -n +"$body_start" "$file")
+
+	if [ "$HARD_WRAP_COUNT" -gt "$HARD_WRAP_MAX_WARNINGS" ]; then
+		echo "  - ⚠️  WARNING: ${HARD_WRAP_COUNT} hard-wrapped lines total, first ${HARD_WRAP_MAX_WARNINGS} shown"
+	fi
 }
 
 # Function to validate a single file
