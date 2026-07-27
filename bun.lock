@@ -6,8 +6,8 @@
       "name": "design-docs",
       "devDependencies": {
         "@effected/pnpm-plugin-effect": "^0.3.1",
-        "@savvy-web/pnpm-plugin-silk": "^0.24.2",
-        "@savvy-web/silk": "^3.2.3",
+        "@savvy-web/pnpm-plugin-silk": "^0.25.0",
+        "@savvy-web/silk": "^3.2.9",
       },
     },
   },
@@ -52,7 +52,7 @@
       "@effect/typeclass": "^0.40.0",
       "@effect/vitest": "^0.29.0",
       "@effect/workflow": "^0.18.2",
-      "@rsbuild/core": "^2.1.6",
+      "@rsbuild/core": "^2.1.8",
       "@rspress/core": "^2.0.18",
       "@tsdown/css": "^0.22.5",
       "@tsdown/exe": "^0.22.5",
@@ -65,15 +65,15 @@
       "@vitest/coverage-v8": "^4.1.10",
       "effect": "^3.21.4",
       "husky": "^9.1.7",
-      "lint-staged": "^17.1.0",
+      "lint-staged": "^17.2.0",
       "markdownlint-cli2": "^0.23.1",
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
-      "react": "^19.2.7",
-      "react-dom": "^19.2.7",
+      "react": "^19.2.8",
+      "react-dom": "^19.2.8",
       "rolldown": "^1.2.0",
       "tsdown": "^0.22.5",
       "tsx": "^4.23.0",
-      "turbo": "^2.10.5",
+      "turbo": "^2.10.6",
       "typescript": "^7.0.2",
       "vitest": "^4.1.10",
     },
@@ -119,8 +119,8 @@
       "@effect/workflow": "^0.18.2",
       "@rsbuild/core": "^2.1.0",
       "@rspress/core": "^2.0.0",
-      "@tsdown/css": "^0.22.12",
-      "@tsdown/exe": "^0.22.12",
+      "@tsdown/css": "^0.22.14",
+      "@tsdown/exe": "^0.22.14",
       "@types/bun": "^1.3.14",
       "@types/node": "^26.1.0",
       "@types/react": "^19.2.0",
@@ -130,7 +130,7 @@
       "@vitest/coverage-v8": "^4.1.0",
       "effect": "^3.21.0",
       "husky": "^9.1.7",
-      "lint-staged": "^17.1.0",
+      "lint-staged": "^17.2.0",
       "markdownlint-cli2": "^0.23.1",
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
       "react": "^19.2.0",
@@ -138,7 +138,7 @@
       "rolldown": "^1.2.0",
       "tsdown": "^0.22.0",
       "tsx": "^4.23.1",
-      "turbo": "^2.10.5",
+      "turbo": "^2.10.6",
       "typescript": "^7.0.0",
       "vitest": "^4.1.0",
     },
@@ -195,7 +195,7 @@
       "@vitest/coverage-v8": "^4.1.0",
       "effect": "^3.21.0",
       "husky": "^9.1.7",
-      "lint-staged": "^17.1.0",
+      "lint-staged": "^17.2.0",
       "markdownlint-cli2": "^0.23.1",
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
       "react": "^19.2.0",
@@ -203,7 +203,7 @@
       "rolldown": "^1.2.0",
       "tsdown": "^0.22.0",
       "tsx": "^4.23.0",
-      "turbo": "^2.10.5",
+      "turbo": "^2.10.6",
       "typescript": "^7.0.0",
       "vitest": "^4.1.0",
     },
@@ -323,17 +323,19 @@
 
     "@effect/platform-node-shared": ["@effect/platform-node-shared@4.0.0-beta.101", "", { "dependencies": { "@types/ws": "^8.18.1", "ws": "^8.21.0" }, "peerDependencies": { "effect": "^4.0.0-beta.101" } }, "sha512-g4L7XiyJSNJLJVhlslyg2zBCQsoKQf1y1gd+Yfd+3wD9ymC+m7ymbd/5FGqnT1aXV6E2AwRr4D/R1eyRUikvWQ=="],
 
-    "@effected/git": ["@effected/git@0.5.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-dPDQBdT4IpLAreelCmd2Q9OFKwxZT/QzTk5EXPLuPOQavZs89Ey9fiM+a5EBL9ks11ngFbBULsJ0PJvodke2pA=="],
+    "@effected/commands": ["@effected/commands@0.1.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-916dEzkBukY8Xi8Cx8Ts7ci5AgGt87fNyvoZ+DrsSYoZISe2xHAXrx92Xsntv6+1Mk48qvUJ3SR6HoPJ+rZOGg=="],
+
+    "@effected/git": ["@effected/git@0.5.1", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-JTW4/lKNp5nq+T5IS1zITQ39Rbcdzo0PI4B+hueky30P2bbWmXdt8OiS8J+AFiJsromVkncdxj4xh+lXoDDHsQ=="],
 
     "@effected/glob": ["@effected/glob@0.2.1", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-qEKzeTto/2qdmXmdzfENUtOPn3Xr4cSKjY5ldm6HdieFYGxhLQ8pKaIepdRZHNY8IZNK+zMO+bkRXTkYMH7pJA=="],
 
     "@effected/jsonc": ["@effected/jsonc@0.5.1", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-lz5oqhw9EQ4Xi1Brif53CVlaiReNIrig0bpQ5ENJuVA+HCV13ZY05nz96JO4qtgPAlLgD9tQR0g2Hj5PRTID5g=="],
 
-    "@effected/lockfiles": ["@effected/lockfiles@0.2.0", "", { "peerDependencies": { "@effected/jsonc": "~0.5.1", "@effected/npm": "~0.4.0", "@effected/semver": "~0.2.1", "@effected/yaml": "~0.6.0", "effect": "4.0.0-beta.101" } }, "sha512-yx7/3TVHQrQ3IVZrzxJmR5gW6Ykph/tAOgkQ1AliHKnCJ2Bc+tdYXbrKetcb4/Un/kbieUN80xSZAHntMCPUjg=="],
+    "@effected/lockfiles": ["@effected/lockfiles@0.2.2", "", { "peerDependencies": { "@effected/jsonc": "~0.5.1", "@effected/npm": "~0.6.0", "@effected/semver": "~0.2.1", "@effected/yaml": "~0.6.0", "effect": "4.0.0-beta.101" } }, "sha512-/rkxjrqTkQOn6toKlfKUD9/WywdwQ34a8/dxmq5MKtR+L+b2NimPqKj9E+e+DTg1oqRFYvkssL8T8hlcHkGAag=="],
 
-    "@effected/npm": ["@effected/npm@0.4.0", "", { "peerDependencies": { "@effected/semver": "~0.2.1", "effect": "4.0.0-beta.101" } }, "sha512-l7UQCTBx8QG+ROZnuXdGhgM646YBxPBf1ZWWduzWfRjJy52fhDx26DZ8shHR35rENX+BQLaGkpznFeqm5e0iRw=="],
+    "@effected/npm": ["@effected/npm@0.6.0", "", { "dependencies": { "@effected/commands": "~0.2.0" }, "peerDependencies": { "@effected/semver": "~0.2.1", "effect": "4.0.0-beta.101" } }, "sha512-7qwXpJY1CceFkiZ5csYsoavwFllCDY1HjQp15+4h9psToFt0lqPU6yG06kWbg+w1Vh5BNHg6BADkzUuau4/e6A=="],
 
-    "@effected/package-json": ["@effected/package-json@0.5.2", "", { "dependencies": { "@effected/npm": "~0.4.0", "@effected/semver": "~0.2.1", "@effected/spdx": "~0.1.1" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-ksxzycjSMJ9WANkNp92O0O52cODaBR3SGOfVbsqr6g8LENAn0onymfaDveTRH2zt+LUt3DSZfT7T5QTvU4MeVg=="],
+    "@effected/package-json": ["@effected/package-json@0.6.1", "", { "dependencies": { "@effected/npm": "~0.6.0", "@effected/semver": "~0.2.1", "@effected/spdx": "~0.1.1" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-msCY5x3QHJTxF5xOY8j3UuzTlMt54dn8wU35LopM65l8CSMdjIZ3qTocoSNiVSOSNPtEaaK+V/+b3gb6b1Dciw=="],
 
     "@effected/pnpm-plugin-effect": ["@effected/pnpm-plugin-effect@0.3.1", "", {}, "sha512-e3HjGx6AQ4dGCLu8ApbFMm49NYmJ/fiC2sptSyeQRsw94VjdfCYWF73i1pa2SlFqRmeHcrYCK7KsWYZlXX9m1A=="],
 
@@ -341,9 +343,11 @@
 
     "@effected/spdx": ["@effected/spdx@0.1.1", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-yLKDewQHc76IQLi/eQaziPOyKdnwPWLMnbM36gcDVE+QDVHfLdrXK2W0QhAFveRWKfXiFxtVC9MUhD9Bi4OLRw=="],
 
-    "@effected/walker": ["@effected/walker@0.3.2", "", { "peerDependencies": { "@effected/glob": "~0.2.1", "effect": "4.0.0-beta.101" } }, "sha512-IQM64A6ZABLSm9bcpPRpzdAu7Czs1qo+V1tHBdYHzdlwH4whCnxLoh/v+ONBVQr33f9WEdvKCvACMhBU9yXA3w=="],
+    "@effected/templates": ["@effected/templates@0.1.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-PrGyzmelKpI/8YGhq4VJKH1NBbgMmrT6kL8kWhDrkb8kCKodzcVOrayRwxBoHTLzwKsnV4Uml8KwInk94n2tPw=="],
 
-    "@effected/workspaces": ["@effected/workspaces@0.8.0", "", { "dependencies": { "@effected/git": "~0.5.0", "@effected/glob": "~0.2.1", "@effected/lockfiles": "~0.2.0", "@effected/npm": "~0.4.0", "@effected/package-json": "~0.5.2", "@effected/semver": "~0.2.1", "@effected/walker": "~0.3.2", "@effected/yaml": "~0.6.0", "@pnpm/catalogs.config": "^1100.0.0", "@pnpm/catalogs.protocol-parser": "^1100.0.0", "@pnpm/catalogs.resolver": "^1100.0.0", "@pnpm/catalogs.types": "^1100.0.0" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-QidnKIAMUnNH3z6IrZknNg7qkF+e6ekXX5EmceNl0eorNzzrFvg6slN491/8+EoJ9POFqYEGG1drUM9bwrPzOA=="],
+    "@effected/walker": ["@effected/walker@0.3.3", "", { "peerDependencies": { "@effected/glob": "~0.2.1", "effect": "4.0.0-beta.101" } }, "sha512-AMHnRIu3jVt2HIuD7eex7kFnyhWR9q9lR5125kbxnkNuecjm1zEkn054VfOE8QuYgMg5REyASjw99TPVtnZe4g=="],
+
+    "@effected/workspaces": ["@effected/workspaces@0.9.1", "", { "dependencies": { "@effected/commands": "~0.2.0", "@effected/git": "~0.5.1", "@effected/glob": "~0.2.1", "@effected/lockfiles": "~0.2.2", "@effected/npm": "~0.6.0", "@effected/package-json": "~0.6.1", "@effected/semver": "~0.2.1", "@effected/walker": "~0.3.3", "@effected/yaml": "~0.6.0", "@pnpm/catalogs.config": "^1100.0.0", "@pnpm/catalogs.protocol-parser": "^1100.0.0", "@pnpm/catalogs.resolver": "^1100.0.0", "@pnpm/catalogs.types": "^1100.0.0" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-64uEMfIvgqKWNtMXx+OBDpm6DOO+K2e1T2HJkORxz/rjLXG9AaH//wQOeJjmNG9qmPw4uo3SG0AEWyCepzoLTA=="],
 
     "@effected/yaml": ["@effected/yaml@0.6.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-o8sPYtrdr7udbQiuOk3skPCcHleTthhrZgyjFwBwaXaLhm+eRKke3lvuo29OxwnTanRO1BjNV2w5ugBFNRtkqg=="],
 
@@ -499,15 +503,15 @@
 
     "@savvy-web/changelog": ["@savvy-web/changelog@0.1.1", "", { "dependencies": { "jju": "^1.4.0", "semver": "^7.8.5" } }, "sha512-UR0PEbLzFlLpz78jIDxTAfSc73TVQoZNZfGGzeBFP/s6wG8y3m5KUJwzY6CsisBxJrI44wOMBYdWztTM21PgJw=="],
 
-    "@savvy-web/cli": ["@savvy-web/cli@2.1.8", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effected/git": "^0.5.0", "@effected/jsonc": "^0.5.1", "@effected/workspaces": "^0.8.0", "@effected/yaml": "^0.6.0", "@savvy-web/silk-effects": "4.2.6", "effect": "4.0.0-beta.101" }, "bin": { "savvy": "bin/savvy.js" } }, "sha512-n/ypUZgZUvjdmgIS7r047hq0bdXwMZ8A0FoinX7K6wtuaE5jvdBif4HF0QH/OcQ1JVrzU3Yt6VWlW7pZUB96Ow=="],
+    "@savvy-web/cli": ["@savvy-web/cli@2.1.12", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effected/commands": "^0.1.0", "@effected/git": "^0.5.1", "@effected/jsonc": "^0.5.1", "@effected/templates": "^0.1.0", "@effected/workspaces": "^0.9.0", "@effected/yaml": "^0.6.0", "@savvy-web/silk-effects": "5.1.1", "effect": "4.0.0-beta.101" }, "bin": { "savvy": "bin/savvy.js" } }, "sha512-1W1xJLN2yVS/Tfqm+Am0XixUaTM5lna9qofQSDkJrIvi63eOkT9LQCsXhH73tudTbpR3Pi/VieNa3cXaWhOqFw=="],
 
-    "@savvy-web/mcp": ["@savvy-web/mcp@2.0.9", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effected/workspaces": "^0.8.0", "@modelcontextprotocol/sdk": "^1.29.0", "@savvy-web/silk-effects": "4.2.6", "effect": "4.0.0-beta.101", "zod": "^4.4.3" }, "bin": { "savvy-mcp": "bin/savvy-mcp.js" } }, "sha512-iG2btK7BS5w1Jo3hGnW8FoR7HZAeNvtN5ivB2M1/Il5lUg8kvkn0LqMg+/22Z6leW7qHG19vryS9TtWEffr9JQ=="],
+    "@savvy-web/mcp": ["@savvy-web/mcp@2.0.13", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effected/commands": "^0.1.0", "@effected/workspaces": "^0.9.0", "@modelcontextprotocol/sdk": "^1.29.0", "@savvy-web/silk-effects": "5.1.1", "effect": "4.0.0-beta.101", "zod": "^4.4.3" }, "bin": { "savvy-mcp": "bin/savvy-mcp.js" } }, "sha512-kceTsMKSzQawCeow0L9MuP7VXjy3pfuIRkDyQhDB1BudsBcd/p0mKCEt33KovLvy8VBKGHeShkCm5Z64Fvy/Tg=="],
 
-    "@savvy-web/pnpm-plugin-silk": ["@savvy-web/pnpm-plugin-silk@0.24.2", "", {}, "sha512-S+m0DmfxLj27auYOxLQW68WSOiLX1xbRJoLsWoqjlrLPfIGijArU2yhc5jTY412Sx41lY5Kugikhr29hgwyIXA=="],
+    "@savvy-web/pnpm-plugin-silk": ["@savvy-web/pnpm-plugin-silk@0.25.0", "", {}, "sha512-u+8BMSuiKjZ+ClskhZxQDN5vuHra5hgpwV8LVsvxYD2/GLaTI4vIFlW/VhMS6qivfXYI1c1wanT0U4gMTjsDbQ=="],
 
-    "@savvy-web/silk": ["@savvy-web/silk@3.2.3", "", { "dependencies": { "@savvy-web/changelog": "0.1.1", "@savvy-web/cli": "2.1.8", "@savvy-web/mcp": "2.0.9", "@savvy-web/silk-effects": "4.2.6", "effect": "4.0.0-beta.101", "semver": "^7.8.5" }, "peerDependencies": { "@biomejs/biome": "~2.5.0", "@changesets/cli": "^3.0.0-next.8", "@commitlint/cli": "^21.2.1", "@commitlint/config-conventional": "^21.2.0", "@types/bun": "^1.3.14", "@types/node": "^26.1.1", "@vitest/coverage-istanbul": "^4.1.10", "@vitest/coverage-v8": "^4.1.10", "husky": "^9.1.7", "lint-staged": "^17.1.0", "markdownlint-cli2": "^0.23.1", "markdownlint-cli2-formatter-codequality": "^0.0.7", "tsx": "^4.23.1", "turbo": "^2.10.5", "typescript": "^7.0.2", "vitest": "^4.1.10" }, "optionalPeers": ["@biomejs/biome"] }, "sha512-EjJqp6qiVa3PlVoj4pPdFAGdAjFoO6+KLJUJzfw89BMZryEgsWWOv/Bjbz6VD1potW68HC2P0qlGWtxJkfhpmQ=="],
+    "@savvy-web/silk": ["@savvy-web/silk@3.2.9", "", { "dependencies": { "@effected/templates": "^0.1.0", "@savvy-web/changelog": "0.1.1", "@savvy-web/cli": "2.1.12", "@savvy-web/mcp": "2.0.13", "@savvy-web/silk-effects": "5.1.1", "effect": "4.0.0-beta.101", "semver": "^7.8.5" }, "peerDependencies": { "@biomejs/biome": "~2.5.0", "@changesets/cli": "^3.0.0-next.8", "@commitlint/cli": "^21.2.1", "@commitlint/config-conventional": "^21.2.0", "@types/bun": "^1.3.14", "@types/node": "^26.1.1", "@vitest/coverage-istanbul": "^4.1.10", "@vitest/coverage-v8": "^4.1.10", "husky": "^9.1.7", "lint-staged": "^17.2.0", "markdownlint-cli2": "^0.23.1", "markdownlint-cli2-formatter-codequality": "^0.0.7", "tsx": "^4.23.1", "turbo": "^2.10.6", "typescript": "^7.0.2", "vitest": "^4.1.10" }, "optionalPeers": ["@biomejs/biome"] }, "sha512-paX0W+gDncDv9dngc0QmFVpnCymoHfBQoTX13dwnSvS6pTHQcXBA3YBiC2PQYW7IJZ8rUl5L7i61DorBVBGFFw=="],
 
-    "@savvy-web/silk-effects": ["@savvy-web/silk-effects@4.2.6", "", { "dependencies": { "@changesets/apply-release-plan": "^8.0.0-next.7", "@changesets/config": "^4.0.0-next.6", "@changesets/get-github-info": "^1.0.0-next.3", "@changesets/get-release-plan": "^5.0.0-next.7", "@effected/git": "^0.5.0", "@effected/glob": "^0.2.1", "@effected/jsonc": "^0.5.1", "@effected/package-json": "^0.5.2", "@effected/walker": "^0.3.2", "@effected/workspaces": "^0.8.0", "@effected/yaml": "^0.6.0", "@manypkg/get-packages": "^3.1.0", "mdast-util-heading-range": "^4.0.0", "mdast-util-to-string": "^4.0.0", "prettier": "^3.9.6", "remark-gfm": "^4.0.1", "remark-parse": "^11.0.0", "remark-stringify": "^11.0.0", "shell-quote": "^1.10.0", "unified": "^11.0.5", "unified-lint-rule": "^3.0.1", "unist-util-visit": "^5.1.0", "yaml-lint": "^1.7.0" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-Ay5OUHiletnQ1nWOzELXWYRwBPgEaTF/uvoI0+EexseJQsIxMtRhSGBB9ySPMvxxed1aRuHErNGwNKzcNF0CPw=="],
+    "@savvy-web/silk-effects": ["@savvy-web/silk-effects@5.1.1", "", { "dependencies": { "@changesets/apply-release-plan": "^8.0.0-next.7", "@changesets/config": "^4.0.0-next.6", "@changesets/get-github-info": "^1.0.0-next.3", "@changesets/get-release-plan": "^5.0.0-next.7", "@effected/commands": "^0.1.0", "@effected/git": "^0.5.1", "@effected/glob": "^0.2.1", "@effected/jsonc": "^0.5.1", "@effected/package-json": "^0.6.0", "@effected/templates": "^0.1.0", "@effected/walker": "^0.3.3", "@effected/workspaces": "^0.9.0", "@effected/yaml": "^0.6.0", "@manypkg/get-packages": "^3.1.0", "mdast-util-heading-range": "^4.0.0", "mdast-util-to-string": "^4.0.0", "prettier": "^3.9.6", "remark-gfm": "^4.0.1", "remark-parse": "^11.0.0", "remark-stringify": "^11.0.0", "shell-quote": "^1.10.0", "unified": "^11.0.5", "unified-lint-rule": "^3.0.1", "unist-util-visit": "^5.1.0", "yaml-lint": "^1.7.0" }, "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-7bCsAj0bUTxZBnaqPQkMay3OmZcO3evtKSxzam+poyKEpWRcVo0oRWYnqfcvsSkHrh8dHuSWOUAm6IKnadQKDg=="],
 
     "@simple-libs/child-process-utils": ["@simple-libs/child-process-utils@2.0.0", "", { "dependencies": { "@simple-libs/stream-utils": "^2.0.0" } }, "sha512-dvNoRKLijXnD0XoJAz94pbNuB5GQgDr55UhpSPhffDkTT0Cmcqh9jSCOtwfT2d4H6MI9E7c4SgtMuJXZ6F3c6A=="],
 
@@ -1340,6 +1344,10 @@
     "@babel/core/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 
     "@babel/helper-compilation-targets/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
+
+    "@effected/npm/@effected/commands": ["@effected/commands@0.2.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-Sh4YJjBpYzKOH48WqG3wwP21dGjH+htg5GOfG29+MGjfGZFWrj5t5H2WBH81zxhts4e1FlVaUzZGhaiYTgir5Q=="],
+
+    "@effected/workspaces/@effected/commands": ["@effected/commands@0.2.0", "", { "peerDependencies": { "effect": "4.0.0-beta.101" } }, "sha512-Sh4YJjBpYzKOH48WqG3wwP21dGjH+htg5GOfG29+MGjfGZFWrj5t5H2WBH81zxhts4e1FlVaUzZGhaiYTgir5Q=="],
 
     "body-parser/content-type": ["content-type@2.0.0", "", {}, "sha512-j/O/d7GcZCyNl7/hwZAb606rzqkyvaDctLmckbxLzHvFBzTJHuGEdodATcP3yIRoDrLHkIATJuvzbFlp/ki2cQ=="],
 
