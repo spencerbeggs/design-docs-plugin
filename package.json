@@ -20,7 +20,7 @@
 		"validate": "claude plugin validate plugin"
 	},
 	"devDependencies": {
-		"@effected/pnpm-plugin-effect": "^0.3.2",
+		"@effected/pnpm-plugin-effect": "^0.4.0",
 		"@savvy-web/pnpm-plugin-silk": "^0.27.0",
 		"@savvy-web/silk": "^3.7.9"
 	},
