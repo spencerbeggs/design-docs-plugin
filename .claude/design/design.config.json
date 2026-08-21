@@ -1,29 +1,75 @@
 {
 	"$schema": "https://raw.githubusercontent.com/spencerbeggs/design-docs-plugin/main/design-docs.schema.json",
-	"version": "1.0.0",
-	"project": {
-		"name": "spencerbeggs/design-docs-plugin",
-		"type": "monorepo",
-		"repository": "https://github.com/spencerbeggs/design-docs-plugin",
-		"maintainer": "C. Spencer Beggs"
-	},
-	"paths": {
-		"designDocs": ".claude/design",
-		"plans": ".claude/plans",
-		"skills": "plugin/skills",
-		"context": "CLAUDE.md",
-		"localContext": "CLAUDE.local.md"
+	"integration": {
+		"ci": {
+			"enabled": false,
+			"syncOnMerge": false,
+			"validateOnPR": false
+		},
+		"git": {
+			"requireReviewForChanges": false,
+			"trackDesignDocs": true
+		},
+		"plans": {
+			"autoSyncProgress": false,
+			"bidirectionalLinking": true,
+			"cacheMetadata": true,
+			"cacheTTL": 300,
+			"enabled": true,
+			"validateOnCommit": true
+		}
 	},
 	"modules": {
 		"design-docs-plugin": {
-			"path": "plugin",
-			"designDocsPath": ".claude/design/design-docs-plugin",
 			"categories": ["architecture", "meta", "documentation"],
+			"designDocsPath": ".claude/design/design-docs-plugin",
 			"maintainer": "C. Spencer Beggs",
+			"path": "plugin",
 			"userDocs": {
 				"readme": "README.md",
 				"repoDocs": "docs",
 				"siteDocs": null
+			}
+		}
+	},
+	"paths": {
+		"context": "CLAUDE.md",
+		"designDocs": ".claude/design",
+		"localContext": "CLAUDE.local.md",
+		"plans": ".claude/plans",
+		"skills": "plugin/skills"
+	},
+	"project": {
+		"maintainer": "C. Spencer Beggs",
+		"name": "spencerbeggs/design-docs-plugin",
+		"repository": "https://github.com/spencerbeggs/design-docs-plugin",
+		"type": "monorepo"
+	},
+	"quality": {
+		"context": {
+			"childMaxWords": 1000,
+			"requireDesignDocPointers": true,
+			"rootMaxWords": 2000
+		},
+		"designDocs": {
+			"minSections": ["Overview", "Current State", "Rationale"],
+			"requireFrontmatter": true,
+			"requireTOC": true
+		},
+		"plans": {
+			"archiveAfterDays": 30,
+			"maxLineLength": 120,
+			"progressRange": [0, 100],
+			"requiredFields": ["name", "title", "created", "status", "progress"],
+			"requireFrontmatter": true,
+			"stalenessThresholdDays": 30,
+			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"]
+		},
+		"userDocs": {
+			"level1": {
+				"maxLineLength": 80,
+				"requireSections": ["Features", "Installation", "Usage"],
+				"targetWordCount": [200, 500]
 			}
 		}
 	},
@@ -67,57 +113,18 @@
 			"finalize"
 		]
 	},
-	"quality": {
-		"designDocs": {
-			"requireFrontmatter": true,
-			"requireTOC": true,
-			"minSections": ["Overview", "Current State", "Rationale"]
-		},
-		"userDocs": {
-			"level1": {
-				"targetWordCount": [200, 500],
-				"maxLineLength": 80,
-				"requireSections": ["Features", "Installation", "Usage"]
-			}
-		},
-		"context": {
-			"rootMaxWords": 2000,
-			"childMaxWords": 1000,
-			"requireDesignDocPointers": true
-		},
-		"plans": {
-			"maxLineLength": 120,
-			"requireFrontmatter": true,
-			"requiredFields": ["name", "title", "created", "status", "progress"],
-			"validStatuses": ["ready", "in-progress", "blocked", "completed", "abandoned"],
-			"progressRange": [0, 100],
-			"stalenessThresholdDays": 30,
-			"archiveAfterDays": 30
-		}
-	},
-	"integration": {
-		"ci": {
-			"enabled": false,
-			"validateOnPR": false,
-			"syncOnMerge": false
-		},
-		"git": {
-			"trackDesignDocs": true,
-			"requireReviewForChanges": false
-		},
-		"plans": {
-			"enabled": true,
-			"bidirectionalLinking": true,
-			"autoSyncProgress": false,
-			"validateOnCommit": true,
-			"cacheMetadata": true,
-			"cacheTTL": 300
-		}
-	},
 	"subagents": {
-		"design-doc-agent": {
+		"context-doc-agent": {
+			"description": "Maintain CLAUDE.md context files",
 			"enabled": true,
+			"file": "plugin/agents/context-doc-agent.md",
+			"skills": ["context-validate", "context-audit", "context-review", "context-update", "context-split"],
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"]
+		},
+		"design-doc-agent": {
 			"description": "Maintain internal design documentation and implementation plans",
+			"enabled": true,
+			"file": "plugin/agents/design-doc-agent.md",
 			"skills": [
 				"design-init",
 				"design-validate",
@@ -138,19 +145,12 @@
 				"plan-create",
 				"plan-list"
 			],
-			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"],
-			"file": "plugin/agents/design-doc-agent.md"
-		},
-		"context-doc-agent": {
-			"enabled": true,
-			"description": "Maintain CLAUDE.md context files",
-			"skills": ["context-validate", "context-audit", "context-review", "context-update", "context-split"],
-			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"],
-			"file": "plugin/agents/context-doc-agent.md"
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write", "Bash"]
 		},
 		"user-docs": {
-			"enabled": true,
 			"description": "Generate user-facing documentation from design docs",
+			"enabled": true,
+			"file": "plugin/agents/user-docs.md",
 			"skills": [
 				"user-docs-create-readme",
 				"docs-generate-contributing",
@@ -162,8 +162,8 @@
 				"docs-review-package",
 				"docs-update"
 			],
-			"tools": ["Read", "Grep", "Glob", "Edit", "Write"],
-			"file": "plugin/agents/user-docs.md"
+			"tools": ["Read", "Grep", "Glob", "Edit", "Write"]
 		}
-	}
+	},
+	"version": "1.0.0"
 }
