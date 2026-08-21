@@ -6,8 +6,8 @@
       "name": "design-docs",
       "devDependencies": {
         "@effected/pnpm-plugin-effect": "^0.5.0",
-        "@savvy-web/pnpm-plugin-silk": "^0.27.0",
-        "@savvy-web/silk": "^3.8.1",
+        "@savvy-web/pnpm-plugin-silk": "^0.28.0",
+        "@savvy-web/silk": "^3.8.3",
       },
     },
   },
@@ -22,7 +22,7 @@
       "@types/react-dom": "^19.2.4",
       "react": "^19.2.8",
       "react-dom": "^19.2.8",
-      "rolldown": "^1.2.4",
+      "rolldown": "^1.2.5",
       "tsdown": "^0.22.14",
       "tsx": "^4.23.12",
       "typescript": "^7.0.2",
@@ -70,31 +70,31 @@
     },
     "lint": {
       "@biomejs/biome": "2.5.0",
-      "@changesets/cli": "^3.0.0",
+      "@changesets/cli": "^3.0.1",
       "@commitlint/cli": "^21.2.2",
       "@commitlint/config-conventional": "^21.2.2",
       "husky": "^9.1.7",
       "lint-staged": "^17.3.0",
       "markdownlint-cli2": "^0.23.2",
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
-      "turbo": "^2.10.10",
+      "turbo": "^2.10.11",
     },
     "lint:peers": {
       "@biomejs/biome": "2.5.0",
-      "@changesets/cli": "^3.0.0",
+      "@changesets/cli": "^3.0.1",
       "@commitlint/cli": "^21.2.2",
       "@commitlint/config-conventional": "^21.2.2",
       "husky": "^9.1.7",
       "lint-staged": "^17.3.0",
       "markdownlint-cli2": "^0.23.2",
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
-      "turbo": "^2.10.10",
+      "turbo": "^2.10.11",
     },
     "silk": {
       "@tsdown/css": "^0.22.5",
       "@tsdown/exe": "^0.22.5",
       "@types/bun": "^1.3.14",
-      "@types/node": "^26.1.2",
+      "@types/node": "^26.2.0",
       "@types/react": "^19.2.18",
       "@types/react-dom": "^19.2.4",
       "@typescript/native-preview": "^7.0.0-dev.20260707.2",
@@ -110,7 +110,7 @@
     },
     "silk:peers": {
       "@types/bun": "^1.3.14",
-      "@types/node": "^26.1.0",
+      "@types/node": "^26.2.0",
       "@types/react": "^19.2.0",
       "@types/react-dom": "^19.2.0",
       "@typescript/native-preview": "^7.0.0-dev.20260707.2",
@@ -120,13 +120,13 @@
       "markdownlint-cli2-formatter-codequality": "^0.0.7",
       "react": "^19.2.0",
       "react-dom": "^19.2.0",
-      "tsx": "^4.23.4",
+      "tsx": "^4.23.12",
       "typescript": "^7.0.0",
     },
     "test": {
-      "@vitest/coverage-istanbul": "^4.1.10",
-      "@vitest/coverage-v8": "^4.1.10",
-      "vitest": "^4.1.10",
+      "@vitest/coverage-istanbul": "^4.1.11",
+      "@vitest/coverage-v8": "^4.1.11",
+      "vitest": "^4.1.11",
     },
     "test:peers": {
       "@vitest/coverage-istanbul": "^4.1.0",
@@ -261,7 +261,7 @@
 
     "@effected/lockfiles": ["@effected/lockfiles@0.6.1", "", { "peerDependencies": { "@effected/jsonc": "^0.7.0", "@effected/npm": "^0.11.0", "@effected/semver": "^0.5.0", "@effected/yaml": "^0.10.0", "effect": "4.0.0-rc.109" } }, "sha512-KVl75PmGt3gmUkcJILvaTAu4js5h51nA50kSwzphP5HsE4FYJVAx1IuyiZDAiMaKNKQvJKyUyWJO5aBvyw9unA=="],
 
-    "@effected/npm": ["@effected/npm@0.11.0", "", { "dependencies": { "@effected/commands": "^0.5.0" }, "peerDependencies": { "@effected/semver": "^0.5.0", "effect": "4.0.0-rc.109" } }, "sha512-JEQUMrlW0wijhHe80ZkDnOWb8LfSUo0mGWtdPtPlwPROn4Og1AozJpEdF4ZPoIwKRzliyzqqtzSXsVZTsPQoQA=="],
+    "@effected/npm": ["@effected/npm@0.11.1", "", { "dependencies": { "@effected/commands": "^0.5.0" }, "peerDependencies": { "@effected/semver": "^0.5.0", "effect": "4.0.0-rc.109" } }, "sha512-W0CSsSRIM6ysjGOqrKm15P1pebCnd5io6imciAFcLgLZiRS5HEQCK00BjlYvirLOfPj9mdpqRJAtIxdBXRHWuA=="],
 
     "@effected/package-json": ["@effected/package-json@0.10.2", "", { "dependencies": { "@effected/jsonc": "^0.7.0", "@effected/npm": "^0.11.0", "@effected/semver": "^0.5.0", "@effected/spdx": "^0.4.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-+gdJpx1aiC3effNfTTMdibe2gW8+tMPaWqJJnYes7aIrtA2pWTGHklbC0CCYIi2VesqXcaMUp6VwCyAdfjBK1g=="],
 
@@ -275,7 +275,7 @@
 
     "@effected/walker": ["@effected/walker@0.5.0", "", { "peerDependencies": { "@effected/glob": "^0.4.0", "effect": "4.0.0-rc.109" } }, "sha512-RTr7FkmAY9i7limoqjhQ3Oe9JGUEGf9fAP2CzjYqMn/9tJPxU+7IWCLMC4gUb7S5evXzBOBBlRtZ85AeVUIBUQ=="],
 
-    "@effected/workspaces": ["@effected/workspaces@0.15.1", "", { "dependencies": { "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/glob": "^0.4.0", "@effected/lockfiles": "^0.6.1", "@effected/npm": "^0.11.0", "@effected/package-json": "^0.10.2", "@effected/semver": "^0.5.0", "@effected/walker": "^0.5.0", "@effected/yaml": "^0.10.0", "@pnpm/catalogs.config": "^1100.0.5", "@pnpm/catalogs.protocol-parser": "^1100.0.0", "@pnpm/catalogs.resolver": "^1100.0.0", "@pnpm/catalogs.types": "^1100.0.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-nfk08vKClSSI5xhXffWLWx3FgDSn3pwXPcjkhi8+zuNsOJeWs1j9wZAnJnw9hSjm4HwwZdePpBpmM83CDsyGgg=="],
+    "@effected/workspaces": ["@effected/workspaces@0.16.0", "", { "dependencies": { "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/glob": "^0.4.0", "@effected/lockfiles": "^0.6.1", "@effected/npm": "^0.11.1", "@effected/package-json": "^0.10.2", "@effected/semver": "^0.5.0", "@effected/walker": "^0.5.0", "@effected/yaml": "^0.10.0", "@pnpm/catalogs.config": "^1100.0.5", "@pnpm/catalogs.protocol-parser": "^1100.0.0", "@pnpm/catalogs.resolver": "^1100.0.0", "@pnpm/catalogs.types": "^1100.0.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-BlwiKzuScsIOVWAELkmCoa4PjpBefe/fCMQe10CraY6ZbKhNfJnI2iKFqiMqsnamPHKpj1Q2OW0P5FhHC6YmIw=="],
 
     "@effected/yaml": ["@effected/yaml@0.10.0", "", { "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-6iXMf2mTyy+boIroYfBiyVdnA8OKum50aWmxTe+r2idzmYPr5iJ/3qTBt0eRw5uqRlQwaTlVCHOmNJE5S0Eixg=="],
 
@@ -439,15 +439,15 @@
 
     "@savvy-web/changelog": ["@savvy-web/changelog@0.1.1", "", { "dependencies": { "jju": "^1.4.0", "semver": "^7.8.5" } }, "sha512-UR0PEbLzFlLpz78jIDxTAfSc73TVQoZNZfGGzeBFP/s6wG8y3m5KUJwzY6CsisBxJrI44wOMBYdWztTM21PgJw=="],
 
-    "@savvy-web/cli": ["@savvy-web/cli@2.6.6", "", { "dependencies": { "@effect/platform-node": "4.0.0-rc.109", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/jsonc": "^0.7.0", "@effected/templates": "^0.4.0", "@effected/workspaces": "^0.15.0", "@effected/yaml": "^0.10.0", "@savvy-web/silk-effects": "6.0.2", "effect": "4.0.0-rc.109" }, "bin": { "savvy": "bin/savvy.js" } }, "sha512-lM4FrbAAwKFju2IGSlsxbcBLMaWnSrqFcGAvC3treFDkHFDPT63o8Cqv5/PNW/JO8IPiETUX18GmsIY197pAQQ=="],
+    "@savvy-web/cli": ["@savvy-web/cli@2.6.8", "", { "dependencies": { "@effect/platform-node": "4.0.0-rc.109", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/jsonc": "^0.7.0", "@effected/templates": "^0.4.0", "@effected/workspaces": "^0.16.0", "@effected/yaml": "^0.10.0", "@savvy-web/silk-effects": "6.0.4", "effect": "4.0.0-rc.109" }, "bin": { "savvy": "bin/savvy.js" } }, "sha512-3Qz9QPVbekqe0tvXOjPPoDYPnDdGz0722pkRroN0tZ4rn8hPM/cO9s7cpHX9eb/0tqvzJ4T/0Ty3fazXJCvbVw=="],
 
-    "@savvy-web/mcp": ["@savvy-web/mcp@2.4.7", "", { "dependencies": { "@effect/platform-node": "4.0.0-rc.109", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/workspaces": "^0.15.0", "@modelcontextprotocol/sdk": "^1.30.0", "@savvy-web/silk-effects": "6.0.2", "effect": "4.0.0-rc.109", "zod": "^4.4.3" }, "bin": { "savvy-mcp": "bin/savvy-mcp.js" } }, "sha512-sEeGDjDPuM2rJcj9Y3QV07fF46kmFaI2J1BPPlYXt/VPThgMbvD+jEOu7dJRZK+cjqdZNN2kaWN6JV3pYyfKxw=="],
+    "@savvy-web/mcp": ["@savvy-web/mcp@2.4.9", "", { "dependencies": { "@effect/platform-node": "4.0.0-rc.109", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/workspaces": "^0.16.0", "@modelcontextprotocol/sdk": "^1.30.0", "@savvy-web/silk-effects": "6.0.4", "effect": "4.0.0-rc.109", "zod": "^4.4.3" }, "bin": { "savvy-mcp": "bin/savvy-mcp.js" } }, "sha512-VezRZPeLwcGwSd0s8iPfR21W1aSN0OY7lQkGb+yxOuwtIQJ5qVSBuQnGvj8heC+Ses7bWw1dhxlqs4/LUML2XA=="],
 
-    "@savvy-web/pnpm-plugin-silk": ["@savvy-web/pnpm-plugin-silk@0.27.0", "", {}, "sha512-HXeAY2jIfr/XKXqOTTHM0LM9a04nj6I1+MG3EhsOBRY5jhwlCqhar+Gs3axfIE2irTt6oSt0I4eXQZnO/A1bzg=="],
+    "@savvy-web/pnpm-plugin-silk": ["@savvy-web/pnpm-plugin-silk@0.28.0", "", {}, "sha512-Kc02T+OYFDCdM62q9o2XGJivV0A+zlj1wIv+POShOH1DFpKNAsQj9W53XmrJ71FcoTR6phyin5OHd9I0BVEtWw=="],
 
-    "@savvy-web/silk": ["@savvy-web/silk@3.8.1", "", { "dependencies": { "@effected/templates": "^0.4.0", "@savvy-web/changelog": "0.1.1", "@savvy-web/cli": "2.6.6", "@savvy-web/mcp": "2.4.7", "@savvy-web/silk-effects": "6.0.2", "effect": "4.0.0-rc.109", "semver": "^7.8.5" }, "peerDependencies": { "@biomejs/biome": "2.5.0", "@changesets/cli": "^3.0.0", "@commitlint/cli": "^21.2.2", "@commitlint/config-conventional": "^21.2.2", "@types/bun": "^1.3.14", "@types/node": "^26.2.0", "@vitest/coverage-istanbul": "^4.1.10", "@vitest/coverage-v8": "^4.1.10", "husky": "^9.1.7", "lint-staged": "^17.3.0", "markdownlint-cli2": "^0.23.2", "markdownlint-cli2-formatter-codequality": "^0.0.7", "tsx": "^4.23.12", "turbo": "^2.10.10", "typescript": "^7.0.2", "vitest": "^4.1.10" }, "optionalPeers": ["@biomejs/biome"] }, "sha512-1mZoGpxrEurx2CKyJdsWNTvd5JAmFGoc3AfPR5YylR7u3bWFXxC6pykHjHCidGXY7qAHFgggXUj5PJANKFdEBw=="],
+    "@savvy-web/silk": ["@savvy-web/silk@3.8.3", "", { "dependencies": { "@effected/templates": "^0.4.0", "@savvy-web/changelog": "0.1.1", "@savvy-web/cli": "2.6.8", "@savvy-web/mcp": "2.4.9", "@savvy-web/silk-effects": "6.0.4", "effect": "4.0.0-rc.109", "semver": "^7.8.5" }, "peerDependencies": { "@biomejs/biome": "2.5.0", "@changesets/cli": "^3.0.1", "@commitlint/cli": "^21.2.2", "@commitlint/config-conventional": "^21.2.2", "@types/bun": "^1.3.14", "@types/node": "^26.2.0", "@vitest/coverage-istanbul": "^4.1.11", "@vitest/coverage-v8": "^4.1.11", "husky": "^9.1.7", "lint-staged": "^17.3.0", "markdownlint-cli2": "^0.23.2", "markdownlint-cli2-formatter-codequality": "^0.0.7", "tsx": "^4.23.12", "turbo": "^2.10.11", "typescript": "^7.0.2", "vitest": "^4.1.11" }, "optionalPeers": ["@biomejs/biome"] }, "sha512-aBga561HDa89bdRPAF3Lv3wbb41L47TG1XU13mXSVRMsHmaFqShNre5O/l4UCBXwFdIHh9LHnHGyDJ971Ja4Ug=="],
 
-    "@savvy-web/silk-effects": ["@savvy-web/silk-effects@6.0.2", "", { "dependencies": { "@changesets/apply-release-plan": "^8.0.0", "@changesets/config": "^4.0.0", "@changesets/get-github-info": "^1.0.0", "@changesets/get-release-plan": "^5.0.0", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/github-references": "^0.1.0", "@effected/glob": "^0.4.0", "@effected/jsonc": "^0.7.0", "@effected/package-json": "^0.10.2", "@effected/templates": "^0.4.0", "@effected/walker": "^0.5.0", "@effected/workspaces": "^0.15.0", "@effected/yaml": "^0.10.0", "@manypkg/get-packages": "^3.1.0", "mdast-util-heading-range": "^4.0.0", "mdast-util-to-string": "^4.0.0", "remark-gfm": "^4.0.1", "remark-parse": "^11.0.0", "remark-stringify": "^11.0.0", "shell-quote": "^1.10.0", "unified": "^11.0.5", "unified-lint-rule": "^3.0.1", "unist-util-visit": "^5.1.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-wcXzoXFjGaUo+Oxk+bqfAqfLPJjqx5u7D3l6w+Yez5D4RoIsePbBZt/nDKHNeR5jFlWSfsQneSjlyTS4BpyXrg=="],
+    "@savvy-web/silk-effects": ["@savvy-web/silk-effects@6.0.4", "", { "dependencies": { "@changesets/apply-release-plan": "^8.0.0", "@changesets/config": "^4.0.0", "@changesets/get-github-info": "^1.0.0", "@changesets/get-release-plan": "^5.0.0", "@effected/commands": "^0.5.0", "@effected/git": "^0.9.0", "@effected/github-references": "^0.1.0", "@effected/glob": "^0.4.0", "@effected/jsonc": "^0.7.0", "@effected/package-json": "^0.10.2", "@effected/templates": "^0.4.0", "@effected/walker": "^0.5.0", "@effected/workspaces": "^0.16.0", "@effected/yaml": "^0.10.0", "@manypkg/get-packages": "^3.1.0", "mdast-util-heading-range": "^4.0.0", "mdast-util-to-string": "^4.0.0", "remark-gfm": "^4.0.1", "remark-parse": "^11.0.0", "remark-stringify": "^11.0.0", "shell-quote": "^1.10.0", "unified": "^11.0.5", "unified-lint-rule": "^3.0.1", "unist-util-visit": "^5.1.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-cCTq8mgPyGI6SfTu9Lmx094bAyrin/TXK/jkHcZcAQC+/m/aqLdjW+HyVXSwdNAdHf3HXfnnW+iyBydt+fs8MA=="],
 
     "@simple-libs/child-process-utils": ["@simple-libs/child-process-utils@2.0.0", "", { "dependencies": { "@simple-libs/stream-utils": "^2.0.0" } }, "sha512-dvNoRKLijXnD0XoJAz94pbNuB5GQgDr55UhpSPhffDkTT0Cmcqh9jSCOtwfT2d4H6MI9E7c4SgtMuJXZ6F3c6A=="],
 
@@ -1264,6 +1264,8 @@
     "@changesets/get-release-plan/@changesets/types": ["@changesets/types@7.0.0", "", {}, "sha512-c5GoiQyt3pxiXjrWSNoP8/GRf4kG+VnKzovx1OQM8dYYALlSwgedmkPmJ+ZqGxqwg9D3Bkj85Uo4KLd5BN3A0w=="],
 
     "@changesets/write/@changesets/format": ["@changesets/format@0.1.0", "", { "dependencies": { "package-manager-detector": "^1.6.0" } }, "sha512-m3ScsTpVqQJu6WOV36vpGozJPBu5JWaFXAhG1/yRnzbOnyqomuPrIfm+LeE0PmX4HWPs9Fh4MDH4aDISEsjZaA=="],
+
+    "@effected/package-json/@effected/npm": ["@effected/npm@0.11.0", "", { "dependencies": { "@effected/commands": "^0.5.0" }, "peerDependencies": { "@effected/semver": "^0.5.0", "effect": "4.0.0-rc.109" } }, "sha512-JEQUMrlW0wijhHe80ZkDnOWb8LfSUo0mGWtdPtPlwPROn4Og1AozJpEdF4ZPoIwKRzliyzqqtzSXsVZTsPQoQA=="],
 
     "@pnpm/catalogs.resolver/@pnpm/error": ["@pnpm/error@1100.0.1", "", { "dependencies": { "@pnpm/constants": "1100.0.0" } }, "sha512-+SRTHRx9/etv+6AYMv6RX/uGW6CEQbV/o2Ojtjk4aHkmdVMe1Q9LekOV6gKmlEmeWOzv6zTzH/soFcuOWxIxTA=="],
 
