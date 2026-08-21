@@ -5,7 +5,7 @@
     "": {
       "name": "design-docs",
       "devDependencies": {
-        "@effected/pnpm-plugin-effect": "^0.3.2",
+        "@effected/pnpm-plugin-effect": "^0.5.0",
         "@savvy-web/pnpm-plugin-silk": "^0.27.0",
         "@savvy-web/silk": "^3.8.1",
       },
@@ -122,11 +122,6 @@
       "react-dom": "^19.2.0",
       "tsx": "^4.23.4",
       "typescript": "^7.0.0",
-    },
-    "silkPeers": {
-      "@tsdown/css": "^0.22.5",
-      "@tsdown/exe": "^0.22.5",
-      "tsx": "^4.23.0",
     },
     "test": {
       "@vitest/coverage-istanbul": "^4.1.10",
@@ -270,7 +265,7 @@
 
     "@effected/package-json": ["@effected/package-json@0.10.2", "", { "dependencies": { "@effected/jsonc": "^0.7.0", "@effected/npm": "^0.11.0", "@effected/semver": "^0.5.0", "@effected/spdx": "^0.4.0" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-+gdJpx1aiC3effNfTTMdibe2gW8+tMPaWqJJnYes7aIrtA2pWTGHklbC0CCYIi2VesqXcaMUp6VwCyAdfjBK1g=="],
 
-    "@effected/pnpm-plugin-effect": ["@effected/pnpm-plugin-effect@0.3.2", "", {}, "sha512-3Mntc42rl1ni4NppisQ9P164/9ApQXlZ4s9A8UTre2Q+rIqGvOzS+shPVwalpiYALjI1+Bw/mHKpNcgYzXJTdA=="],
+    "@effected/pnpm-plugin-effect": ["@effected/pnpm-plugin-effect@0.5.0", "", {}, "sha512-ZXhKy7WI8ROoHdiOX/q2VzmDPHhQZFwuEvsKN68GsBWnjmbQkCCmaisxoXL6wzM6IKNV4zV3IXWIO1cKsydQuA=="],
 
     "@effected/semver": ["@effected/semver@0.5.0", "", { "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-Ch/lt/FZOyKy7Mt8qnxyPd7wmvvcD7/7Y4G13cq+OuRUEJQQM6hcZLomvbq9eOZCOH6Bms4KvwvWZnof/JBG1A=="],
 
