@@ -1,15 +1,15 @@
 {
-	"name": "design-docs",
-	"description": "Design documentation and implementation plan management system for Claude Code",
-	"version": "0.10.1",
+	"agents": ["./agents/context-doc-agent.md", "./agents/design-doc-agent.md", "./agents/user-docs.md"],
 	"author": {
 		"name": "C. Spencer Beggs",
 		"url": "https://spencerbeg.gs"
 	},
-	"homepage": "https://github.com/spencerbeggs/design-docs-plugin",
-	"repository": "https://github.com/spencerbeggs/design-docs-plugin.git",
-	"license": "MIT",
 	"commands": [],
+	"description": "Design documentation and implementation plan management system for Claude Code",
+	"homepage": "https://github.com/spencerbeggs/design-docs-plugin",
+	"license": "MIT",
+	"name": "design-docs",
+	"repository": "https://github.com/spencerbeggs/design-docs-plugin.git",
 	"skills": [
 		"./skills/context-audit",
 		"./skills/context-docs-style",
@@ -62,5 +62,5 @@
 		"./skills/user-docs-review",
 		"./skills/user-docs-style"
 	],
-	"agents": ["./agents/context-doc-agent.md", "./agents/design-doc-agent.md", "./agents/user-docs.md"]
+	"version": "0.10.1"
 }

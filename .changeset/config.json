@@ -1,9 +1,10 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+	"access": "restricted",
+	"baseBranch": "main",
 	"changelog": [
 		"@savvy-web/changelog",
 		{
-			"repo": "spencerbeggs/design-docs-plugin",
 			"packages": {
 				"design-docs": {
 					"versionFiles": [
@@ -13,16 +14,15 @@
 						}
 					]
 				}
-			}
+			},
+			"repo": "spencerbeggs/design-docs-plugin"
 		}
 	],
 	"commit": false,
-	"access": "restricted",
-	"baseBranch": "main",
-	"updateInternalDependencies": "patch",
 	"ignore": [],
 	"privatePackages": {
 		"tag": true,
 		"version": true
-	}
+	},
+	"updateInternalDependencies": "patch"
 }
